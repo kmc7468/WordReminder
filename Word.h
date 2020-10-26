@@ -23,3 +23,23 @@ bool AddWord(Vocabulary* vocabulary, const Word* word);
 void RemoveWord(Vocabulary* vocabulary, int index);
 int GetUniqueWordCount(const Vocabulary* vocabulary);
 void DestroyVocabulary(Vocabulary* vocabulary);
+
+typedef enum {
+	GuessingMeaning = 1,
+	GuessingWord = 2,
+	GuessingBoth = GuessingMeaning | GuessingWord,
+} QuestionType;
+
+typedef struct {
+	QuestionType Type;
+	const Word* Words[5];
+	int Answer;
+} Question;
+
+typedef struct {
+	Vocabulary Vocabulary;
+	QuestionType QuestionType;
+	bool ShouldGivePronunciation;
+} QuestionOption;
+
+void GenerateQuestion(Question* question, const QuestionOption* option);

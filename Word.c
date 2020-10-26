@@ -124,3 +124,24 @@ void WriteString(FILE* file, LPCTSTR string) {
 	free((LPWSTR)raw);
 #endif
 }
+
+void GenerateQuestion(Question* question, const QuestionOption* option) {
+	for (int i = 0; i < 5; ++i) {
+		bool unique = false;
+		do {
+			question->Words[i] = option->Vocabulary.Array + rand() % option->Vocabulary.Count;
+			for (int j = 0; j <= i; ++j) {
+				if (i == j) {
+					unique = true;
+				} else if (!_tcscmp(question->Words[i]->Meaning, question->Words[j]->Meaning)) break;
+			}
+		} while (!unique);
+	}
+
+	if (option->QuestionType == GuessingBoth) {
+		question->Type = (QuestionType)(rand() % 2 + 1);
+	} else {
+		question->Type = option->QuestionType;
+	}
+	question->Answer = rand() % 5;
+}
