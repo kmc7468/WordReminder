@@ -2,8 +2,6 @@
 
 #include "Word.h"
 
-#include <ShlObj.h>
-
 static Vocabulary g_Vocabulary;
 static bool g_IsSaved = true;
 
@@ -11,9 +9,6 @@ static HWND g_WordList;
 static HWND g_WordEdit, g_PronunciationEdit, g_MeaningEdit;
 static HWND g_AddWordButton, g_RemoveWordButton;
 static HWND g_LoadVocabularyButton, g_SaveVocabularyButton;
-
-static OPENFILENAME g_FileDialog;
-static TCHAR g_FileDialogPath[MAX_PATH];
 
 LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
@@ -37,17 +32,6 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 			WIDTH / 3 + 20, HEIGHT - 103, WIDTH / 3 - 25, 50, handle, 6);
 		g_SaveVocabularyButton = CreateAndShowChild(_T("button"), _T("단어장 저장"), GlobalBoldFont, BS_PUSHBUTTON,
 			WIDTH / 3 * 2 + 1, HEIGHT - 103, WIDTH / 3 - 25, 50, handle, 7);
-
-		g_FileDialog.hwndOwner = handle;
-		g_FileDialog.lpstrDefExt = _T("kwl");
-		g_FileDialog.lpstrFile = g_FileDialogPath;
-		g_FileDialog.lpstrFilter = _T("단어장 파일(*.kwl)\0*.kwl\0모든 파일(*.*)\0*.*\0");
-		g_FileDialog.lStructSize = sizeof(g_FileDialog);
-		g_FileDialog.nMaxFile = ARRAYSIZE(g_FileDialogPath);
-
-		TCHAR desktop[MAX_PATH];
-		SHGetSpecialFolderPath(HWND_DESKTOP, desktop, CSIDL_DESKTOP, FALSE);
-		g_FileDialog.lpstrInitialDir = desktop;
 		return 0;
 
 	case WM_DESTROY:
@@ -134,18 +118,18 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 			break;
 		}
 
-		case 6:
+		case 6: {
 			if (!g_IsSaved &&
-				MessageBox(handle, _T("단어장이 저장되지 않았습니다. 다른 단어장을 열면 저장되지 않은 내용은 삭제됩니다. 정말 다른 단어장을 여시겠습니까?"), _T("경고"), MB_YESNO | MB_ICONQUESTION) != IDYES) break;
+				MessageBox(handle, _T("단어장이 저장되지 않았습니다. 다른 단어장을 열면 저장되지 않은 내용은 삭제됩니다. 정말 다른 단어장을 여시겠습니까?"), _T("경고"), MB_YESNO | MB_ICONWARNING) != IDYES) break;
 
-			g_FileDialog.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST;
-			if (GetOpenFileName(&g_FileDialog)) {
+			const LPCTSTR path = ShowOpenFileDialog(handle);
+			if (path) {
 				for (int i = 0; i < g_Vocabulary.Count; ++i) {
 					SendMessage(g_WordList, LB_DELETESTRING, 0, 0);
 				}
 				DestroyVocabulary(&g_Vocabulary);
 
-				LoadVocabulary(&g_Vocabulary, g_FileDialogPath);
+				LoadVocabulary(&g_Vocabulary, path);
 				for (int i = 0; i < g_Vocabulary.Count; ++i) {
 					SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)g_Vocabulary.Array[i].Word);
 				}
@@ -154,22 +138,24 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 				SetWindowText(g_MeaningEdit, _T(""));
 			}
 			break;
+		}
 
-		case 7:
+		case 7: {
 			if (GetUniqueWordCount(&g_Vocabulary) < 5) {
 				MessageBox(handle, _T("적어도 뜻이 다른 단어 5개를 단어장에 추가해야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}
 
-			g_FileDialog.Flags = OFN_EXPLORER | OFN_HIDEREADONLY;
-			if (GetSaveFileName(&g_FileDialog)) {
-				if (SaveVocabulary(&g_Vocabulary, g_FileDialogPath)) {
+			const LPCTSTR path = ShowSaveFileDialog(handle);
+			if (path) {
+				if (SaveVocabulary(&g_Vocabulary, path)) {
 					g_IsSaved = true;
 				} else {
 					MessageBox(handle, _T("저장 중 알 수 없는 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				}
 			}
 			break;
+		}
 		}
 		return 0;
 

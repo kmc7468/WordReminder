@@ -13,6 +13,9 @@ HWND CreateAndShowChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x
 HFONT CreateGlobalFont(int height, bool isBold);
 void DrawTextUsingFont(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length);
 
+LPCTSTR ShowOpenFileDialog(HWND handle);
+LPCTSTR ShowSaveFileDialog(HWND handle);
+
 extern HWND MainWindow, VocabularyWindow;
 
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);

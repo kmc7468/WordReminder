@@ -1,10 +1,14 @@
 #include "Window.h"
 
+#include <ShlObj.h>
 #include <stdlib.h>
 #include <time.h>
 
 static HINSTANCE g_Instance;
 static LOGFONT g_GlobalFont;
+
+static OPENFILENAME g_FileDialog;
+static TCHAR g_FileDialogPath[MAX_PATH];
 
 HFONT GlobalDefaultFont, GlobalBoldFont;
 
@@ -14,11 +18,22 @@ void Initialize(HINSTANCE instance) {
 
 	RegisterWindow(_T("MainWindow"), MainWindowProc);
 	RegisterWindow(_T("VocabularyWindow"), VocabularyWindowProc);
+	RegisterWindow(_T("QuestionOptionWindow"), QuestionOptionWindowProc);
 
 	g_GlobalFont.lfCharSet = HANGUL_CHARSET;
 	_tcscpy(g_GlobalFont.lfFaceName, _T("나눔고딕"));
 	GlobalDefaultFont = CreateGlobalFont(18, false);
 	GlobalBoldFont = CreateGlobalFont(18, true);
+
+	g_FileDialog.lpstrDefExt = _T("kwl");
+	g_FileDialog.lpstrFile = g_FileDialogPath;
+	g_FileDialog.lpstrFilter = _T("단어장 파일(*.kwl)\0*.kwl\0모든 파일(*.*)\0*.*\0");
+	g_FileDialog.lStructSize = sizeof(g_FileDialog);
+	g_FileDialog.nMaxFile = ARRAYSIZE(g_FileDialogPath);
+
+	TCHAR desktop[MAX_PATH];
+	SHGetSpecialFolderPath(HWND_DESKTOP, desktop, CSIDL_DESKTOP, FALSE);
+	g_FileDialog.lpstrInitialDir = desktop;
 }
 void RegisterWindow(LPCTSTR name, WNDPROC wndProc) {
 	WNDCLASS wc;
@@ -54,6 +69,19 @@ void DrawTextUsingFont(HDC dc, HFONT font, int x, int y, LPCTSTR string, int len
 	const HGDIOBJ oldFont = SelectObject(dc, font);
 	TextOut(dc, x, y, string, length);
 	SelectObject(dc, oldFont);
+}
+
+LPCTSTR ShowOpenFileDialog(HWND handle) {
+	g_FileDialog.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST;
+	g_FileDialog.hwndOwner = handle;
+	if (GetOpenFileName(&g_FileDialog)) return g_FileDialogPath;
+	else return NULL;
+}
+LPCTSTR ShowSaveFileDialog(HWND handle) {
+	g_FileDialog.Flags = OFN_EXPLORER | OFN_HIDEREADONLY;
+	g_FileDialog.hwndOwner = handle;
+	if (GetSaveFileName(&g_FileDialog)) return g_FileDialogPath;
+	else return NULL;
 }
 
 HWND MainWindow, VocabularyWindow;

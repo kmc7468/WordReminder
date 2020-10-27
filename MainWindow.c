@@ -37,11 +37,15 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
-		case 1: {
+		case 0:
+			CreateAndShowWindow(_T("QuestionOptionWindow"), _T("단어 암기하기"), SW_SHOW);
+			EnableWindow(handle, FALSE);
+			break;
+
+		case 1:
 			VocabularyWindow = CreateAndShowWindow(_T("VocabularyWindow"), _T("단어장 만들기/수정하기"), SW_SHOW);
 			EnableWindow(handle, FALSE);
 			break;
-		}
 		}
 		return 0;
 
