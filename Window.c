@@ -20,6 +20,7 @@ void Initialize(HINSTANCE instance) {
 	RegisterWindow(_T("VocabularyWindow"), VocabularyWindowProc);
 	RegisterWindow(_T("QuestionOptionWindow"), QuestionOptionWindowProc);
 	RegisterWindow(_T("QuestionWindow"), QuestionWindowProc);
+	RegisterWindow(_T("StatisticWindow"), StatisticWindowProc);
 
 	g_GlobalFont.lfCharSet = HANGUL_CHARSET;
 	_tcscpy(g_GlobalFont.lfFaceName, _T("³ª´®°íµñ"));

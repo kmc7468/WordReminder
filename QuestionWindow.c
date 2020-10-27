@@ -10,6 +10,9 @@ static bool g_IsWrong;
 
 static HFONT g_QuestionFont, g_WordOrMeaningFont, g_PronunciationFont, g_ButtonFont;
 static HWND g_Buttons[5];
+static HWND g_StopButton;
+
+static bool g_ShouldEnableMainWindow = true;
 
 static void ShowNextQuestion(HWND handle);
 
@@ -25,17 +28,25 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			g_Buttons[i] = CreateAndShowChild(_T("button"), _T(""), g_ButtonFont, BS_PUSHBUTTON | BS_MULTILINE,
 				WIDTH / 2 - WIDTH / 4, 140 + ((HEIGHT / 10 + HEIGHT / 50) * i), WIDTH / 2, HEIGHT / 10, handle, i);
 		}
+
+		g_StopButton = CreateAndShowChild(_T("button"), _T("그만 외우기"), g_ButtonFont, BS_PUSHBUTTON,
+			WIDTH - WIDTH / 4 + 10, 140 + ((HEIGHT / 10 + HEIGHT / 50) * 4), WIDTH / 4 - 37, HEIGHT / 10, handle, 5);
 		return 0;
 
 	case WM_DESTROY:
 		DestroyVocabulary(&g_QuestionOption->Vocabulary);
 		free(g_QuestionOption);
+		g_IsWrong = false;
 
 		DeleteObject(g_QuestionFont);
 		DeleteObject(g_WordOrMeaningFont);
 		DeleteObject(g_PronunciationFont);
 		DeleteObject(g_ButtonFont);
-		EnableWindow(MainWindow, TRUE);
+
+		if (g_ShouldEnableMainWindow) {
+			EnableWindow(MainWindow, TRUE);
+		}
+		g_ShouldEnableMainWindow = true;
 		return 0;
 
 	case WM_SIZE:
@@ -45,6 +56,9 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			SetWindowPos(g_Buttons[i], HWND_TOP, WIDTH / 2 - WIDTH / 4, 140 + ((HEIGHT / 10 + HEIGHT / 50) * i), WIDTH / 2, HEIGHT / 10, 0);
 			SendMessage(g_Buttons[i], WM_SETFONT, (WPARAM)g_ButtonFont, true);
 		}
+
+		SetWindowPos(g_StopButton, HWND_TOP, WIDTH - WIDTH / 4 + 10, 140 + ((HEIGHT / 10 + HEIGHT / 50) * 4), WIDTH / 4 - 37, HEIGHT / 10, 0);
+		SendMessage(g_StopButton, WM_SETFONT, (WPARAM)g_ButtonFont, true);
 		return 0;
 
 	case WM_PAINT: {
@@ -77,13 +91,26 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	}
 
 	case WM_COMMAND:
-		if (LOWORD(wParam) == g_Question.Answer) {
-			g_IsWrong = false;
-			ShowNextQuestion(handle);
+		if (LOWORD(wParam) < 5) {
+			if (LOWORD(wParam) == g_Question.Answer) {
+				g_IsWrong = false;
+				ShowNextQuestion(handle);
+			} else {
+				g_Question.Words[g_Question.Answer]->IsWrong = g_IsWrong = true;
+				EnableWindow(g_Buttons[LOWORD(wParam)], FALSE);
+				InvalidateRect(handle, NULL, TRUE);
+			}
 		} else {
-			g_IsWrong = true;
-			EnableWindow(g_Buttons[LOWORD(wParam)], FALSE);
-			InvalidateRect(handle, NULL, TRUE);
+			Vocabulary* const vocabulary = malloc(sizeof(Vocabulary));
+			*vocabulary = g_QuestionOption->Vocabulary;
+			g_QuestionOption->Vocabulary.Array = NULL;
+			g_QuestionOption->Vocabulary.Count = 0;
+
+			const HWND statisticWindow = CreateAndShowWindow(_T("StatisticWindow"), _T("단어 암기하기"), SW_SHOW);
+			SendMessage(statisticWindow, WM_USER, 0, (LPARAM)vocabulary);
+
+			g_ShouldEnableMainWindow = false;
+			SendMessage(handle, WM_CLOSE, 0, 0);
 		}
 		return 0;
 

@@ -2,12 +2,15 @@
 
 #include "Word.h"
 
+#include <stdlib.h>
+
 static HWND g_SelectingVocabularyButton;
 static HWND g_GuessingMeaningButton, g_GuessingWordButton;
 static HWND g_ShouldGivePronunciationButton;
 static HWND g_StartButton;
 
 static LPCTSTR g_VocabularyPath;
+static Vocabulary* g_Vocabularary;
 
 static bool g_ShouldEnableMainWindow = true;
 
@@ -30,6 +33,10 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		return 0;
 
 	case WM_DESTROY:
+		if (g_Vocabularary) {
+			DestroyVocabulary(g_Vocabularary);
+			free(g_Vocabularary);
+		}
 		if (g_ShouldEnableMainWindow) {
 			EnableWindow(MainWindow, TRUE);
 		}
@@ -60,12 +67,16 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			if (path) {
 				SetWindowText(g_SelectingVocabularyButton, _T("단어장 선택됨"));
 				g_VocabularyPath = path;
+
+				DestroyVocabulary(g_Vocabularary);
+				free(g_Vocabularary);
+				g_Vocabularary = NULL;
 			}
 			break;
 		}
 
 		case 4: {
-			if (!g_VocabularyPath) {
+			if (!g_VocabularyPath && !g_Vocabularary) {
 				MessageBox(handle, _T("단어장을 선택해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}
@@ -81,6 +92,12 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			if (!option) {
 				MessageBox(handle, _T("메모리가 부족합니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
+			}
+
+			if (g_Vocabularary) {
+				option->Vocabulary = *g_Vocabularary;
+				free(g_Vocabularary);
+				g_Vocabularary = NULL;
 			} else if (!LoadVocabulary(&option->Vocabulary, g_VocabularyPath)) {
 				MessageBox(handle, _T("단어장을 읽는데 실패했습니다. 올바른 단어장인지 확인해 보세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
@@ -97,6 +114,14 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		}
 		}
 		return 0;
+
+	case WM_USER:
+		g_Vocabularary = (Vocabulary*)lParam;
+		for (int i = 0; i < g_Vocabularary->Count; ++i) {
+			g_Vocabularary->Array[i].IsWrong = false;
+		}
+		SetWindowText(g_SelectingVocabularyButton, _T("단어장 선택됨"));
+		break;
 
 	case WM_GETMINMAXINFO: {
 		LPMINMAXINFO size = (LPMINMAXINFO)lParam;

@@ -27,6 +27,7 @@ bool LoadVocabulary(Vocabulary* vocabulary, LPCTSTR path) {
 		word.Word = ReadString(file);
 		word.Pronunciation = ReadString(file);
 		word.Meaning = ReadString(file);
+		word.IsWrong = false;
 		AddWord(vocabulary, &word);
 	}
 	fclose(file);
@@ -60,6 +61,12 @@ bool AddWord(Vocabulary* vocabulary, const Word* word) {
 void RemoveWord(Vocabulary* vocabulary, int index) {
 	DestroyWord(vocabulary->Array + index);
 	memmove(vocabulary->Array + index, vocabulary->Array + index + 1, sizeof(Word) * (--vocabulary->Count - index));
+}
+void CopyWord(Word* dest, const Word* source) {
+	_tcscpy(dest->Word = malloc(sizeof(TCHAR) * 201), source->Word);
+	_tcscpy(dest->Pronunciation = malloc(sizeof(TCHAR) * 201), source->Pronunciation);
+	_tcscpy(dest->Meaning = malloc(sizeof(TCHAR) * 201), source->Meaning);
+	dest->IsWrong = source->IsWrong;
 }
 int GetUniqueWordCount(const Vocabulary* vocabulary) {
 	int result = vocabulary->Count;
