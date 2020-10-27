@@ -13,6 +13,7 @@ void Initialize(HINSTANCE instance) {
 	srand((unsigned)time(NULL));
 
 	RegisterWindow(_T("MainWindow"), MainWindowProc);
+	RegisterWindow(_T("VocabularyWindow"), VocabularyWindowProc);
 
 	g_GlobalFont.lfCharSet = HANGUL_CHARSET;
 	_tcscpy(g_GlobalFont.lfFaceName, _T("³ª´®°íµñ"));

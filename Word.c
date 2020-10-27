@@ -47,7 +47,7 @@ bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path) {
 }
 bool AddWord(Vocabulary* vocabulary, const Word* word) {
 	if (vocabulary->Capacity == vocabulary->Count) {
-		const int newCapacity = min(1, vocabulary->Capacity * 2);
+		const int newCapacity = max(1, vocabulary->Capacity * 2);
 		Word* const newArray = realloc(vocabulary->Array, sizeof(Word) * newCapacity);
 		if (!newArray) return false;
 
@@ -78,6 +78,7 @@ void DestroyVocabulary(Vocabulary* vocabulary) {
 		DestroyWord(vocabulary->Array + i);
 	}
 	free(vocabulary->Array);
+	memset(vocabulary, 0, sizeof(*vocabulary));
 }
 
 LPSTR WCS2MBS(LPCWSTR wcs, bool destroyWCS) {

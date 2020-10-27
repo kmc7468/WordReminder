@@ -15,7 +15,7 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 		return 0;
 
 	case WM_DESTROY:
-		DeleteObject(g_EditButton);
+		DeleteObject(g_TitleFont);
 		return 0;
 
 	case WM_SIZE:
@@ -35,6 +35,16 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 		return 0;
 	}
 
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case 1: {
+			VocabularyWindow = CreateAndShowWindow(_T("VocabularyWindow"), _T("단어장 만들기/수정하기"), SW_SHOW);
+			EnableWindow(handle, FALSE);
+			break;
+		}
+		}
+		return 0;
+
 	case WM_GETMINMAXINFO: {
 		LPMINMAXINFO size = (LPMINMAXINFO)lParam;
 		size->ptMinTrackSize.x = 640;
@@ -43,6 +53,7 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 	}
 
 	case WM_CLOSE:
+		DestroyWindow(handle);
 		PostQuitMessage(0);
 		return 0;
 	}
