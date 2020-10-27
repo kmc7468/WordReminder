@@ -77,7 +77,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 				break;
 			}
 
-			QuestionOption* option = malloc(sizeof(QuestionOption));
+			QuestionOption* option = calloc(1, sizeof(QuestionOption));
 			if (!option) {
 				MessageBox(handle, _T("메모리가 부족합니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
@@ -90,6 +90,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			option->ShouldGivePronunciation = (bool)SendMessage(g_ShouldGivePronunciationButton, BM_GETCHECK, 0, 0);
 
 			const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("단어 암기하기"), SW_SHOW);
+			g_ShouldEnableMainWindow = false;
 			SendMessage(questionWindow, WM_USER, 0, (LPARAM)option);
 			SendMessage(handle, WM_CLOSE, 0, 0);
 			break;
