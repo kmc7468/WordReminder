@@ -68,9 +68,11 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 				SetWindowText(g_SelectingVocabularyButton, _T("단어장 선택됨"));
 				g_VocabularyPath = path;
 
-				DestroyVocabulary(g_Vocabularary);
-				free(g_Vocabularary);
-				g_Vocabularary = NULL;
+				if (g_Vocabularary) {
+					DestroyVocabulary(g_Vocabularary);
+					free(g_Vocabularary);
+					g_Vocabularary = NULL;
+				}
 			}
 			break;
 		}
