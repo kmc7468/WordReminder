@@ -26,9 +26,9 @@ void Initialize(HINSTANCE instance) {
 	GlobalDefaultFont = CreateGlobalFont(18, false);
 	GlobalBoldFont = CreateGlobalFont(18, true);
 
-	g_FileDialog.lpstrDefExt = _T("kwl");
+	g_FileDialog.lpstrDefExt = _T("kv");
 	g_FileDialog.lpstrFile = g_FileDialogPath;
-	g_FileDialog.lpstrFilter = _T("단어장 파일(*.kwl)\0*.kwl\0모든 파일(*.*)\0*.*\0");
+	g_FileDialog.lpstrFilter = _T("단어장 파일(*.kv, *.kwl)\0*.kv;*.kwl\0모든 파일(*.*)\0*.*\0");
 	g_FileDialog.lStructSize = sizeof(g_FileDialog);
 	g_FileDialog.nMaxFile = ARRAYSIZE(g_FileDialogPath);
 
