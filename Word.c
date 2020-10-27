@@ -117,7 +117,7 @@ void WriteString(FILE* file, LPCTSTR string) {
 #else
 		MBS2WCS(string, false);
 #endif
-	const int rawLength = wcslen(raw);
+	const int rawLength = (int)wcslen(raw);
 	fwrite(&rawLength, sizeof(rawLength), 1, file);
 	fwrite(raw, sizeof(WCHAR), rawLength, file);
 #if !defined(UNICODE) && !defined(_UNICODE)
