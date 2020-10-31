@@ -19,6 +19,8 @@ static void ShowNextQuestion(HWND handle);
 LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
 	case WM_CREATE:
+		g_Question.Answer = -1;
+
 		g_QuestionFont = CreateGlobalFont(23, true);
 		g_WordOrMeaningFont = CreateGlobalFont(40, true);
 		g_PronunciationFont = CreateGlobalFont(28, false);

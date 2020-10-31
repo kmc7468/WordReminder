@@ -151,5 +151,10 @@ void GenerateQuestion(Question* question, const QuestionOption* option) {
 	} else {
 		question->Type = option->QuestionType;
 	}
-	question->Answer = rand() % 5;
+
+	int newAnswer;
+	do {
+		newAnswer = rand() % 5;
+	} while (newAnswer == question->Answer);
+	question->Answer = newAnswer;
 }
