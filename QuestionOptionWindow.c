@@ -21,9 +21,9 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			10, 35, WIDTH - 35, 50, handle, 0);
 
 		g_GuessingMeaningButton = CreateAndShowChild(_T("button"), _T("단어 보고 뜻 맞추기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
-			10, 130, 200, 30, handle, 1);
+			10, 130, 150, 30, handle, 1);
 		g_GuessingWordButton = CreateAndShowChild(_T("button"), _T("뜻 보고 단어 맞추기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
-			180, 130, 200, 30, handle, 2);
+			180, 130, 150, 30, handle, 2);
 
 		g_ShouldGivePronunciationButton = CreateAndShowChild(_T("button"), _T("발음 표시하기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
 			10, 195, 200, 30, handle, 3);
