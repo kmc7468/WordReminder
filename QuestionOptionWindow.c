@@ -131,7 +131,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			g_Vocabularary->Array[i].IsWrong = false;
 		}
 		SetWindowText(g_SelectVocabularyButton, _T("단어장 선택됨"));
-		break;
+		return 0;
 
 	case WM_GETMINMAXINFO: {
 		LPMINMAXINFO size = (LPMINMAXINFO)lParam;

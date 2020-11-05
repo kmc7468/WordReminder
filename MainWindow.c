@@ -7,7 +7,8 @@ static HWND g_CreateServerButton, g_JoinServerButton;
 static DWORD g_ThreadId;
 static HANDLE g_Thread;
 
-static WINAPI Thread(PVOID param);
+static DWORD WINAPI Thread(LPVOID param);
+static void Restore();
 
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
@@ -72,6 +73,24 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 			VocabularyWindow = CreateAndShowWindow(_T("VocabularyWindow"), _T("단어장 만들기/수정하기"), SW_SHOW);
 			EnableWindow(handle, FALSE);
 			break;
+
+		case 3: {
+			const HWND multiWindow = CreateAndShowWindow(_T("MultiplayStartWindow"), _T("서버 만들기"), SW_SHOW);
+			SendMessage(multiWindow, WM_USER, 0, 0);
+			EnableWindow(handle, FALSE);
+
+			TerminateThread(g_Thread, 0);
+			Restore();
+			break;
+		}
+
+		case 4:
+			CreateAndShowWindow(_T("MultiplayStartWindow"), _T("서버 접속하기"), SW_SHOW);
+			EnableWindow(handle, FALSE);
+
+			TerminateThread(g_Thread, 0);
+			Restore();
+			break;
 		}
 		return 0;
 
@@ -90,8 +109,13 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 	return DefWindowProc(handle, message, wParam, lParam);
 }
 
-WINAPI Thread(PVOID param) {
+DWORD WINAPI Thread(LPVOID param) {
+	(void)param;
 	Sleep(5000);
+	Restore();
+	return 0;
+}
+void Restore() {
 	ShowWindow(g_MultiPlayButton, SW_SHOW);
 	ShowWindow(g_CreateServerButton, SW_HIDE);
 	ShowWindow(g_JoinServerButton, SW_HIDE);
