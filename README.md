@@ -5,8 +5,7 @@
 
 ## 스크린샷
 - **메인 화면**<br>
-![MainWindow](https://github.com/kmc7468/WordReminder/blob/master/img/MainWindow.png)<br>
-![MainWindow_MultiplayClicked](https://github.com/kmc7468/WordReminder/blob/master/img/MainWindow_MultiplayClicked.png)<br>
+![MainWindow](https://github.com/kmc7468/WordReminder/blob/master/img/MainWindow.png) ![MainWindow_MultiplayClicked](https://github.com/kmc7468/WordReminder/blob/master/img/MainWindow_MultiplayClicked.png)<br>
 멀티 플레이 버튼을 누르면 5초간 서버 만들기 버튼과 서버 접속하기 버튼으로 나눠집니다.
 - **단어장 만들기/수정하기**<br>
 ![VocabularyWindow](https://github.com/kmc7468/WordReminder/blob/master/img/VocabularyWindow.png)<br>
