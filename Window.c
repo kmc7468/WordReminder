@@ -91,4 +91,4 @@ LPCTSTR ShowSaveFileDialog(HWND handle) {
 	else return NULL;
 }
 
-HWND MainWindow, VocabularyWindow;
+HWND MainWindow, VocabularyWindow, MultiplayStartWindow;

@@ -17,7 +17,7 @@ void DrawTextUsingFont(HDC dc, HFONT font, int x, int y, LPCTSTR string, int len
 LPCTSTR ShowOpenFileDialog(HWND handle);
 LPCTSTR ShowSaveFileDialog(HWND handle);
 
-extern HWND MainWindow, VocabularyWindow;
+extern HWND MainWindow, VocabularyWindow, MultiplayStartWindow;
 
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);

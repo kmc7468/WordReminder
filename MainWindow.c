@@ -75,23 +75,19 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 			EnableWindow(handle, FALSE);
 			break;
 
-		case 3: {
-			const HWND multiWindow = CreateAndShowWindow(_T("MultiplayStartWindow"), _T("서버 만들기"), SW_SHOW);
-			SendMessage(multiWindow, WM_USER, 0, 0);
+		case 3:
+		case 4: {
+			const WORD id = LOWORD(wParam);
+			MultiplayStartWindow = CreateAndShowWindow(_T("MultiplayStartWindow"), id == 3 ? _T("서버 만들기") : _T("서버 접속하기"), SW_SHOW);
+			if (id == 3) {
+				SendMessage(MultiplayStartWindow, WM_USER + 2, 0, 0);
+			}
 			EnableWindow(handle, FALSE);
 
 			TerminateThread(g_Thread, 0);
 			Restore();
 			break;
 		}
-
-		case 4:
-			CreateAndShowWindow(_T("MultiplayStartWindow"), _T("서버 접속하기"), SW_SHOW);
-			EnableWindow(handle, FALSE);
-
-			TerminateThread(g_Thread, 0);
-			Restore();
-			break;
 		}
 		return 0;
 
