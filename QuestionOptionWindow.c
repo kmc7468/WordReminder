@@ -122,9 +122,17 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			option->QuestionType |= guessingWord ? GuessingWord : 0;
 			option->ShouldGivePronunciation = (bool)SendMessage(g_ShouldGivePronunciationButton, BM_GETCHECK, 0, 0);
 
-			const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("단어 암기하기"), SW_SHOW);
-			g_ShouldEnableMainWindow = false;
-			SendMessage(questionWindow, WM_USER, 0, (LPARAM)option);
+			if (!g_MultiplayOption || g_MultiplayOption->Mode == TurnMode) {
+				const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("단어 암기하기"), SW_SHOW);
+				g_ShouldEnableMainWindow = false;
+				SendMessage(questionWindow, WM_USER, 0, (LPARAM)option);
+				if (g_MultiplayOption) {
+					SendMessage(questionWindow, WM_USER + 1, 0, (LPARAM)g_MultiplayOption);
+					g_MultiplayOption = NULL;
+				}
+			} else {
+				// TODO
+			}
 			SendMessage(handle, WM_CLOSE, 0, 0);
 			break;
 		}

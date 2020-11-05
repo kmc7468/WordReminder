@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <WinSock2.h>
 #include <Windows.h>
 
 typedef struct {

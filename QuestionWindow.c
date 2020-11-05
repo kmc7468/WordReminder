@@ -1,5 +1,6 @@
 #include "Window.h"
 
+#include "Multiplay.h"
 #include "Word.h"
 
 #include <stdlib.h>
@@ -7,6 +8,9 @@
 static QuestionOption* g_QuestionOption;
 static Question g_Question;
 static bool g_IsWrong;
+
+static Multiplay g_Multiplay;
+static bool g_IsWaiting = false;
 
 static HFONT g_QuestionFont, g_WordOrMeaningFont, g_PronunciationFont, g_ButtonFont;
 static HWND g_Buttons[5];
@@ -40,6 +44,9 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		free(g_QuestionOption);
 		g_IsWrong = false;
 
+		DestroyMultiplay(&g_Multiplay);
+		g_IsWaiting = false;
+
 		DeleteObject(g_QuestionFont);
 		DeleteObject(g_WordOrMeaningFont);
 		DeleteObject(g_PronunciationFont);
@@ -69,24 +76,28 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		const HDC dc = BeginPaint(handle, &ps);
 		SetTextAlign(dc, TA_CENTER);
 
-		const Word* const answer = g_Question.Words[g_Question.Answer];
-		if (g_Question.Type == GuessingMeaning) {
-			DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 단어의 뜻은?"));
-			DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Word, (int)_tcslen(answer->Word));
-			if (g_QuestionOption->ShouldGivePronunciation &&
-				(answer->Pronunciation[0] == 0 || _tcscmp(answer->Word, answer->Pronunciation))) {
-				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 90, answer->Pronunciation, (int)_tcslen(answer->Pronunciation));
-			}
+		if (g_IsWaiting) {
+			DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("상대방을 기다리는 중..."));
 		} else {
-			DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 뜻을 가진 단어는?"));
-			DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Meaning, (int)_tcslen(answer->Meaning));
-		}
+			const Word* const answer = g_Question.Words[g_Question.Answer];
+			if (g_Question.Type == GuessingMeaning) {
+				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 단어의 뜻은?"));
+				DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Word, (int)_tcslen(answer->Word));
+				if (g_QuestionOption->ShouldGivePronunciation &&
+					(answer->Pronunciation[0] == 0 || _tcscmp(answer->Word, answer->Pronunciation))) {
+					DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 90, answer->Pronunciation, (int)_tcslen(answer->Pronunciation));
+				}
+			} else {
+				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 뜻을 가진 단어는?"));
+				DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Meaning, (int)_tcslen(answer->Meaning));
+			}
 
-		if (g_IsWrong) {
-			SetTextAlign(dc, TA_LEFT);
-			SetTextColor(dc, RGB(255, 0, 0));
-			DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("오답!"));
-			SetTextColor(dc, RGB(0, 0, 0));
+			if (g_IsWrong) {
+				SetTextAlign(dc, TA_LEFT);
+				SetTextColor(dc, RGB(255, 0, 0));
+				DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("오답!"));
+				SetTextColor(dc, RGB(0, 0, 0));
+			}
 		}
 
 		EndPaint(handle, &ps);
@@ -121,6 +132,23 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		g_QuestionOption = (QuestionOption*)lParam;
 		ShowNextQuestion(handle);
 		return 0;
+
+	case WM_USER + 1:
+		g_IsWaiting = true;
+		InvalidateRect(handle, NULL, TRUE);
+		SetWindowText(handle, _T("멀티 플레이"));
+		for (int i = 0; i < 5; ++i) {
+			ShowWindow(g_Buttons[i], SW_HIDE);
+		}
+		ShowWindow(g_StopButton, SW_HIDE);
+
+		if (!OpenServer(&g_Multiplay, (MultiplayOption*)lParam)) {
+			MessageBox(NULL, _T("서버를 여는데 실패했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+			SendMessage(handle, WM_CLOSE, 0, 0);
+			break;
+		}
+		g_Multiplay.Option->Vocabulary = &g_QuestionOption->Vocabulary;
+		break;
 
 	case WM_GETMINMAXINFO: {
 		LPMINMAXINFO size = (LPMINMAXINFO)lParam;

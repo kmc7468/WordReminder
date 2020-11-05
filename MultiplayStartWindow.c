@@ -84,12 +84,12 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 				break;
 			}
 
-			const LPTSTR address = malloc(sizeof(TCHAR) * addrLength);
+			const LPSTR address = malloc(sizeof(CHAR) * addrLength);
 			if (!address) {
 				MessageBox(handle, _T("메모리가 부족합니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}
-			GetWindowText(g_ServerAddressEdit, address, addrLength);
+			GetWindowTextA(g_ServerAddressEdit, address, addrLength);
 			TCHAR port[6];
 			GetWindowText(g_ServerPortEdit, port, ARRAYSIZE(port));
 
@@ -115,7 +115,7 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 			} else {
 				// TODO
 			}
-			DestroyWindow(handle);
+			SendMessage(handle, WM_CLOSE, 0, 0);
 			break;
 		}
 		}
