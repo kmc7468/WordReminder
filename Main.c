@@ -1,14 +1,18 @@
-#pragma comment(linker,"\"/manifestdependency:type='win32' \
+#pragma comment(linker, "\"/manifestdependency:type='win32' \
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
+#define _WINSOCKAPI_
 #include <Windows.h>
 
 #include "Window.h"
 
 int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdArgs, int cmdShow) {
-	Initialize(instance);
-	(void)(prevInstance, cmdArgs);
+	if (!Initialize(instance)) {
+		(void)(prevInstance, cmdArgs);
+		MessageBox(NULL, _T("프로그램을 초기화하는데 실패했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+		return 0;
+	}
 	MainWindow = CreateAndShowWindow(_T("MainWindow"), _T("단어 암기 프로그램"), cmdShow);
 
 	MSG message;

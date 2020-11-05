@@ -8,6 +8,8 @@ static HWND g_Button;
 static bool g_ShouldEnableMainWindow = true;
 static bool g_IsServerCreation = false;
 
+static LPSTR GetIpAddress();
+
 LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
 	case WM_CREATE:
@@ -65,6 +67,8 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 	case WM_USER:
 		g_IsServerCreation = true;
 		SetWindowPos(handle, HWND_TOP, 0, 0, 500, 300, SWP_NOMOVE);
+
+		SetWindowTextA(g_ServerAddressEdit, GetIpAddress());
 		SendMessage(g_ServerAddressEdit, EM_SETREADONLY, TRUE, 0);
 
 		g_TurnModeButton = CreateAndShowChild(_T("button"), _T("턴제 모드"), GlobalDefaultFont, BS_AUTORADIOBUTTON,
@@ -88,4 +92,13 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 		return 0;
 	}
 	return DefWindowProc(handle, message, wParam, lParam);
+}
+
+LPSTR GetIpAddress() {
+	char name[256];
+	if (gethostname(name, ARRAYSIZE(name))) return NULL;
+
+	const PHOSTENT host = gethostbyname(name);
+	if (host) return inet_ntoa(*(struct in_addr*)*host->h_addr_list);
+	else return NULL;
 }

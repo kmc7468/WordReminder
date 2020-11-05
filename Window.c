@@ -12,7 +12,7 @@ static TCHAR g_FileDialogPath[MAX_PATH];
 
 HFONT GlobalDefaultFont, GlobalBoldFont;
 
-void Initialize(HINSTANCE instance) {
+bool Initialize(HINSTANCE instance) {
 	g_Instance = instance;
 	srand((unsigned)time(NULL));
 
@@ -37,6 +37,10 @@ void Initialize(HINSTANCE instance) {
 	TCHAR desktop[MAX_PATH];
 	SHGetSpecialFolderPath(HWND_DESKTOP, desktop, CSIDL_DESKTOP, FALSE);
 	g_FileDialog.lpstrInitialDir = desktop;
+
+	WSADATA data;
+	if (WSAStartup(MAKEWORD(2, 2), &data) != ERROR_SUCCESS) return false;
+	else return true;
 }
 void RegisterWindow(LPCTSTR name, WNDPROC wndProc) {
 	WNDCLASS wc;

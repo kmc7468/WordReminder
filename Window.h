@@ -2,11 +2,12 @@
 
 #include <stdbool.h>
 #include <tchar.h>
+#include <WinSock2.h>
 #include <Windows.h>
 
 extern HFONT GlobalDefaultFont, GlobalBoldFont;
 
-void Initialize(HINSTANCE instance);
+bool Initialize(HINSTANCE instance);
 void RegisterWindow(LPCTSTR name, WNDPROC wndProc);
 HWND CreateAndShowWindow(LPCTSTR name, LPCTSTR title, int cmdShow);
 HWND CreateAndShowChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu);
