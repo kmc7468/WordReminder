@@ -37,6 +37,7 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 	case WM_DESTROY:
 		DestroyVocabulary(&g_Vocabulary);
 		EnableWindow(MainWindow, TRUE);
+		SetWindowPos(MainWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 		return 0;
 
 	case WM_SIZE:

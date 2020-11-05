@@ -39,6 +39,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		}
 		if (g_ShouldEnableMainWindow) {
 			EnableWindow(MainWindow, TRUE);
+			SetWindowPos(MainWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 		}
 		g_ShouldEnableMainWindow = true;
 		return 0;

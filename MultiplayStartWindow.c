@@ -33,6 +33,7 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 	case WM_DESTROY:
 		if (g_ShouldEnableMainWindow) {
 			EnableWindow(MainWindow, TRUE);
+			SetWindowPos(MainWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 		}
 		g_ShouldEnableMainWindow = true;
 		g_IsServerCreation = false;

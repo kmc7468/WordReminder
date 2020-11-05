@@ -42,6 +42,7 @@ LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, L
 		DestroyVocabulary(&g_WrongVocabulary);
 		if (g_ShouldEnableMainWindow) {
 			EnableWindow(MainWindow, TRUE);
+			SetWindowPos(MainWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 		}
 		g_ShouldEnableMainWindow = true;
 		return 0;
