@@ -5,9 +5,9 @@
 
 ## 사용 방법
 ### 메인 화면
-<p align="middle">
-	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/MainWindow.png" width="50%" />
-	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/MainWindow_MultiplayClicked.png" width="50%" />
+<p float="left">
+	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/MainWindow.png" width="49%" />
+	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/MainWindow_MultiplayClicked.png" width="49%" />
 </p>
 
 프로그램을 실행하면 가장 먼저 볼 수 있는 화면입니다. 단어 암기하기 버튼을 눌러 단어를 암기할 수 있으며, 단어장 만들기/수정하기 버튼을 눌러 암기에 필요한 단어장을 만들거나 수정할 수도 있습니다. 멀티 플레이 버튼을 눌러 친구와 함께 단어를 암기할 수도 있습니다. 멀티 플레이 버튼을 누르면 버튼이 5초간 서버 만들기와 서버 접속하기 버튼으로 나뉘는데, 멀티 플레이 서버를 직접 열거나 친구가 만든 멀티 플레이 서버에 접속할 수 있습니다.
