@@ -1,5 +1,6 @@
 #include "Window.h"
 
+#include "Multiplay.h"
 #include "Word.h"
 
 #include <stdlib.h>
@@ -11,6 +12,7 @@ static HWND g_StartButton;
 
 static LPCTSTR g_VocabularyPath;
 static Vocabulary* g_Vocabularary;
+static MultiplayOption* g_MultiplayOption;
 
 static bool g_ShouldEnableMainWindow = true;
 
@@ -31,7 +33,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		g_ShouldGivePronunciationButton = CreateAndShowChild(_T("button"), _T("발음 표시하기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
 			10, 190, 200, 15, handle, 3);
 
-		g_StartButton = CreateAndShowChild(_T("button"), _T("암기 시작"), GlobalBoldFont, BS_PUSHBUTTON,
+		g_StartButton = CreateAndShowChild(_T("button"), _T("시작하기"), GlobalBoldFont, BS_PUSHBUTTON,
 			10, 225, 465, 50, handle, 4);
 		return 0;
 
@@ -39,6 +41,11 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		if (g_Vocabularary) {
 			DestroyVocabulary(g_Vocabularary);
 			free(g_Vocabularary);
+			g_Vocabularary = NULL;
+		}
+		if (g_MultiplayOption) {
+			free(g_MultiplayOption);
+			g_MultiplayOption = NULL;
 		}
 		if (g_ShouldEnableMainWindow) {
 			EnableWindow(MainWindow, TRUE);
@@ -130,6 +137,11 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			g_Vocabularary->Array[i].IsWrong = false;
 		}
 		SetWindowText(g_SelectVocabularyButton, _T("단어장 선택됨"));
+		return 0;
+
+	case WM_USER + 1:
+		g_MultiplayOption = (MultiplayOption*)lParam;
+		SetWindowText(g_StartButton, _T("만들기"));
 		return 0;
 
 	case WM_CLOSE:

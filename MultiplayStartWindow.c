@@ -1,5 +1,8 @@
 #include "Window.h"
 
+#include "Multiplay.h"
+
+#include <ctype.h>
 #include <string.h>
 
 static HWND g_ServerAddressEdit, g_ServerPortEdit;
@@ -14,6 +17,7 @@ static DWORD g_ThreadId;
 static HANDLE g_Thread;
 
 static DWORD WINAPI Thread(LPVOID param);
+static int StringToInteger(LPCTSTR string);
 
 LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
@@ -64,9 +68,56 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
-		case 0:
-			// TODO
+		case 6: {
+			const int addrLength = GetWindowTextLength(g_ServerAddressEdit);
+			if (addrLength == 0) {
+				MessageBox(handle, _T("접속할 서버의 주소를 입력해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			}
+
+			const int portLength = GetWindowTextLength(g_ServerPortEdit);
+			if (portLength == 0) {
+				MessageBox(handle, _T("접속할 서버의 포트를 입력해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			} else if (portLength > 5) {
+				MessageBox(handle, _T("접속할 서버의 포트(0~65535)를 올바르게 입력해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			}
+
+			const LPTSTR address = malloc(sizeof(TCHAR) * addrLength);
+			if (!address) {
+				MessageBox(handle, _T("메모리가 부족합니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			}
+			GetWindowText(g_ServerAddressEdit, address, addrLength);
+			TCHAR port[6];
+			GetWindowText(g_ServerPortEdit, port, ARRAYSIZE(port));
+
+			MultiplayOption* const option = calloc(1, sizeof(MultiplayOption));
+			if (!option) {
+				MessageBox(handle, _T("메모리가 부족합니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				free(address);
+				break;
+			}
+			option->ServerIp = address;
+			if ((option->ServerPort = StringToInteger(port)) == -1 || option->ServerPort > 65535) {
+				MessageBox(handle, _T("접속할 서버의 포트(0~65535)를 올바르게 입력해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			}
+			option->SocketType = Client - g_IsServerCreation;
+			option->Mode = (MultiplayMode)IsDlgButtonChecked(handle, 3);
+			option->Role = (MultiplayRole)IsDlgButtonChecked(handle, 5);
+
+			if (g_IsServerCreation) {
+				const HWND questionOptionWindow = CreateAndShowWindow(_T("QuestionOptionWindow"), _T("서버 만들기"), SW_SHOW);
+				SendMessage(questionOptionWindow, WM_USER + 1, 0, (LPARAM)option);
+				g_ShouldEnableMainWindow = false;
+			} else {
+				// TODO
+			}
+			DestroyWindow(handle);
 			break;
+		}
 		}
 		return 0;
 
@@ -130,4 +181,14 @@ DWORD WINAPI Thread(LPVOID param) {
 		SetWindowTextA(g_ServerAddressEdit, body + 4);
 	}
 	return 0;
+}
+int StringToInteger(LPCTSTR string) {
+	int result = 0, power = 1;
+	const int length = (int)_tcslen(string);
+	for (int i = 0; i < length; ++i) {
+		if (!isdigit(string[length - i - 1])) return -1;
+		result += (string[length - i - 1] - '0') * power;
+		power *= 10;
+	}
+	return result;
 }
