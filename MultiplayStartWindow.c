@@ -46,8 +46,8 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 		DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("서버 주소"));
 		DrawTextUsingFont(dc, GlobalBoldFont, 320, 10, STRING("서버 포트"));
 		if (g_IsServerCreation) {
-			DrawTextUsingFont(dc, GlobalBoldFont, 10, 70, STRING("모드"));
-			DrawTextUsingFont(dc, GlobalBoldFont, 10, 130, STRING("역할"));
+			DrawTextUsingFont(dc, GlobalBoldFont, 10, 80, STRING("모드"));
+			DrawTextUsingFont(dc, GlobalBoldFont, 10, 140, STRING("역할"));
 		}
 
 		EndPaint(handle, &ps);
@@ -72,25 +72,25 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 
 	case WM_USER + 2:
 		g_IsServerCreation = true;
-		SetWindowPos(handle, HWND_TOP, 0, 0, 500, 300, SWP_NOMOVE);
+		SetWindowPos(handle, HWND_TOP, 0, 0, 500, 325, SWP_NOMOVE);
 
 		g_Thread = CreateThread(NULL, 0, Thread, NULL, 0, &g_ThreadId);
 		SendMessage(g_ServerAddressEdit, EM_SETREADONLY, TRUE, 0);
 
 		g_TurnModeButton = CreateAndShowChild(_T("button"), _T("턴제 모드"), GlobalDefaultFont, BS_AUTORADIOBUTTON | WS_GROUP,
-			10, 95, 90, 15, handle, 2);
+			10, 105, 90, 15, handle, 2);
 		g_FixedModeButton = CreateAndShowChild(_T("button"), _T("역할 고정 모드"), GlobalDefaultFont, BS_AUTORADIOBUTTON,
-			110, 95, 120, 15, handle, 3);
+			110, 105, 120, 15, handle, 3);
 		CheckRadioButton(handle, 2, 3, 2);
 
 		g_ExaminerButton = CreateAndShowChild(_T("button"), _T("출제자"), GlobalDefaultFont, BS_AUTORADIOBUTTON | WS_GROUP,
-			10, 155, 70, 15, handle, 4);
+			10, 165, 70, 15, handle, 4);
 		g_ExamineeButton = CreateAndShowChild(_T("button"), _T("응시자"), GlobalDefaultFont, BS_AUTORADIOBUTTON,
-			90, 155, 70, 15, handle, 5);
+			90, 165, 70, 15, handle, 5);
 		CheckRadioButton(handle, 4, 5, 4);
 
-		SetWindowText(g_Button, _T("만들기"));
-		SetWindowPos(g_Button, HWND_TOP, 10, 200, 0, 0, SWP_NOSIZE);
+		SetWindowText(g_Button, _T("다음으로"));
+		SetWindowPos(g_Button, HWND_TOP, 10, 225, 0, 0, SWP_NOSIZE);
 		return 0;
 
 	case WM_CLOSE:
@@ -120,7 +120,7 @@ DWORD WINAPI Thread(LPVOID param) {
 	char buffer[512] = { 0 };
 	char* current = buffer;
 	int length;
-	while ((length = recv(sock, current, ARRAYSIZE(buffer) - (current - buffer), 0)) > 0) {
+	while ((length = recv(sock, current, (int)(ARRAYSIZE(buffer) - (current - buffer)), 0)) > 0) {
 		current += length;
 	}
 	closesocket(sock);

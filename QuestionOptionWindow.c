@@ -17,19 +17,22 @@ static bool g_ShouldEnableMainWindow = true;
 LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
 	case WM_CREATE:
+		SetWindowLong(handle, GWL_STYLE, GetWindowLong(handle, GWL_STYLE) & ~WS_SIZEBOX & ~WS_MAXIMIZEBOX);
+		SetWindowPos(handle, HWND_TOP, 0, 0, 500, 325, SWP_NOMOVE);
+
 		g_SelectVocabularyButton = CreateAndShowChild(_T("button"), _T("단어장 선택"), GlobalBoldFont, BS_PUSHBUTTON,
-			10, 35, WIDTH - 35, 50, handle, 0);
+			10, 35, 465, 50, handle, 0);
 
 		g_GuessMeaningButton = CreateAndShowChild(_T("button"), _T("단어 보고 뜻 맞추기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
-			10, 130, 150, 30, handle, 1);
+			10, 130, 150, 15, handle, 1);
 		g_GuessWordButton = CreateAndShowChild(_T("button"), _T("뜻 보고 단어 맞추기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
-			180, 130, 150, 30, handle, 2);
+			180, 130, 150, 15, handle, 2);
 
 		g_ShouldGivePronunciationButton = CreateAndShowChild(_T("button"), _T("발음 표시하기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
-			10, 195, 200, 30, handle, 3);
+			10, 190, 200, 15, handle, 3);
 
 		g_StartButton = CreateAndShowChild(_T("button"), _T("암기 시작"), GlobalBoldFont, BS_PUSHBUTTON,
-			10, HEIGHT - 100, WIDTH - 35, 50, handle, 4);
+			10, 225, 465, 50, handle, 4);
 		return 0;
 
 	case WM_DESTROY:
@@ -44,18 +47,13 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		g_ShouldEnableMainWindow = true;
 		return 0;
 
-	case WM_SIZE:
-		SetWindowPos(g_SelectVocabularyButton, HWND_TOP, 0, 0, WIDTH - 35, 50, SWP_NOMOVE);
-		SetWindowPos(g_StartButton, HWND_TOP, 10, HEIGHT - 100, WIDTH - 35, 50, 0);
-		return 0;
-
 	case WM_PAINT: {
 		PAINTSTRUCT ps;
 		const HDC dc = BeginPaint(handle, &ps);
 
-		DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("단어장 선택"));
-		DrawTextUsingFont(dc, GlobalBoldFont, 10, 105, STRING("문제 유형 선택"));
-		DrawTextUsingFont(dc, GlobalBoldFont, 10, 170, STRING("기타 옵션"));
+		DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("단어장"));
+		DrawTextUsingFont(dc, GlobalBoldFont, 10, 105, STRING("문제 유형"));
+		DrawTextUsingFont(dc, GlobalBoldFont, 10, 165, STRING("기타 옵션"));
 
 		EndPaint(handle, &ps);
 		return 0;
@@ -133,13 +131,6 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		}
 		SetWindowText(g_SelectVocabularyButton, _T("단어장 선택됨"));
 		return 0;
-
-	case WM_GETMINMAXINFO: {
-		LPMINMAXINFO size = (LPMINMAXINFO)lParam;
-		size->ptMinTrackSize.x = 640;
-		size->ptMinTrackSize.y = 480;
-		return 0;
-	}
 
 	case WM_CLOSE:
 		DestroyWindow(handle);
