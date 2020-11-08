@@ -12,13 +12,13 @@ typedef enum {
 } SocketType;
 
 typedef enum {
-	TurnMode,
-	FixedMode,
+	TurnMode, // 턴제 모드
+	FixedMode, // 역할 고정 모드
 } MultiplayMode;
 
 typedef enum {
-	Examiner,
-	Examinee,
+	Examiner, // 출제자
+	Examinee, // 응시자
 } MultiplayRole;
 
 typedef struct {
@@ -45,7 +45,6 @@ typedef struct {
 bool OpenServer(Multiplay* multiplay, MultiplayOption* multiplayOption);
 bool WaitForPlayer(Multiplay* multiplay);
 bool JoinServer(Multiplay* multiplay, MultiplayOption* multiplayOption);
-void FinishMultiplay(Multiplay* multiplay);
 void DestroyMultiplay(Multiplay* multiplay);
 
 bool Send(Multiplay* multiplay, const void* data, int length);

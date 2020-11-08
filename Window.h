@@ -8,6 +8,7 @@
 extern HFONT GlobalDefaultFont, GlobalBoldFont;
 
 bool Initialize(HINSTANCE instance);
+void Destroy();
 void RegisterWindow(LPCTSTR name, WNDPROC wndProc);
 HWND CreateAndShowWindow(LPCTSTR name, LPCTSTR title, int cmdShow);
 HWND CreateAndShowChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu);

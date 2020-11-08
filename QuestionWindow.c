@@ -64,7 +64,9 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		free(g_QuestionOption);
 		g_IsWrong = false;
 
-		DestroyMultiplay(&g_Multiplay);
+		if (g_MultiplayStatus != None) {
+			DestroyMultiplay(&g_Multiplay);
+		}
 		g_MultiplayStatus = None;
 
 		DeleteObject(g_QuestionFont);

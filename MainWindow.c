@@ -32,7 +32,7 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 
 	case WM_DESTROY:
 		DeleteObject(g_TitleFont);
-		WSACleanup();
+		Destroy();
 		return 0;
 
 	case WM_SIZE:

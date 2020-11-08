@@ -15,6 +15,8 @@ typedef struct {
 	bool IsWrong;
 } Word;
 
+bool CopyWord(Word* dest, const Word* source);
+bool CompareWord(const Word* a, const Word* b);
 void DestroyWord(Word* word);
 
 typedef struct {
@@ -27,7 +29,6 @@ bool LoadVocabulary(Vocabulary* vocabulary, LPCTSTR path);
 bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path);
 bool AddWord(Vocabulary* vocabulary, const Word* word);
 void RemoveWord(Vocabulary* vocabulary, int index);
-void CopyWord(Word* dest, const Word* source);
 int GetUniqueWordCount(const Vocabulary* vocabulary);
 void DestroyVocabulary(Vocabulary* vocabulary);
 

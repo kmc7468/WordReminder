@@ -32,6 +32,25 @@ void FreeRawString(LPCWSTR raw) {
 #endif
 }
 
+bool CopyWord(Word* dest, const Word* source) {
+	bool success = true;
+	success = success && (dest->Word = malloc(sizeof(TCHAR) * (_tcslen(source->Word) + 1)));
+	success = success && (dest->Pronunciation = malloc(sizeof(TCHAR) * (_tcslen(source->Pronunciation) + 1)));
+	success = success && (dest->Meaning = malloc(sizeof(TCHAR) * (_tcslen(source->Meaning) + 1)));
+	if (!success) {
+		DestroyWord(dest);
+		return false;
+	}
+
+	_tcscpy(dest->Word, source->Word);
+	_tcscpy(dest->Pronunciation, source->Pronunciation);
+	_tcscpy(dest->Meaning, source->Meaning);
+	dest->IsWrong = source->IsWrong;
+	return true;
+}
+bool CompareWord(const Word* a, const Word* b) {
+	return a == b || _tcscmp(a->Meaning, b->Meaning) == 0;
+}
 void DestroyWord(Word* word) {
 	free(word->Word);
 	free(word->Pronunciation);
@@ -52,6 +71,7 @@ bool LoadVocabulary(Vocabulary* vocabulary, LPCTSTR path) {
 		word.IsWrong = false;
 		AddWord(vocabulary, &word);
 	}
+
 	fclose(file);
 	return true;
 }
@@ -65,6 +85,7 @@ bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path) {
 		WriteString(file, vocabulary->Array[i].Pronunciation);
 		WriteString(file, vocabulary->Array[i].Meaning);
 	}
+
 	fclose(file);
 	return true;
 }
@@ -77,6 +98,7 @@ bool AddWord(Vocabulary* vocabulary, const Word* word) {
 		vocabulary->Array = newArray;
 		vocabulary->Capacity = newCapacity;
 	}
+
 	vocabulary->Array[vocabulary->Count++] = *word;
 	return true;
 }
@@ -84,17 +106,11 @@ void RemoveWord(Vocabulary* vocabulary, int index) {
 	DestroyWord(vocabulary->Array + index);
 	memmove(vocabulary->Array + index, vocabulary->Array + index + 1, sizeof(Word) * (--vocabulary->Count - index));
 }
-void CopyWord(Word* dest, const Word* source) {
-	_tcscpy(dest->Word = malloc(sizeof(TCHAR) * 201), source->Word);
-	_tcscpy(dest->Pronunciation = malloc(sizeof(TCHAR) * 201), source->Pronunciation);
-	_tcscpy(dest->Meaning = malloc(sizeof(TCHAR) * 201), source->Meaning);
-	dest->IsWrong = source->IsWrong;
-}
 int GetUniqueWordCount(const Vocabulary* vocabulary) {
 	int result = vocabulary->Count;
 	for (int i = 0; i < vocabulary->Count; ++i) {
 		for (int j = 0; j < i; ++j) {
-			if (!_tcscmp(vocabulary->Array[i].Meaning, vocabulary->Array[j].Meaning)) {
+			if (CompareWord(vocabulary->Array + i, vocabulary->Array + j)) {
 				--result;
 				break;
 			}
@@ -114,6 +130,7 @@ LPSTR WCS2MBS(LPCWSTR wcs, bool destroyWCS) {
 	const int length = WideCharToMultiByte(CP_ACP, 0, wcs, -1, NULL, 0, NULL, NULL);
 	const LPSTR result = malloc(sizeof(CHAR) * length);
 	WideCharToMultiByte(CP_ACP, 0, wcs, -1, result, length, NULL, NULL);
+
 	if (destroyWCS) {
 		free((LPWSTR)wcs);
 	}
@@ -123,6 +140,7 @@ LPWSTR MBS2WCS(LPCSTR mbs, bool destroyMBS) {
 	const int length = MultiByteToWideChar(CP_ACP, 0, mbs, -1, NULL, 0);
 	const LPWSTR result = malloc(sizeof(WCHAR) * length);
 	MultiByteToWideChar(CP_ACP, 0, mbs, -1, result, length);
+
 	if (destroyMBS) {
 		free((LPSTR)mbs);
 	}
@@ -145,6 +163,8 @@ void WriteString(FILE* file, LPCTSTR string) {
 }
 
 void GenerateQuestion(Question* question, const QuestionOption* option) {
+	const Word* const oldAnswer = question->Answer >= 0 ? question->Words[question->Answer] : NULL;
+
 	for (int i = 0; i < 5; ++i) {
 		bool unique = false;
 		do {
@@ -152,7 +172,7 @@ void GenerateQuestion(Question* question, const QuestionOption* option) {
 			for (int j = 0; j <= i; ++j) {
 				if (i == j) {
 					unique = true;
-				} else if (!_tcscmp(question->Words[i]->Meaning, question->Words[j]->Meaning)) break;
+				} else if (CompareWord(option->Vocabulary.Array + i, option->Vocabulary.Array + j)) break;
 			}
 		} while (!unique);
 	}
@@ -162,5 +182,8 @@ void GenerateQuestion(Question* question, const QuestionOption* option) {
 	} else {
 		question->Type = option->QuestionType;
 	}
-	question->Answer = rand() % 5;
+
+	do {
+		question->Answer = rand() % 5;
+	} while (oldAnswer && CompareWord(oldAnswer, question->Words[question->Answer]));
 }

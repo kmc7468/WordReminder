@@ -7,6 +7,10 @@
 #define My multiplay->Players[0]
 #define Other multiplay->Players[1]
 
+static SOCKET GetClientSocket(Multiplay* multiplay) {
+	return multiplay->Option->SocketType == Server ? Other.Socket : My.Socket;
+}
+
 bool OpenServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
 	multiplay->Option = multiplayOption;
 	memset(multiplay->Players, 0, sizeof(multiplay->Players));
@@ -32,6 +36,7 @@ bool JoinServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
 	if ((My.Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == SOCKET_ERROR) return false;
 
 	const PHOSTENT host = gethostbyname(multiplayOption->ServerIp);
+	if (!host) return false;
 
 	Other.Address.sin_addr = *(IN_ADDR*)host->h_addr_list[0];
 	Other.Address.sin_family = AF_INET;
@@ -41,32 +46,29 @@ bool JoinServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
 		return false;
 	} else return true;
 }
-void FinishMultiplay(Multiplay* multiplay) {
-	closesocket(My.Socket);
-}
 void DestroyMultiplay(Multiplay* multiplay) {
-	FinishMultiplay(multiplay);
+	closesocket(My.Socket);
 	free(multiplay->Option->ServerIp);
 	free(multiplay->Option);
 }
 
 bool Send(Multiplay* multiplay, const void* data, int length) {
-	const SOCKET socket = multiplay->Option->SocketType == Server ? Other.Socket : My.Socket;
-	const char* current = data;
-	int sent;
-	while ((sent = send(socket, current, (int)(length - (current - (const char*)data)), 0)) > 0) {
-		if ((current += sent) >= (char*)data + length) break;
-	}
-	return sent != SOCKET_ERROR;
+	int sent = 0;
+	do {
+		const int result = send(GetClientSocket(multiplay), (const char*)data + sent, length - sent, 0);
+		if (result == SOCKET_ERROR) return false;
+		sent += result;
+	} while (sent < length);
+	return true;
 }
 bool Receive(Multiplay* multiplay, void* buffer, int length) {
-	const SOCKET socket = multiplay->Option->SocketType == Server ? Other.Socket : My.Socket;
-	char* current = buffer;
-	int received;
-	while ((received = recv(socket, current, (int)(length - (current - (char*)buffer)), 0)) > 0) {
-		if ((current += received) >= (char*)buffer + length) break;
-	}
-	return received != SOCKET_ERROR;
+	int received = 0;
+	do {
+		const int result = send(GetClientSocket(multiplay), (char*)buffer + received, length - received, 0);
+		if (result == SOCKET_ERROR) return false;
+		received += result;
+	} while (received < length);
+	return true;
 }
 bool SendBool(Multiplay* multiplay, bool data) {
 	return Send(multiplay, &data, sizeof(data));
@@ -83,12 +85,7 @@ bool ReceiveInt(Multiplay* multiplay, int* buffer) {
 bool SendString(Multiplay* multiplay, LPCTSTR data) {
 	const LPCWSTR raw = GetRawString(data);
 	const int rawLength = (int)wcslen(raw);
-	if (!SendInt(multiplay, rawLength)) {
-		FreeRawString(raw);
-		return false;
-	}
-
-	const bool result = Send(multiplay, raw, sizeof(WCHAR) * rawLength);
+	const bool result = !SendInt(multiplay, rawLength) || !Send(multiplay, raw, sizeof(WCHAR) * rawLength);
 	return FreeRawString(raw), result;
 }
 bool ReceiveString(Multiplay* multiplay, LPTSTR* buffer) {
@@ -116,7 +113,7 @@ bool ReceiveVocabulary(Multiplay* multiplay) {
 	int count;
 	if (!ReceiveInt(multiplay, &count)) return false;
 	for (int i = 0; i < count; ++i) {
-		Word word = { NULL, NULL, NULL };
+		Word word = { 0 };
 		bool success = true;
 		success = success && ReceiveString(multiplay, &word.Word);
 		success = success && ReceiveString(multiplay, &word.Pronunciation);
@@ -124,9 +121,7 @@ bool ReceiveVocabulary(Multiplay* multiplay) {
 		if (success) {
 			AddWord(multiplay->Option->Vocabulary, &word);
 		} else {
-			free(word.Word);
-			free(word.Pronunciation);
-			free(word.Meaning);
+			DestroyWord(&word);
 			DestroyVocabulary(multiplay->Option->Vocabulary);
 			return false;
 		}

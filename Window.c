@@ -39,12 +39,13 @@ bool Initialize(HINSTANCE instance) {
 	g_FileDialog.lpstrInitialDir = desktop;
 
 	WSADATA data;
-	if (WSAStartup(MAKEWORD(2, 2), &data) != ERROR_SUCCESS) return false;
-	else return true;
+	return WSAStartup(MAKEWORD(2, 2), &data) == ERROR_SUCCESS;
+}
+void Destroy() {
+	WSACleanup();
 }
 void RegisterWindow(LPCTSTR name, WNDPROC wndProc) {
-	WNDCLASS wc;
-	wc.cbClsExtra = wc.cbWndExtra = 0;
+	WNDCLASS wc = { 0 };
 	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
@@ -82,13 +83,13 @@ LPCTSTR ShowOpenFileDialog(HWND handle) {
 	g_FileDialog.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST;
 	g_FileDialog.hwndOwner = handle;
 	if (GetOpenFileName(&g_FileDialog)) return g_FileDialogPath;
-	else return NULL;
+	return NULL;
 }
 LPCTSTR ShowSaveFileDialog(HWND handle) {
 	g_FileDialog.Flags = OFN_EXPLORER | OFN_HIDEREADONLY;
 	g_FileDialog.hwndOwner = handle;
 	if (GetSaveFileName(&g_FileDialog)) return g_FileDialogPath;
-	else return NULL;
+	return NULL;
 }
 
 HWND MainWindow, VocabularyWindow, MultiplayStartWindow;
