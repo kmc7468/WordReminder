@@ -36,7 +36,7 @@
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/MultiplayStartWindow_ServerJoining.png" width="49%" />
 </p>
 
-메인 화면에서 서버 만들기, 서버 접속하기 버튼을 누르면 볼 수 있는 화면입니다. 서버 만들기를 눌렀을 경우 PC의 외부 IP를 확인하고, 서버를 열 포트와 플레이 모드, 자신의 역할을 고를 수 있습니다. 서버 접속하기 버튼을 눌렀을 경우 접속할 서버의 주소를 입력할 수 있습니다.
+메인 화면에서 서버 만들기, 서버 접속하기 버튼을 누르면 볼 수 있는 화면입니다. 서버 만들기를 눌렀을 경우 컴퓨터의 외부 IP를 확인하고, 서버를 열 포트와 플레이 모드, 자신의 역할을 고를 수 있습니다. 서버 접속하기 버튼을 눌렀을 경우 접속할 서버의 주소를 입력할 수 있습니다.
 
 턴제 모드는 두 사람의 역할이 매 턴마다 바뀌는 플레이 모드이고, 역할 고정 모드는 역할이 바뀌지 않는 플레이 모드입니다.
 
@@ -46,7 +46,7 @@
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/QuestionWindow_Examiner2.png" width="49%" />
 </p>
 
-턴제 모드에서, 먼저 출제자는 컴퓨터가 생성한 5개의 선지를 확인할 수 있습니다. 출제자는 이 중 하나의 단어를 골라 응시자에게 해당 단어를 맞추도록 할 수 있습니다. 응시자가 문제를 맞출 때까지 출제자는 대기하게 됩니다.
+턴제 모드에서, 먼저 출제자는 컴퓨터가 생성한 5개의 선지를 확인할 수 있습니다. 출제자는 이 중 하나의 단어를 골라 응시자에게 해당 단어를 맞히도록 할 수 있습니다. 응시자가 문제를 맞힐 때까지 출제자는 대기하게 됩니다.
 
 <p float="left">
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/QuestionWindow_Examinee1.png" width="49%" />
