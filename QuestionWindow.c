@@ -9,13 +9,20 @@ static QuestionOption* g_QuestionOption;
 static Question g_Question;
 static bool g_IsWrong;
 
-static Multiplay g_Multiplay;
-static bool g_IsWaiting = false;
-static bool g_IsJoining = false;
+typedef enum {
+	None,
+	WaitingForPlayer,
+	JoiningPlayer,
+	JoiningServer,
+} MultiplayStatus;
 
-static HANDLE g_WaitForPlayerThreadHandle;
-static DWORD g_WaitForPlayerThreadId;
+static Multiplay g_Multiplay;
+static MultiplayStatus g_MultiplayStatus;
+
+static HANDLE g_Thread;
+static DWORD g_ThreadId;
 static DWORD WINAPI WaitForPlayerThread(LPVOID param);
+static DWORD WINAPI JoinServerThread(LPVOID param);
 
 static HFONT g_QuestionFont, g_WordOrMeaningFont, g_PronunciationFont, g_ButtonFont;
 static HWND g_Buttons[5];
@@ -50,7 +57,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		g_IsWrong = false;
 
 		DestroyMultiplay(&g_Multiplay);
-		g_IsWaiting = false;
+		g_MultiplayStatus = None;
 
 		DeleteObject(g_QuestionFont);
 		DeleteObject(g_WordOrMeaningFont);
@@ -81,10 +88,18 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		const HDC dc = BeginPaint(handle, &ps);
 		SetTextAlign(dc, TA_CENTER);
 
-		if (g_IsWaiting) {
-			DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("상대방을 기다리는 중..."));
-		} else if (g_IsJoining) {
-			DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("상대방이 접속하는 중..."));
+		if (g_MultiplayStatus != None) {
+			switch (g_MultiplayStatus) {
+			case WaitingForPlayer:
+				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("상대방을 기다리는 중..."));
+				break;
+			case JoiningPlayer:
+				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("상대방이 접속하는 중..."));
+				break;
+			case JoiningServer:
+				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("서버에 접속하는 중..."));
+				break;
+			}
 		} else {
 			const Word* const answer = g_Question.Words[g_Question.Answer];
 			if (g_Question.Type == GuessingMeaning) {
@@ -141,8 +156,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 
 	case WM_USER + 1:
-		g_IsWaiting = true;
-		InvalidateRect(handle, NULL, TRUE);
+		g_MultiplayStatus = WaitingForPlayer;
 		SetWindowText(handle, _T("멀티 플레이"));
 		for (int i = 0; i < 5; ++i) {
 			ShowWindow(g_Buttons[i], SW_HIDE);
@@ -155,12 +169,12 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			break;
 		}
 		g_Multiplay.Option->Vocabulary = &g_QuestionOption->Vocabulary;
-		g_WaitForPlayerThreadHandle = CreateThread(NULL, 0, WaitForPlayerThread, handle, 0, &g_WaitForPlayerThreadId);
+		g_Thread = CreateThread(NULL, 0, WaitForPlayerThread, handle, 0, &g_ThreadId);
 		break;
 
 	case WM_USER + 2:
 		if (lParam == 0) {
-			if (g_IsWaiting) {
+			if (g_MultiplayStatus == WaitingForPlayer) {
 				MessageBox(handle, _T("상대방을 기다리는 중 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				SendMessage(handle, WM_CLOSE, 0, 0);
 			} else {
@@ -168,8 +182,42 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 				SendMessage(handle, WM_CLOSE, 0, 0);
 			}
 		} else {
-			g_IsJoining = false;
-			MessageBox(handle, _T("성공"), _T("성공"), MB_OK | MB_ICONINFORMATION);
+			g_MultiplayStatus = None;
+			MessageBox(handle, _T("연결 성공"), _T("성공"), MB_OK | MB_ICONINFORMATION);
+			// TODO
+		}
+		break;
+
+	case WM_USER + 3:
+		g_QuestionOption = calloc(1, sizeof(QuestionOption));
+		if (!g_QuestionOption) {
+			MessageBox(handle, _T("메모리가 부족합니다."), _T("오류"), MB_OK | MB_ICONERROR);
+			SendMessage(handle, WM_CLOSE, 0, 0);
+			break;
+		}
+
+		g_MultiplayStatus = JoiningServer;
+		for (int i = 0; i < 5; ++i) {
+			ShowWindow(g_Buttons[i], SW_HIDE);
+		}
+		ShowWindow(g_StopButton, SW_HIDE);
+
+		if (!JoinServer(&g_Multiplay, (MultiplayOption*)lParam)) {
+			MessageBox(handle, _T("서버에 접속하는데 실패했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+			SendMessage(handle, WM_CLOSE, 0, 0);
+			break;
+		}
+		g_Multiplay.Option->Vocabulary = &g_QuestionOption->Vocabulary;
+		g_Thread = CreateThread(NULL, 0, JoinServerThread, handle, 0, &g_ThreadId);
+		break;
+
+	case WM_USER + 4:
+		if (lParam == 0) {
+			MessageBox(handle, _T("서버에 접속하는데 실패했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+			SendMessage(handle, WM_CLOSE, 0, 0);
+		} else {
+			g_MultiplayStatus = None;
+			MessageBox(handle, _T("접속 성공"), _T("성공"), MB_OK | MB_ICONINFORMATION);
 			// TODO
 		}
 		break;
@@ -189,22 +237,36 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 }
 
 DWORD WINAPI WaitForPlayerThread(LPVOID param) {
-	(void)param;
 	if (!WaitForPlayer(&g_Multiplay)) {
 		SendMessage((HWND)param, WM_USER + 2, 0, 0);
 		return 0;
 	}
-	
-	g_IsWaiting = false;
-	g_IsJoining = true;
+
+	int dummy;
+	g_MultiplayStatus = JoiningPlayer;
 	InvalidateRect((HWND)param, NULL, TRUE);
-	if (!SendInt(&g_Multiplay, g_Multiplay.Option->Mode) ||
+	if (!SendBool(&g_Multiplay, g_QuestionOption->ShouldGivePronunciation) ||
+		!SendInt(&g_Multiplay, g_Multiplay.Option->Mode) ||
 		!SendInt(&g_Multiplay, g_Multiplay.Option->Role == Examiner ? Examinee : Examiner) ||
-		!SendVocabulary(&g_Multiplay)) {
+		!SendVocabulary(&g_Multiplay) ||
+		!ReceiveInt(&g_Multiplay, &dummy)) {
 		SendMessage((HWND)param, WM_USER + 2, 0, 0);
 		return 0;
 	} else {
 		SendMessage((HWND)param, WM_USER + 2, 0, 1);
+		return 0;
+	}
+}
+DWORD WINAPI JoinServerThread(LPVOID param) {
+	if (!ReceiveBool(&g_Multiplay, &g_QuestionOption->ShouldGivePronunciation) ||
+		!ReceiveInt(&g_Multiplay, (int*)&g_Multiplay.Option->Mode) ||
+		!ReceiveInt(&g_Multiplay, (int*)&g_Multiplay.Option->Role) ||
+		!ReceiveVocabulary(&g_Multiplay) ||
+		!SendInt(&g_Multiplay, 0x12345678)) {
+		SendMessage((HWND)param, WM_USER + 4, 0, 0);
+		return 0;
+	} else {
+		SendMessage((HWND)param, WM_USER + 4, 0, 1);
 		return 0;
 	}
 }

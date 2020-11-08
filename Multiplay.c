@@ -51,20 +51,28 @@ void DestroyMultiplay(Multiplay* multiplay) {
 }
 
 bool Send(Multiplay* multiplay, const void* data, int length) {
+	const SOCKET socket = multiplay->Option->SocketType == Server ? Other.Socket : My.Socket;
 	const char* current = data;
 	int sent;
-	while ((sent = send(Other.Socket, current, (int)(length - (current - (const char*)data)), 0)) > 0) {
-		current += sent;
+	while ((sent = send(socket, current, (int)(length - (current - (const char*)data)), 0)) > 0) {
+		if ((current += sent) >= (char*)data + length) break;
 	}
 	return sent != SOCKET_ERROR;
 }
 bool Receive(Multiplay* multiplay, void* buffer, int length) {
+	const SOCKET socket = multiplay->Option->SocketType == Server ? Other.Socket : My.Socket;
 	char* current = buffer;
 	int received;
-	while ((received = recv(Other.Socket, current, (int)(length - (current - (char*)buffer)), 0)) > 0) {
-		current += received;
+	while ((received = recv(socket, current, (int)(length - (current - (char*)buffer)), 0)) > 0) {
+		if ((current += received) >= (char*)buffer + length) break;
 	}
 	return received != SOCKET_ERROR;
+}
+bool SendBool(Multiplay* multiplay, bool data) {
+	return Send(multiplay, &data, sizeof(data));
+}
+bool ReceiveBool(Multiplay* multiplay, bool* buffer) {
+	return Receive(multiplay, buffer, sizeof(*buffer));
 }
 bool SendInt(Multiplay* multiplay, int data) {
 	return Send(multiplay, &data, sizeof(data));
@@ -86,7 +94,7 @@ bool SendString(Multiplay* multiplay, LPCTSTR data) {
 bool ReceiveString(Multiplay* multiplay, LPTSTR* buffer) {
 	int rawLength;
 	if (!ReceiveInt(multiplay, &rawLength)) return false;
-	const LPWSTR raw = malloc(sizeof(WCHAR) * rawLength);
+	const LPWSTR raw = calloc(rawLength + 1, sizeof(WCHAR));
 	if (Receive(multiplay, raw, sizeof(WCHAR) * rawLength)) {
 		*buffer = MakeUniString(raw);
 		return true;

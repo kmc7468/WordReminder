@@ -50,6 +50,8 @@ void DestroyMultiplay(Multiplay* multiplay);
 
 bool Send(Multiplay* multiplay, const void* data, int length);
 bool Receive(Multiplay* multiplay, void* buffer, int length);
+bool SendBool(Multiplay* multiplay, bool data);
+bool ReceiveBool(Multiplay* multiplay, bool* buffer);
 bool SendInt(Multiplay* multiplay, int data);
 bool ReceiveInt(Multiplay* multiplay, int* buffer);
 bool SendString(Multiplay* multiplay, LPCTSTR data);

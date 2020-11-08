@@ -84,12 +84,12 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 				break;
 			}
 
-			const LPSTR address = malloc(sizeof(CHAR) * addrLength);
+			const LPSTR address = malloc(sizeof(CHAR) * (addrLength + 1));
 			if (!address) {
 				MessageBox(handle, _T("메모리가 부족합니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}
-			GetWindowTextA(g_ServerAddressEdit, address, addrLength);
+			GetWindowTextA(g_ServerAddressEdit, address, sizeof(CHAR) * (addrLength + 1));
 			TCHAR port[6];
 			GetWindowText(g_ServerPortEdit, port, ARRAYSIZE(port));
 
@@ -113,7 +113,9 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 				SendMessage(questionOptionWindow, WM_USER + 1, 0, (LPARAM)option);
 				g_ShouldEnableMainWindow = false;
 			} else {
-				// TODO
+				const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("멀티 플레이"), SW_SHOW);
+				SendMessage(questionWindow, WM_USER + 3, 0, (LPARAM)option);
+				g_ShouldEnableMainWindow = false;
 			}
 			SendMessage(handle, WM_CLOSE, 0, 0);
 			break;
