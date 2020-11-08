@@ -5,19 +5,18 @@
 #include <ctype.h>
 #include <string.h>
 
+static int StringToInteger(LPCTSTR string);
+
 static HWND g_ServerAddressEdit, g_ServerPortEdit;
 static HWND g_TurnModeButton, g_FixedModeButton;
 static HWND g_ExaminerButton, g_ExamineeButton;
-static HWND g_Button;
+static HWND g_StartButton;
+
+static Thread g_Thread;
+static DWORD WINAPI GetExternalIpThread(LPVOID param);
 
 static bool g_ShouldEnableMainWindow = true;
 static bool g_IsServerCreation = false;
-
-static DWORD g_ThreadId;
-static HANDLE g_Thread;
-
-static DWORD WINAPI Thread(LPVOID param);
-static int StringToInteger(LPCTSTR string);
 
 LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
@@ -30,7 +29,7 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 		g_ServerPortEdit = CreateAndShowChild(_T("edit"), _T("1234"), GlobalDefaultFont, WS_BORDER | WS_GROUP | WS_TABSTOP,
 			320, 35, 153, 25, handle, 1);
 
-		g_Button = CreateAndShowChild(_T("button"), _T("접속하기"), GlobalBoldFont, BS_PUSHBUTTON,
+		g_StartButton = CreateAndShowChild(_T("button"), _T("접속하기"), GlobalBoldFont, BS_PUSHBUTTON,
 			10, 75, 465, 50, handle, 6);
 		return 0;
 
@@ -60,7 +59,8 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 
 	case WM_CTLCOLORSTATIC: {
 		const HWND btnHandle = (HWND)lParam;
-		if (btnHandle == g_TurnModeButton || btnHandle == g_FixedModeButton || btnHandle == g_ExaminerButton || btnHandle == g_ExamineeButton) {
+		if (btnHandle == g_TurnModeButton || btnHandle == g_FixedModeButton ||
+			btnHandle == g_ExaminerButton || btnHandle == g_ExamineeButton) {
 			SetBkMode((HDC)wParam, TRANSPARENT);
 		}
 		return 0;
@@ -69,14 +69,12 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case 6: {
-			const int addrLength = GetWindowTextLength(g_ServerAddressEdit);
-			if (addrLength == 0) {
+			const int addressLength = GetWindowTextLength(g_ServerAddressEdit);
+			const int portLength = GetWindowTextLength(g_ServerPortEdit);
+			if (addressLength == 0) {
 				MessageBox(handle, _T("접속할 서버의 주소를 입력해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
-			}
-
-			const int portLength = GetWindowTextLength(g_ServerPortEdit);
-			if (portLength == 0) {
+			} else if (portLength == 0) {
 				MessageBox(handle, _T("접속할 서버의 포트를 입력해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			} else if (portLength > 5) {
@@ -84,21 +82,12 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 				break;
 			}
 
-			const LPSTR address = malloc(sizeof(CHAR) * (addrLength + 1));
-			if (!address) {
-				MessageBox(handle, _T("메모리가 부족합니다."), _T("오류"), MB_OK | MB_ICONERROR);
-				break;
-			}
-			GetWindowTextA(g_ServerAddressEdit, address, sizeof(CHAR) * (addrLength + 1));
+			const LPSTR address = malloc(sizeof(CHAR) * (addressLength + 1));
 			TCHAR port[6];
+			GetWindowTextA(g_ServerAddressEdit, address, sizeof(CHAR) * (addressLength + 1));
 			GetWindowText(g_ServerPortEdit, port, ARRAYSIZE(port));
 
 			MultiplayOption* const option = calloc(1, sizeof(MultiplayOption));
-			if (!option) {
-				MessageBox(handle, _T("메모리가 부족합니다."), _T("오류"), MB_OK | MB_ICONERROR);
-				free(address);
-				break;
-			}
 			option->ServerIp = address;
 			if ((option->ServerPort = StringToInteger(port)) == -1 || option->ServerPort > 65535) {
 				MessageBox(handle, _T("접속할 서버의 포트(0~65535)를 올바르게 입력해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
@@ -111,12 +100,11 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 			if (g_IsServerCreation) {
 				const HWND questionOptionWindow = CreateAndShowWindow(_T("QuestionOptionWindow"), _T("서버 만들기"), SW_SHOW);
 				SendMessage(questionOptionWindow, WM_USER + 1, 0, (LPARAM)option);
-				g_ShouldEnableMainWindow = false;
 			} else {
 				const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("멀티 플레이"), SW_SHOW);
 				SendMessage(questionWindow, WM_USER + 3, 0, (LPARAM)option);
-				g_ShouldEnableMainWindow = false;
 			}
+			g_ShouldEnableMainWindow = false;
 			SendMessage(handle, WM_CLOSE, 0, 0);
 			break;
 		}
@@ -127,7 +115,7 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 		g_IsServerCreation = true;
 		SetWindowPos(handle, HWND_TOP, 0, 0, 500, 325, SWP_NOMOVE);
 
-		g_Thread = CreateThread(NULL, 0, Thread, NULL, 0, &g_ThreadId);
+		StartThread(&g_Thread, GetExternalIpThread, NULL);
 		SendMessage(g_ServerAddressEdit, EM_SETREADONLY, TRUE, 0);
 
 		g_TurnModeButton = CreateAndShowChild(_T("button"), _T("턴제 모드"), GlobalDefaultFont, BS_AUTORADIOBUTTON | WS_GROUP,
@@ -142,8 +130,8 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 			90, 165, 70, 15, handle, 5);
 		CheckRadioButton(handle, 4, 5, 4);
 
-		SetWindowText(g_Button, _T("다음으로"));
-		SetWindowPos(g_Button, HWND_TOP, 10, 225, 0, 0, SWP_NOSIZE);
+		SetWindowText(g_StartButton, _T("다음으로"));
+		SetWindowPos(g_StartButton, HWND_TOP, 10, 225, 0, 0, SWP_NOSIZE);
 		return 0;
 
 	case WM_CLOSE:
@@ -153,37 +141,20 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 	return DefWindowProc(handle, message, wParam, lParam);
 }
 
-DWORD WINAPI Thread(LPVOID param) {
+DWORD WINAPI GetExternalIpThread(LPVOID param) {
 	(void)param;
 
-	const SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	const PHOSTENT host = gethostbyname("myexternalip.com");
-	SOCKADDR_IN server;
-	server.sin_addr.s_addr = *(ULONG*)host->h_addr;
-	server.sin_family = AF_INET;
-	server.sin_port = htons(80);
-	if (connect(sock, (SOCKADDR*)&server, sizeof(server))) {
-		closesocket(sock);
-		return 0;
-	}
-
 	const char request[] = "GET /raw HTTP/1.1\r\nHost: myexternalip.com\r\nConnection: close\r\n\r\n";
-	send(sock, request, ARRAYSIZE(request) - 1, 0);
-
 	char buffer[512] = { 0 };
-	char* current = buffer;
-	int length;
-	while ((length = recv(sock, current, (int)(ARRAYSIZE(buffer) - (current - buffer)), 0)) > 0) {
-		current += length;
-	}
-	closesocket(sock);
+	if (!SendHttpRequest("myexternalip.com", request, ARRAYSIZE(request) - 1, buffer, ARRAYSIZE(buffer))) return 0;
 
-	char* const body = strstr(buffer, "\r\n\r\n");
+	const char* const body = strstr(buffer, "\r\n\r\n");
 	if (body) {
 		SetWindowTextA(g_ServerAddressEdit, body + 4);
 	}
 	return 0;
 }
+
 int StringToInteger(LPCTSTR string) {
 	int result = 0, power = 1;
 	const int length = (int)_tcslen(string);

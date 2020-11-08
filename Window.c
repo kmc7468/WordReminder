@@ -93,3 +93,10 @@ LPCTSTR ShowSaveFileDialog(HWND handle) {
 }
 
 HWND MainWindow, VocabularyWindow, MultiplayStartWindow;
+
+void StartThread(Thread* thread, LPTHREAD_START_ROUTINE function, LPVOID param) {
+	thread->Handle = CreateThread(NULL, 0, function, param, 0, &thread->Id);
+}
+void StopThread(Thread* thread) {
+	TerminateThread(thread->Handle, 0);
+}

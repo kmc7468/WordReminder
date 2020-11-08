@@ -30,4 +30,12 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 #define EVENT RECT windowSize; GetWindowRect(handle, &windowSize); switch (message)
 #define WIDTH (windowSize.right - windowSize.left)
 #define HEIGHT (windowSize.bottom - windowSize.top)
-#define STRING(text) _T(text), sizeof(_T(text)) / sizeof((_T(text))[0])
+#define STRING(text) _T(text), sizeof(_T(text)) / sizeof((_T(text))[0]) - 1
+
+typedef struct {
+	HANDLE Handle;
+	DWORD Id;
+} Thread;
+
+void StartThread(Thread* thread, LPTHREAD_START_ROUTINE function, LPVOID param);
+void StopThread(Thread* thread);

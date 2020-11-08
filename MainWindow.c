@@ -1,25 +1,24 @@
 #include "Window.h"
 
+static void ShowMultiplayButton();
+
 static HFONT g_TitleFont;
-static HWND g_StartButton, g_MultiPlayButton, g_EditButton;
+static HWND g_SingleplayButton, g_MultiplayButton, g_VocabularyButton;
 static HWND g_CreateServerButton, g_JoinServerButton;
 
-static DWORD g_ThreadId;
-static HANDLE g_Thread;
-
-static DWORD WINAPI Thread(LPVOID param);
-static void Restore();
+static Thread g_Thread;
+static DWORD WINAPI ShowMultiplayButtonThread(LPVOID param);
 
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
 	case WM_CREATE:
 		g_TitleFont = CreateGlobalFont(50, true);
 
-		g_StartButton = CreateAndShowChild(_T("button"), _T("단어 암기하기"), GlobalBoldFont, BS_PUSHBUTTON,
+		g_SingleplayButton = CreateAndShowChild(_T("button"), _T("단어 암기하기"), GlobalBoldFont, BS_PUSHBUTTON,
 			WIDTH / 2 - 150, 140, 300, 50, handle, 0);
-		g_MultiPlayButton = CreateAndShowChild(_T("button"), _T("멀티 플레이"), GlobalBoldFont, BS_PUSHBUTTON,
+		g_MultiplayButton = CreateAndShowChild(_T("button"), _T("멀티 플레이"), GlobalBoldFont, BS_PUSHBUTTON,
 			WIDTH / 2 - 150, 200, 300, 50, handle, 1);
-		g_EditButton = CreateAndShowChild(_T("button"), _T("단어장 만들기/수정하기"), GlobalBoldFont, BS_PUSHBUTTON,
+		g_VocabularyButton = CreateAndShowChild(_T("button"), _T("단어장 만들기/수정하기"), GlobalBoldFont, BS_PUSHBUTTON,
 			WIDTH / 2 - 150, 260, 300, 50, handle, 2);
 
 		g_CreateServerButton = CreateAndShowChild(_T("button"), _T("서버 만들기"), GlobalBoldFont, BS_PUSHBUTTON,
@@ -32,13 +31,15 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 
 	case WM_DESTROY:
 		DeleteObject(g_TitleFont);
+		StopThread(&g_Thread);
+
 		Destroy();
 		return 0;
 
 	case WM_SIZE:
-		SetWindowPos(g_StartButton, HWND_TOP, WIDTH / 2 - 150, 140, 0, 0, SWP_NOSIZE);
-		SetWindowPos(g_MultiPlayButton, HWND_TOP, WIDTH / 2 - 150, 200, 0, 0, SWP_NOSIZE);
-		SetWindowPos(g_EditButton, HWND_TOP, WIDTH / 2 - 150, 260, 0, 0, SWP_NOSIZE);
+		SetWindowPos(g_SingleplayButton, HWND_TOP, WIDTH / 2 - 150, 140, 0, 0, SWP_NOSIZE);
+		SetWindowPos(g_MultiplayButton, HWND_TOP, WIDTH / 2 - 150, 200, 0, 0, SWP_NOSIZE);
+		SetWindowPos(g_VocabularyButton, HWND_TOP, WIDTH / 2 - 150, 260, 0, 0, SWP_NOSIZE);
 
 		SetWindowPos(g_CreateServerButton, HWND_TOP, WIDTH / 2 - 150, 200, 0, 0, SWP_NOSIZE);
 		SetWindowPos(g_JoinServerButton, HWND_TOP, WIDTH / 2 + 2, 200, 0, 0, SWP_NOSIZE);
@@ -64,11 +65,11 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 			break;
 
 		case 1:
-			ShowWindow(g_MultiPlayButton, SW_HIDE);
+			ShowWindow(g_MultiplayButton, SW_HIDE);
 			ShowWindow(g_CreateServerButton, SW_SHOW);
 			ShowWindow(g_JoinServerButton, SW_SHOW);
-			g_Thread = CreateThread(NULL, 0, Thread, NULL, 0, &g_ThreadId);
-			break;
+			StartThread(&g_Thread, ShowMultiplayButtonThread, NULL);
+			return 0;
 
 		case 2:
 			VocabularyWindow = CreateAndShowWindow(_T("VocabularyWindow"), _T("단어장 만들기/수정하기"), SW_SHOW);
@@ -83,12 +84,12 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 				SendMessage(MultiplayStartWindow, WM_USER + 2, 0, 0);
 			}
 			EnableWindow(handle, FALSE);
-
-			TerminateThread(g_Thread, 0);
-			Restore();
 			break;
 		}
 		}
+
+		StopThread(&g_Thread);
+		ShowMultiplayButton();
 		return 0;
 
 	case WM_GETMINMAXINFO: {
@@ -106,14 +107,15 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 	return DefWindowProc(handle, message, wParam, lParam);
 }
 
-DWORD WINAPI Thread(LPVOID param) {
+DWORD WINAPI ShowMultiplayButtonThread(LPVOID param) {
 	(void)param;
 	Sleep(5000);
-	Restore();
+	ShowMultiplayButton();
 	return 0;
 }
-void Restore() {
-	ShowWindow(g_MultiPlayButton, SW_SHOW);
+
+void ShowMultiplayButton() {
+	ShowWindow(g_MultiplayButton, SW_SHOW);
 	ShowWindow(g_CreateServerButton, SW_HIDE);
 	ShowWindow(g_JoinServerButton, SW_HIDE);
 }

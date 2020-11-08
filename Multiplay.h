@@ -57,3 +57,5 @@ bool SendString(Multiplay* multiplay, LPCTSTR data);
 bool ReceiveString(Multiplay* multiplay, LPTSTR* buffer);
 bool SendVocabulary(Multiplay* multiplay);
 bool ReceiveVocabulary(Multiplay* multiplay);
+
+bool SendHttpRequest(LPCSTR address, LPCSTR request, int requestLength, LPSTR response, int responseLength);

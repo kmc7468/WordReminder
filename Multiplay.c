@@ -38,7 +38,7 @@ bool JoinServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
 	const PHOSTENT host = gethostbyname(multiplayOption->ServerIp);
 	if (!host) return false;
 
-	Other.Address.sin_addr = *(IN_ADDR*)host->h_addr_list[0];
+	Other.Address.sin_addr.s_addr = *(ULONG*)host->h_addr;
 	Other.Address.sin_family = AF_INET;
 	Other.Address.sin_port = htons((u_short)multiplayOption->ServerPort);
 	if (connect(My.Socket, (SOCKADDR*)&Other.Address, sizeof(Other.Address))) {
@@ -64,7 +64,7 @@ bool Send(Multiplay* multiplay, const void* data, int length) {
 bool Receive(Multiplay* multiplay, void* buffer, int length) {
 	int received = 0;
 	do {
-		const int result = send(GetClientSocket(multiplay), (char*)buffer + received, length - received, 0);
+		const int result = recv(GetClientSocket(multiplay), (char*)buffer + received, length - received, 0);
 		if (result == SOCKET_ERROR) return false;
 		received += result;
 	} while (received < length);
@@ -85,7 +85,7 @@ bool ReceiveInt(Multiplay* multiplay, int* buffer) {
 bool SendString(Multiplay* multiplay, LPCTSTR data) {
 	const LPCWSTR raw = GetRawString(data);
 	const int rawLength = (int)wcslen(raw);
-	const bool result = !SendInt(multiplay, rawLength) || !Send(multiplay, raw, sizeof(WCHAR) * rawLength);
+	const bool result = SendInt(multiplay, rawLength) && Send(multiplay, raw, sizeof(WCHAR) * rawLength);
 	return FreeRawString(raw), result;
 }
 bool ReceiveString(Multiplay* multiplay, LPTSTR* buffer) {
@@ -126,5 +126,48 @@ bool ReceiveVocabulary(Multiplay* multiplay) {
 			return false;
 		}
 	}
+	return true;
+}
+
+bool SendHttpRequest(LPCSTR address, LPCSTR request, int requestLength, LPSTR response, int responseLength) {
+	const SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (sock == SOCKET_ERROR) return false;
+
+	const PHOSTENT host = gethostbyname(address);
+	if (!host) {
+		closesocket(sock);
+		return false;
+	}
+
+	SOCKADDR_IN server;
+	server.sin_addr.s_addr = *(ULONG*)host->h_addr;
+	server.sin_family = AF_INET;
+	server.sin_port = htons(80);
+	if (connect(sock, (SOCKADDR*)&server, sizeof(server))) {
+		closesocket(sock);
+		return false;
+	}
+
+	int result, processed = 0;
+	do {
+		result = send(sock, request + processed, requestLength - processed, 0);
+		if (result == SOCKET_ERROR) {
+			closesocket(sock);
+			return false;
+		}
+		processed += result;
+	} while (processed < requestLength);
+
+	processed = 0;
+	do {
+		result = recv(sock, response + processed, responseLength - processed, 0);
+		if (result == SOCKET_ERROR) {
+			closesocket(sock);
+			return false;
+		}
+		processed += result;
+	} while (result > 0 && processed < responseLength);
+
+	closesocket(sock);
 	return true;
 }
