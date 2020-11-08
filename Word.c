@@ -10,6 +10,28 @@ static LPWSTR MBS2WCS(LPCSTR mbs, bool destroyMBS);
 static LPTSTR ReadString(FILE* file);
 static void WriteString(FILE* file, LPCTSTR string);
 
+LPTSTR MakeUniString(LPWSTR raw) {
+#if defined(UNICODE) || defined(_UNICODE)
+	return raw;
+#else
+	return WCS2MBS(raw, true);
+#endif
+}
+LPCWSTR GetRawString(LPCTSTR tcs) {
+#if defined(UNICODE) || defined(_UNICODE)
+	return tcs;
+#else
+	return MBS2WCS(tcs, false);
+#endif
+}
+void FreeRawString(LPCWSTR raw) {
+#if defined(UNICODE) || defined(_UNICODE)
+	(void)raw;
+#else
+	free((LPWSTR)raw);
+#endif
+}
+
 void DestroyWord(Word* word) {
 	free(word->Word);
 	free(word->Pronunciation);
@@ -112,25 +134,14 @@ LPTSTR ReadString(FILE* file) {
 	const LPWSTR rawStr = malloc(sizeof(WCHAR) * (length + 1));
 	fread(rawStr, sizeof(*rawStr), length, file);
 	rawStr[length] = 0;
-#if defined(UNICODE) || defined(_UNICODE)
-	return rawStr;
-#else
-	return WCS2MBS(rawStr, true);
-#endif
+	return MakeUniString(rawStr);
 }
 void WriteString(FILE* file, LPCTSTR string) {
-	const LPCWSTR raw =
-#if defined(UNICODE) || defined(_UNICODE)
-		string;
-#else
-		MBS2WCS(string, false);
-#endif
+	const LPCWSTR raw = GetRawString(string);
 	const int rawLength = (int)wcslen(raw);
 	fwrite(&rawLength, sizeof(rawLength), 1, file);
 	fwrite(raw, sizeof(WCHAR), rawLength, file);
-#if !defined(UNICODE) && !defined(_UNICODE)
-	free((LPWSTR)raw);
-#endif
+	FreeRawString(raw);
 }
 
 void GenerateQuestion(Question* question, const QuestionOption* option) {

@@ -11,6 +11,11 @@ static bool g_IsWrong;
 
 static Multiplay g_Multiplay;
 static bool g_IsWaiting = false;
+static bool g_IsJoining = false;
+
+static HANDLE g_WaitForPlayerThreadHandle;
+static DWORD g_WaitForPlayerThreadId;
+static DWORD WINAPI WaitForPlayerThread(LPVOID param);
 
 static HFONT g_QuestionFont, g_WordOrMeaningFont, g_PronunciationFont, g_ButtonFont;
 static HWND g_Buttons[5];
@@ -78,6 +83,8 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 
 		if (g_IsWaiting) {
 			DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("상대방을 기다리는 중..."));
+		} else if (g_IsJoining) {
+			DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("상대방이 접속하는 중..."));
 		} else {
 			const Word* const answer = g_Question.Words[g_Question.Answer];
 			if (g_Question.Type == GuessingMeaning) {
@@ -143,11 +150,28 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		ShowWindow(g_StopButton, SW_HIDE);
 
 		if (!OpenServer(&g_Multiplay, (MultiplayOption*)lParam)) {
-			MessageBox(NULL, _T("서버를 여는데 실패했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+			MessageBox(handle, _T("서버를 여는데 실패했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
 			SendMessage(handle, WM_CLOSE, 0, 0);
 			break;
 		}
 		g_Multiplay.Option->Vocabulary = &g_QuestionOption->Vocabulary;
+		g_WaitForPlayerThreadHandle = CreateThread(NULL, 0, WaitForPlayerThread, handle, 0, &g_WaitForPlayerThreadId);
+		break;
+
+	case WM_USER + 2:
+		if (lParam == 0) {
+			if (g_IsWaiting) {
+				MessageBox(handle, _T("상대방을 기다리는 중 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				SendMessage(handle, WM_CLOSE, 0, 0);
+			} else {
+				MessageBox(handle, _T("상대방이 접속하는 중 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				SendMessage(handle, WM_CLOSE, 0, 0);
+			}
+		} else {
+			g_IsJoining = false;
+			MessageBox(handle, _T("성공"), _T("성공"), MB_OK | MB_ICONINFORMATION);
+			// TODO
+		}
 		break;
 
 	case WM_GETMINMAXINFO: {
@@ -162,6 +186,27 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 	}
 	return DefWindowProc(handle, message, wParam, lParam);
+}
+
+DWORD WINAPI WaitForPlayerThread(LPVOID param) {
+	(void)param;
+	if (!WaitForPlayer(&g_Multiplay)) {
+		SendMessage((HWND)param, WM_USER + 2, 0, 0);
+		return 0;
+	}
+	
+	g_IsWaiting = false;
+	g_IsJoining = true;
+	InvalidateRect((HWND)param, NULL, TRUE);
+	if (!SendInt(&g_Multiplay, g_Multiplay.Option->Mode) ||
+		!SendInt(&g_Multiplay, g_Multiplay.Option->Role == Examiner ? Examinee : Examiner) ||
+		!SendVocabulary(&g_Multiplay)) {
+		SendMessage((HWND)param, WM_USER + 2, 0, 0);
+		return 0;
+	} else {
+		SendMessage((HWND)param, WM_USER + 2, 0, 1);
+		return 0;
+	}
 }
 
 void ShowNextQuestion(HWND handle) {
