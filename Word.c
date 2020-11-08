@@ -172,7 +172,7 @@ void GenerateQuestion(Question* question, const QuestionOption* option) {
 			for (int j = 0; j <= i; ++j) {
 				if (i == j) {
 					unique = true;
-				} else if (CompareWord(option->Vocabulary.Array + i, option->Vocabulary.Array + j)) break;
+				} else if (CompareWord(question->Words[i], question->Words[j])) break;
 			}
 		} while (!unique);
 	}

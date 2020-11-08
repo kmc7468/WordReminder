@@ -102,7 +102,7 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 				SendMessage(questionOptionWindow, WM_USER + 1, 0, (LPARAM)option);
 			} else {
 				const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("멀티 플레이"), SW_SHOW);
-				SendMessage(questionWindow, WM_USER + 3, 0, (LPARAM)option);
+				SendMessage(questionWindow, WM_USER + 2, 0, (LPARAM)option);
 			}
 			g_ShouldEnableMainWindow = false;
 			SendMessage(handle, WM_CLOSE, 0, 0);
