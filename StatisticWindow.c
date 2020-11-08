@@ -4,12 +4,12 @@
 
 #include <stdlib.h>
 
-static Vocabulary g_Vocabulary;
-static Vocabulary g_WrongVocabulary;
-
 static HWND g_WordList;
 static HWND g_WordEdit, g_PronunciationEdit, g_MeaningEdit;
 static HWND g_AllWordRemindButton, g_WrongWordRemindButton, g_DoneButton;
+
+static Vocabulary g_Vocabulary;
+static Vocabulary g_WrongVocabulary;
 
 static bool g_ShouldEnableMainWindow = true;
 
@@ -40,6 +40,7 @@ LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, L
 	case WM_DESTROY:
 		DestroyVocabulary(&g_Vocabulary);
 		DestroyVocabulary(&g_WrongVocabulary);
+
 		if (g_ShouldEnableMainWindow) {
 			EnableWindow(MainWindow, TRUE);
 			SetWindowPos(MainWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
@@ -96,6 +97,7 @@ LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, L
 			} else {
 				if (GetUniqueWordCount(&g_WrongVocabulary) < 5) {
 					MessageBox(handle, _T("적어도 뜻이 다른 단어 5개를 틀려야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
+					free(vocabulary);
 					break;
 				}
 
@@ -106,7 +108,6 @@ LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, L
 
 			const HWND questionOptionWindow = CreateAndShowWindow(_T("QuestionOptionWindow"), _T("단어 암기하기"), SW_SHOW);
 			SendMessage(questionOptionWindow, WM_USER, 0, (LPARAM)vocabulary);
-
 			g_ShouldEnableMainWindow = false;
 			SendMessage(handle, WM_CLOSE, 0, 0);
 			break;

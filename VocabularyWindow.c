@@ -2,13 +2,13 @@
 
 #include "Word.h"
 
-static Vocabulary g_Vocabulary;
-static bool g_IsSaved = true;
-
 static HWND g_WordList;
 static HWND g_WordEdit, g_PronunciationEdit, g_MeaningEdit;
 static HWND g_AddWordButton, g_RemoveWordButton;
 static HWND g_LoadVocabularyButton, g_SaveVocabularyButton;
+
+static Vocabulary g_Vocabulary;
+static bool g_IsSaved = true;
 
 LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
@@ -36,6 +36,8 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 
 	case WM_DESTROY:
 		DestroyVocabulary(&g_Vocabulary);
+		g_IsSaved = true;
+
 		EnableWindow(MainWindow, TRUE);
 		SetWindowPos(MainWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 		return 0;
@@ -82,23 +84,14 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 
 		case 4: {
 			Word word = { 0 };
-			if (!(word.Word = malloc(sizeof(TCHAR) * 201)) ||
-				!(word.Pronunciation = malloc(sizeof(TCHAR) * 201)) ||
-				!(word.Meaning = malloc(sizeof(TCHAR) * 201))) {
-				MessageBox(handle, _T("메모리가 부족합니다."), _T("오류"), MB_OK | MB_ICONERROR);
-				DestroyWord(&word);
-				break;
-			}
-
-			GetWindowText(g_WordEdit, word.Word, 201);
-			GetWindowText(g_PronunciationEdit, word.Pronunciation, 201);
-			GetWindowText(g_MeaningEdit, word.Meaning, 201);
+			GetWindowText(g_WordEdit, word.Word = malloc(sizeof(TCHAR) * (GetWindowTextLength(g_WordEdit) + 1)), 201);
+			GetWindowText(g_PronunciationEdit, word.Pronunciation = malloc(sizeof(TCHAR) * (GetWindowTextLength(g_PronunciationEdit) + 1)), 201);
+			GetWindowText(g_MeaningEdit, word.Meaning = malloc(sizeof(TCHAR) * (GetWindowTextLength(g_MeaningEdit) + 1)), 201);
 			if (_tcslen(word.Word) == 0 || _tcslen(word.Meaning) == 0) {
 				MessageBox(handle, _T("단어와 뜻은 꼭 입력해야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				DestroyWord(&word);
 				break;
 			}
-
 			AddWord(&g_Vocabulary, &word);
 			g_IsSaved = false;
 
@@ -114,8 +107,8 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 			if (index == -1) break;
 
 			g_IsSaved = false;
-			SendMessage(g_WordList, LB_DELETESTRING, index, 0);
 			RemoveWord(&g_Vocabulary, index);
+			SendMessage(g_WordList, LB_DELETESTRING, index, 0);
 			break;
 		}
 
@@ -152,7 +145,7 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 				if (SaveVocabulary(&g_Vocabulary, path)) {
 					g_IsSaved = true;
 				} else {
-					MessageBox(handle, _T("저장 중 알 수 없는 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+					MessageBox(handle, _T("저장 중 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				}
 			}
 			break;

@@ -22,7 +22,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		SetWindowLong(handle, GWL_STYLE, GetWindowLong(handle, GWL_STYLE) & ~WS_SIZEBOX & ~WS_MAXIMIZEBOX);
 		SetWindowPos(handle, HWND_TOP, 0, 0, 500, 325, SWP_NOMOVE);
 
-		g_SelectVocabularyButton = CreateAndShowChild(_T("button"), _T("단어장 선택"), GlobalBoldFont, BS_PUSHBUTTON,
+		g_SelectVocabularyButton = CreateAndShowChild(_T("button"), _T("단어장 선택하기"), GlobalBoldFont, BS_PUSHBUTTON,
 			10, 35, 465, 50, handle, 0);
 
 		g_GuessMeaningButton = CreateAndShowChild(_T("button"), _T("단어 보고 뜻 맞추기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
@@ -68,7 +68,8 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 
 	case WM_CTLCOLORSTATIC: {
 		const HWND btnHandle = (HWND)lParam;
-		if (btnHandle == g_GuessMeaningButton || btnHandle == g_GuessWordButton || btnHandle == g_ShouldGivePronunciationButton) {
+		if (btnHandle == g_GuessMeaningButton || btnHandle == g_GuessWordButton ||
+			btnHandle == g_ShouldGivePronunciationButton) {
 			SetBkMode((HDC)wParam, TRANSPARENT);
 		}
 		return 0;
@@ -81,7 +82,6 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			if (path) {
 				SetWindowText(g_SelectVocabularyButton, _T("단어장 선택됨"));
 				g_VocabularyPath = path;
-
 				if (g_Vocabularary) {
 					DestroyVocabulary(g_Vocabularary);
 					free(g_Vocabularary);
@@ -92,42 +92,39 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		}
 
 		case 4: {
+			const bool guessingMeaning = (bool)IsDlgButtonChecked(handle, 1);
+			const bool guessingWord = (bool)IsDlgButtonChecked(handle, 2);
 			if (!g_VocabularyPath && !g_Vocabularary) {
 				MessageBox(handle, _T("단어장을 선택해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
-			}
-
-			const bool guessingMeaning = (bool)SendMessage(g_GuessMeaningButton, BM_GETCHECK, 0, 0);
-			const bool guessingWord = (bool)SendMessage(g_GuessWordButton, BM_GETCHECK, 0, 0);
-			if (!guessingMeaning && !guessingWord) {
+			} else if (!guessingMeaning && !guessingWord) {
 				MessageBox(handle, _T("문제 유형을 선택해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}
 
 			QuestionOption* option = calloc(1, sizeof(QuestionOption));
-			if (!option) {
-				MessageBox(handle, _T("메모리가 부족합니다."), _T("오류"), MB_OK | MB_ICONERROR);
-				break;
-			}
-
 			if (g_Vocabularary) {
 				option->Vocabulary = *g_Vocabularary;
 				free(g_Vocabularary);
 				g_Vocabularary = NULL;
 			} else if (!LoadVocabulary(&option->Vocabulary, g_VocabularyPath)) {
-				MessageBox(handle, _T("단어장을 읽는데 실패했습니다. 올바른 단어장인지 확인해 보세요."), _T("오류"), MB_OK | MB_ICONERROR);
+				MessageBox(handle, _T("단어장을 읽는 중 오류가 발생했습니다. 올바른 단어장인지 확인해 보세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}
 			option->QuestionType |= guessingMeaning ? GuessingMeaning : 0;
 			option->QuestionType |= guessingWord ? GuessingWord : 0;
-			option->ShouldGivePronunciation = (bool)SendMessage(g_ShouldGivePronunciationButton, BM_GETCHECK, 0, 0);
+			option->ShouldGivePronunciation = (bool)IsDlgButtonChecked(handle, 3);
 
-			if (!g_MultiplayOption || g_MultiplayOption->Mode == TurnMode) {
+			if (!g_MultiplayOption || g_MultiplayOption->Mode == TurnMode || g_MultiplayOption->Role == Examinee) {
 				const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("단어 암기하기"), SW_SHOW);
 				g_ShouldEnableMainWindow = false;
 				SendMessage(questionWindow, WM_USER, 0, (LPARAM)option);
 				if (g_MultiplayOption) {
-					SendMessage(questionWindow, WM_USER + 1, 0, (LPARAM)g_MultiplayOption);
+					if (g_MultiplayOption->Mode == TurnMode) {
+						SendMessage(questionWindow, WM_USER + 1, 0, (LPARAM)g_MultiplayOption);
+					} else {
+						SendMessage(questionWindow, WM_USER + 9, 0, (LPARAM)g_MultiplayOption);
+					}
 					g_MultiplayOption = NULL;
 				}
 			} else {
@@ -149,7 +146,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 
 	case WM_USER + 1:
 		g_MultiplayOption = (MultiplayOption*)lParam;
-		SetWindowText(g_StartButton, _T("만들기"));
+		SetWindowText(g_StartButton, _T("서버 만들기"));
 		return 0;
 
 	case WM_CLOSE:
