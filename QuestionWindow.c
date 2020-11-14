@@ -407,6 +407,8 @@ void PrepareMultiplay(HWND handle) {
 		for (int i = 0; i < 5; ++i) {
 			SetWindowText(g_Buttons[i], _T(""));
 		}
+
+		g_Question.Answer = -1;
 	}
 
 	g_MultiplayStatus = Connected;
