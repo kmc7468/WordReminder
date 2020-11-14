@@ -336,6 +336,7 @@ DWORD WINAPI WaitForNextTurnThread(LPVOID param) {
 	g_Multiplay.Option->Role = g_Multiplay.Option->Role == Examiner ? Examinee : Examiner;
 
 	g_MultiplayStatus = Connected;
+	InvalidateRect((HWND)param, NULL, TRUE);
 	SendMessage((HWND)param, WM_USER + 4, 0, 0);
 	return 0;
 }
