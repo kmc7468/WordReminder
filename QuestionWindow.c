@@ -4,6 +4,7 @@
 #include "Word.h"
 
 #include <stdlib.h>
+#include <time.h>
 
 static void ShowNextQuestion(HWND handle, bool generateQuestion);
 static void PrepareMultiplay(HWND handle);
@@ -53,6 +54,8 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		}
 		g_StopButton = CreateAndShowChild(_T("button"), _T("그만 외우기"), g_ButtonFont, BS_PUSHBUTTON,
 			WIDTH - WIDTH / 4 + 10, 140 + ((HEIGHT / 10 + HEIGHT / 50) * 4), WIDTH / 4 - 37, HEIGHT / 10, handle, 5);
+
+		g_Question.Answer = -1;
 		return 0;
 
 	case WM_DESTROY:
@@ -275,10 +278,14 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 }
 
 DWORD WINAPI WaitForPlayerThread(LPVOID param) {
+	srand((unsigned)time(NULL));
+
 	while (!WaitForPlayer(&g_Multiplay));
 	return ReceiveThread(param);
 }
 DWORD WINAPI JoinServerThread(LPVOID param) {
+	srand((unsigned)time(NULL));
+
 	if (!SendInt(&g_Multiplay, MAGIC_START) ||
 		!ReceiveInt(&g_Multiplay, (int*)&g_QuestionOption->QuestionType) ||
 		!ReceiveBool(&g_Multiplay, &g_QuestionOption->GivePronunciation) ||
@@ -374,8 +381,6 @@ void PrepareMultiplay(HWND handle) {
 			SetWindowText(g_Buttons[i], _T(""));
 		}
 	}
-
-	g_Question.Answer = -1;
 
 	g_MultiplayStatus = Connected;
 	InvalidateRect(handle, NULL, TRUE);
