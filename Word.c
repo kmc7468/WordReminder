@@ -177,7 +177,7 @@ void GenerateQuestion(Question* question, const QuestionOption* option) {
 		} while (!unique);
 	}
 
-	if (option->QuestionType == GuessingBoth) {
+	if (option->QuestionType == GuessBoth) {
 		question->Type = (QuestionType)(rand() % 2 + 1);
 	} else {
 		question->Type = option->QuestionType;

@@ -92,12 +92,12 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		}
 
 		case 4: {
-			const bool guessingMeaning = (bool)IsDlgButtonChecked(handle, 1);
-			const bool guessingWord = (bool)IsDlgButtonChecked(handle, 2);
+			const bool guessMeaning = (bool)IsDlgButtonChecked(handle, 1);
+			const bool guessWord = (bool)IsDlgButtonChecked(handle, 2);
 			if (!g_VocabularyPath && !g_Vocabularary) {
 				MessageBox(handle, _T("단어장을 선택해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
-			} else if (!guessingMeaning && !guessingWord) {
+			} else if (!guessMeaning && !guessWord) {
 				MessageBox(handle, _T("문제 유형을 선택해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}
@@ -111,9 +111,9 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 				MessageBox(handle, _T("단어장을 읽는 중 오류가 발생했습니다. 올바른 단어장인지 확인해 보세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}
-			option->QuestionType |= guessingMeaning ? GuessingMeaning : 0;
-			option->QuestionType |= guessingWord ? GuessingWord : 0;
-			option->ShouldGivePronunciation = (bool)IsDlgButtonChecked(handle, 3);
+			option->QuestionType |= guessMeaning ? GuessMeaning : 0;
+			option->QuestionType |= guessWord ? GuessWord : 0;
+			option->GivePronunciation = (bool)IsDlgButtonChecked(handle, 3);
 
 			if (!g_MultiplayOption || g_MultiplayOption->Mode == TurnMode || g_MultiplayOption->Role == Examinee) {
 				const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("단어 암기하기"), SW_SHOW);

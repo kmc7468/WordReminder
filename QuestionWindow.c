@@ -124,10 +124,10 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			const Word* answer;
 		Default:
 			answer = g_Question.Words[g_Question.Answer];
-			if (g_Question.Type == GuessingMeaning) {
+			if (g_Question.Type == GuessMeaning) {
 				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 단어의 뜻은?"));
 				DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Word, (int)_tcslen(answer->Word));
-				if (g_QuestionOption->ShouldGivePronunciation &&
+				if (g_QuestionOption->GivePronunciation &&
 					(answer->Pronunciation[0] == 0 || _tcscmp(answer->Word, answer->Pronunciation))) {
 					DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 90, answer->Pronunciation, (int)_tcslen(answer->Pronunciation));
 				}
@@ -295,7 +295,7 @@ DWORD WINAPI WaitForPlayerThread(LPVOID param) {
 	g_MultiplayStatus = PlayerJoining;
 	InvalidateRect((HWND)param, NULL, TRUE);
 	if (!SendInt(&g_Multiplay, g_QuestionOption->QuestionType) ||
-		!SendBool(&g_Multiplay, g_QuestionOption->ShouldGivePronunciation) ||
+		!SendBool(&g_Multiplay, g_QuestionOption->GivePronunciation) ||
 		!SendInt(&g_Multiplay, g_Multiplay.Option->Mode) ||
 		!SendInt(&g_Multiplay, g_Multiplay.Option->Role == Examiner ? Examinee : Examiner) ||
 		!SendVocabulary(&g_Multiplay) ||
@@ -309,7 +309,7 @@ DWORD WINAPI WaitForPlayerThread(LPVOID param) {
 }
 DWORD WINAPI JoinServerThread(LPVOID param) {
 	if (!ReceiveInt(&g_Multiplay, (int*)&g_QuestionOption->QuestionType) ||
-		!ReceiveBool(&g_Multiplay, &g_QuestionOption->ShouldGivePronunciation) ||
+		!ReceiveBool(&g_Multiplay, &g_QuestionOption->GivePronunciation) ||
 		!ReceiveInt(&g_Multiplay, (int*)&g_Multiplay.Option->Mode) ||
 		!ReceiveInt(&g_Multiplay, (int*)&g_Multiplay.Option->Role) ||
 		!ReceiveVocabulary(&g_Multiplay) ||
@@ -368,8 +368,8 @@ void ShowNextQuestion(HWND handle, bool generateQuestion) {
 
 	for (int i = 0; i < 5; ++i) {
 		if (g_MultiplayStatus != Singleplay && g_Multiplay.Option->Role == Examiner ||
-			g_Question.Type == GuessingWord) {
-			if (g_QuestionOption->ShouldGivePronunciation &&
+			g_Question.Type == GuessWord) {
+			if (g_QuestionOption->GivePronunciation &&
 				(g_Question.Words[i]->Pronunciation[0] == 0 || _tcscmp(g_Question.Words[i]->Word, g_Question.Words[i]->Pronunciation))) {
 				LPTSTR text = malloc(sizeof(TCHAR) * (_tcslen(g_Question.Words[i]->Word) + _tcslen(g_Question.Words[i]->Pronunciation) + 4));
 				_tcscpy(text, g_Question.Words[i]->Word);

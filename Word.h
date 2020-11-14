@@ -33,9 +33,9 @@ int GetUniqueWordCount(const Vocabulary* vocabulary);
 void DestroyVocabulary(Vocabulary* vocabulary);
 
 typedef enum {
-	GuessingMeaning = 1,
-	GuessingWord = 2,
-	GuessingBoth = GuessingMeaning | GuessingWord,
+	GuessMeaning = 1,
+	GuessWord = 2,
+	GuessBoth = GuessMeaning | GuessWord,
 } QuestionType;
 
 typedef struct {
@@ -47,7 +47,7 @@ typedef struct {
 typedef struct {
 	Vocabulary Vocabulary;
 	QuestionType QuestionType;
-	bool ShouldGivePronunciation;
+	bool GivePronunciation;
 } QuestionOption;
 
 void GenerateQuestion(Question* question, const QuestionOption* option);
