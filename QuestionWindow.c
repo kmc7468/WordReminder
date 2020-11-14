@@ -6,6 +6,8 @@
 #include <stdlib.h>
 
 static void ShowNextQuestion(HWND handle, bool generateQuestion);
+static void PrepareMultiplay(HWND handle);
+static void PrepareNextTurn(HWND handle);
 
 static HFONT g_QuestionFont, g_WordOrMeaningFont, g_PronunciationFont, g_ButtonFont;
 static HWND g_Buttons[5], g_StopButton;
@@ -24,15 +26,16 @@ static enum {
 	SentAnswer,
 } g_MultiplayStatus;
 
-#define MAGIC_READY 0x12121212
-#define MAGIC_NEXT 0x34343434
-#define MAGIC_STOP 0x56565656
+#define MAGIC_START 0x11111111
+#define MAGIC_READY 0x22222222
+#define MAGIC_QUESTION 0x33333333
+#define MAGIC_ANSWER 0x44444444
+#define MAGIC_STOP 0x55555555
 
 static Thread g_Thread;
 static DWORD WINAPI WaitForPlayerThread(LPVOID param);
 static DWORD WINAPI JoinServerThread(LPVOID param);
-static DWORD WINAPI WaitForNextTurnThread(LPVOID param);
-static DWORD WINAPI WaitForQuestionThread(LPVOID param);
+static DWORD WINAPI ReceiveThread(LPVOID param);
 
 static bool g_ShouldEnableMainWindow = true;
 
@@ -50,8 +53,6 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		}
 		g_StopButton = CreateAndShowChild(_T("button"), _T("그만 외우기"), g_ButtonFont, BS_PUSHBUTTON,
 			WIDTH - WIDTH / 4 + 10, 140 + ((HEIGHT / 10 + HEIGHT / 50) * 4), WIDTH / 4 - 37, HEIGHT / 10, handle, 5);
-
-		g_Question.Answer = -1;
 		return 0;
 
 	case WM_DESTROY:
@@ -148,51 +149,51 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 	}
 
-	case WM_COMMAND:
-		if (LOWORD(wParam) < 5) {
-			if (g_MultiplayStatus == Singleplay || g_Multiplay.Option->Role == Examinee) {
-				if (LOWORD(wParam) == g_Question.Answer) {
-					g_IsWrong = false;
-					if (g_MultiplayStatus == Singleplay) {
-						ShowNextQuestion(handle, true);
-					} else {
-						g_Multiplay.Option->Role = g_Multiplay.Option->Role == Examiner ? Examinee : Examiner;
-						if (!SendInt(&g_Multiplay, MAGIC_NEXT)) {
-							SendMessage(handle, WM_USER + 5, 0, 0);
-							break;
-						}
-						SendMessage(handle, WM_USER + 4, 0, 0);
-					}
-				} else {
-					g_Question.Words[g_Question.Answer]->IsWrong = g_IsWrong = true;
-					EnableWindow(g_Buttons[LOWORD(wParam)], FALSE);
-					InvalidateRect(handle, NULL, TRUE);
-				}
-			} else {
-				if (!SendInt(&g_Multiplay, g_Question.Type)) {
-					SendMessage(handle, WM_USER + 5, 0, 0);
-					break;
-				}
-				for (int i = 0; i < 5; ++i) {
-					EnableWindow(g_Buttons[i], FALSE);
-					if (!SendInt(&g_Multiplay, (int)(g_Question.Words[i] - g_QuestionOption->Vocabulary.Array))) {
-						SendMessage(handle, WM_USER + 5, 0, 0);
-						break;
-					}
-				}
-				if (!SendInt(&g_Multiplay, (g_Question.Answer = LOWORD(wParam)))) {
-					SendMessage(handle, WM_USER + 5, 0, 0);
-					break;
-				}
-				StartThread(&g_Thread, WaitForNextTurnThread, handle);
-
-				g_MultiplayStatus = SentAnswer;
+	case WM_COMMAND: {
+		const WORD menu = LOWORD(wParam);
+		if (menu == 5) {
+			SendMessage(handle, WM_USER + 5, 0, 0);
+		} else if (g_MultiplayStatus == Singleplay || g_Multiplay.Option->Role == Examinee) {
+			if (menu != g_Question.Answer) {
+				g_Question.Words[menu]->IsWrong = g_IsWrong = true;
 				InvalidateRect(handle, NULL, TRUE);
+				EnableWindow(g_Buttons[menu], FALSE);
+				return 0;
+			}
+
+			g_IsWrong = false;
+			if (g_MultiplayStatus == Singleplay) {
+				ShowNextQuestion(handle, true);
+			} else {
+				if (!SendInt(&g_Multiplay, MAGIC_ANSWER)) {
+					SendMessage(handle, WM_USER + 3, 0, 0);
+					return 0;
+				}
+				PrepareNextTurn(handle);
 			}
 		} else {
-			SendMessage(handle, WM_USER + 6, 0, 0);
+			if (!SendInt(&g_Multiplay, MAGIC_QUESTION) ||
+				!SendInt(&g_Multiplay, g_Question.Type)) {
+				SendMessage(handle, WM_USER + 3, 0, 0);
+				return 0;
+			}
+			for (int i = 0; i < 5; ++i) {
+				EnableWindow(g_Buttons[i], FALSE);
+				if (!SendInt(&g_Multiplay, (int)(g_Question.Words[i] - g_QuestionOption->Vocabulary.Array))) {
+					SendMessage(handle, WM_USER + 3, 0, 0);
+					return 0;
+				}
+			}
+			if (!SendInt(&g_Multiplay, (g_Question.Answer = menu))) {
+				SendMessage(handle, WM_USER + 3, 0, 0);
+				return 0;
+			}
+
+			g_MultiplayStatus = SentAnswer;
+			InvalidateRect(handle, NULL, TRUE);
 		}
 		return 0;
+	}
 
 	case WM_USER:
 		g_QuestionOption = (QuestionOption*)lParam;
@@ -236,28 +237,16 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 
 	case WM_USER + 3:
-		for (int i = 0; i < 5; ++i) {
-			ShowWindow(g_Buttons[i], SW_SHOW);
-			EnableWindow(g_Buttons[i], g_Multiplay.Option->Role == Examiner);
-		}
-		ShowWindow(g_StopButton, SW_SHOW);
-
-		g_MultiplayStatus = Connected;
-		InvalidateRect(handle, NULL, TRUE);
-		SendMessage(handle, WM_USER + 4, 0, 0);
+		MessageBox(handle, _T("상대방과 통신하는 중 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+		SendMessage(handle, WM_USER + 5, 0, 0);
 		return 0;
 
 	case WM_USER + 4:
-		if (g_Multiplay.Option->Role == Examiner) {
-			ShowNextQuestion(handle, true);
-		} else {
-			StartThread(&g_Thread, WaitForQuestionThread, handle);
-		}
+		MessageBox(handle, _T("상대방이 접속을 종료했습니다."), _T("정보"), MB_OK | MB_ICONINFORMATION);
+		SendMessage(handle, WM_USER + 5, 0, 0);
 		return 0;
 
-	case WM_USER + 5:
-		MessageBox(handle, _T("상대방이 접속을 종료했습니다."), _T("정보"), MB_OK | MB_ICONINFORMATION);
-	case WM_USER + 6: {
+	case WM_USER + 5: {
 		Vocabulary* const vocabulary = malloc(sizeof(Vocabulary));
 		*vocabulary = g_QuestionOption->Vocabulary;
 		g_QuestionOption->Vocabulary.Array = NULL;
@@ -286,29 +275,12 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 }
 
 DWORD WINAPI WaitForPlayerThread(LPVOID param) {
-	if (!WaitForPlayer(&g_Multiplay)) {
-		SendMessage((HWND)param, WM_USER + 2, 0, 0);
-		return 0;
-	}
-
-	int dummy; // MAGIC_READY
-	g_MultiplayStatus = PlayerJoining;
-	InvalidateRect((HWND)param, NULL, TRUE);
-	if (!SendInt(&g_Multiplay, g_QuestionOption->QuestionType) ||
-		!SendBool(&g_Multiplay, g_QuestionOption->GivePronunciation) ||
-		!SendInt(&g_Multiplay, g_Multiplay.Option->Mode) ||
-		!SendInt(&g_Multiplay, g_Multiplay.Option->Role == Examiner ? Examinee : Examiner) ||
-		!SendVocabulary(&g_Multiplay) ||
-		!ReceiveInt(&g_Multiplay, &dummy)) {
-		MessageBox((HWND)param, _T("상대방이 접속하는 중 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
-		SendMessage((HWND)param, WM_CLOSE, 0, 0);
-	} else {
-		SendMessage((HWND)param, WM_USER + 3, 0, 1);
-	}
-	return 0;
+	while (!WaitForPlayer(&g_Multiplay));
+	return ReceiveThread(param);
 }
 DWORD WINAPI JoinServerThread(LPVOID param) {
-	if (!ReceiveInt(&g_Multiplay, (int*)&g_QuestionOption->QuestionType) ||
+	if (!SendInt(&g_Multiplay, MAGIC_START) ||
+		!ReceiveInt(&g_Multiplay, (int*)&g_QuestionOption->QuestionType) ||
 		!ReceiveBool(&g_Multiplay, &g_QuestionOption->GivePronunciation) ||
 		!ReceiveInt(&g_Multiplay, (int*)&g_Multiplay.Option->Mode) ||
 		!ReceiveInt(&g_Multiplay, (int*)&g_Multiplay.Option->Role) ||
@@ -316,49 +288,48 @@ DWORD WINAPI JoinServerThread(LPVOID param) {
 		!SendInt(&g_Multiplay, MAGIC_READY)) {
 		MessageBox((HWND)param, _T("서버에 접속하는 중 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
 		SendMessage((HWND)param, WM_CLOSE, 0, 0);
+		return 0;
 	} else {
-		SendMessage((HWND)param, WM_USER + 3, 0, 1);
+		PrepareMultiplay((HWND)param);
+		return ReceiveThread(param);
 	}
-	return 0;
 }
-DWORD WINAPI WaitForNextTurnThread(LPVOID param) {
-	int dummy; // MAGIC_NEXT
-	if (!ReceiveInt(&g_Multiplay, &dummy) || dummy == MAGIC_STOP) {
-		SendMessage((HWND)param, WM_USER + 5, 0, 0);
-		return 0;
-	}
-
-	for (int i = 0; i < 5; ++i) {
-		SetWindowText(g_Buttons[i], _T(""));
-	}
-
-	g_Question.Answer = -1;
-	g_Multiplay.Option->Role = g_Multiplay.Option->Role == Examiner ? Examinee : Examiner;
-
-	g_MultiplayStatus = Connected;
-	InvalidateRect((HWND)param, NULL, TRUE);
-	SendMessage((HWND)param, WM_USER + 4, 0, 0);
-	return 0;
-}
-DWORD WINAPI WaitForQuestionThread(LPVOID param) {
-	if (!ReceiveInt(&g_Multiplay, (int*)&g_Question.Type) || g_Question.Type == MAGIC_STOP) {
-		SendMessage((HWND)param, WM_USER + 5, 0, 0);
-		return 0;
-	}
-
-	for (int i = 0; i < 5; ++i) {
-		int index;
-		if (!ReceiveInt(&g_Multiplay, &index)) {
-			SendMessage((HWND)param, WM_USER + 5, 0, 0);
+DWORD WINAPI ReceiveThread(LPVOID param) {
+	int magic;
+	while (ReceiveInt(&g_Multiplay, &magic)) {
+		if (magic == MAGIC_START) {
+			g_MultiplayStatus = PlayerJoining;
+			InvalidateRect((HWND)param, NULL, TRUE);
+			if (!SendInt(&g_Multiplay, g_QuestionOption->QuestionType) ||
+				!SendBool(&g_Multiplay, g_QuestionOption->GivePronunciation) ||
+				!SendInt(&g_Multiplay, g_Multiplay.Option->Mode) ||
+				!SendInt(&g_Multiplay, g_Multiplay.Option->Role == Examiner ? Examinee : Examiner) ||
+				!SendVocabulary(&g_Multiplay)) {
+				g_MultiplayStatus = WaitingForPlayer;
+				InvalidateRect((HWND)param, NULL, TRUE);
+				return WaitForPlayerThread(param);
+			}
+		} else if (magic == MAGIC_READY) {
+			PrepareMultiplay((HWND)param);
+		} else if (magic == MAGIC_QUESTION) {
+			if (!ReceiveInt(&g_Multiplay, (int*)&g_Question.Type)) goto Error;
+			for (int i = 0; i < 5; ++i) {
+				int index;
+				if (!ReceiveInt(&g_Multiplay, &index)) goto Error;
+				g_Question.Words[i] = g_QuestionOption->Vocabulary.Array + index;
+			}
+			if (!ReceiveInt(&g_Multiplay, &g_Question.Answer)) goto Error;
+			ShowNextQuestion((HWND)param, false);
+		} else if (magic == MAGIC_ANSWER) {
+			PrepareNextTurn((HWND)param);
+		} else {
+			SendMessage((HWND)param, WM_USER + 4, 0, 0);
 			return 0;
 		}
-		g_Question.Words[i] = g_QuestionOption->Vocabulary.Array + index;
 	}
-	if (!ReceiveInt(&g_Multiplay, &g_Question.Answer)) {
-		SendMessage((HWND)param, WM_USER + 5, 0, 0);
-		return 0;
-	}
-	ShowNextQuestion((HWND)param, false);
+
+Error:
+	SendMessage((HWND)param, WM_USER + 3, 0, 0);
 	return 0;
 }
 
@@ -387,5 +358,41 @@ void ShowNextQuestion(HWND handle, bool generateQuestion) {
 		}
 		EnableWindow(g_Buttons[i], TRUE);
 	}
+	InvalidateRect(handle, NULL, TRUE);
+}
+void PrepareMultiplay(HWND handle) {
+	for (int i = 0; i < 5; ++i) {
+		ShowWindow(g_Buttons[i], SW_SHOW);
+		EnableWindow(g_Buttons[i], g_Multiplay.Option->Role == Examiner);
+	}
+	ShowWindow(g_StopButton, SW_SHOW);
+
+	if (g_Multiplay.Option->Role == Examiner) {
+		ShowNextQuestion(handle, true);
+	} else {
+		for (int i = 0; i < 5; ++i) {
+			SetWindowText(g_Buttons[i], _T(""));
+		}
+	}
+
+	g_Question.Answer = -1;
+
+	g_MultiplayStatus = Connected;
+	InvalidateRect(handle, NULL, TRUE);
+}
+void PrepareNextTurn(HWND handle) {
+	for (int i = 0; i < 5; ++i) {
+		SetWindowText(g_Buttons[i], _T(""));
+	}
+
+	g_Question.Answer = -1;
+	if (g_Multiplay.Option->Role == Examiner) {
+		g_Multiplay.Option->Role = Examinee;
+	} else {
+		g_Multiplay.Option->Role = Examiner;
+		ShowNextQuestion(handle, true);
+	}
+
+	g_MultiplayStatus = Connected;
 	InvalidateRect(handle, NULL, TRUE);
 }
