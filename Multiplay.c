@@ -70,6 +70,12 @@ bool Receive(Multiplay* multiplay, void* buffer, int length) {
 	} while (received < length);
 	return true;
 }
+bool SendVersion(Multiplay* multiplay) {
+	return SendString(multiplay, WR_APPLICATION_VERSION) && SendInt(multiplay, WR_MULTIPLAY_PROTOCOL_VERSION);
+}
+bool ReceiveVersion(Multiplay* multiplay, LPTSTR* serverVersion, int* protocolVersion) {
+	return ReceiveString(multiplay, serverVersion) && ReceiveInt(multiplay, protocolVersion);
+}
 bool SendBool(Multiplay* multiplay, bool data) {
 	return Send(multiplay, &data, sizeof(data));
 }

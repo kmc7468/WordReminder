@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Version.h"
 #include "Word.h"
 
 #include <stdbool.h>
@@ -49,6 +50,8 @@ void DestroyMultiplay(Multiplay* multiplay);
 
 bool Send(Multiplay* multiplay, const void* data, int length);
 bool Receive(Multiplay* multiplay, void* buffer, int length);
+bool SendVersion(Multiplay* multiplay);
+bool ReceiveVersion(Multiplay* multiplay, LPTSTR* serverVersion, int* protocolVersion);
 bool SendBool(Multiplay* multiplay, bool data);
 bool ReceiveBool(Multiplay* multiplay, bool* buffer);
 bool SendInt(Multiplay* multiplay, int data);

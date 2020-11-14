@@ -28,10 +28,12 @@ static enum {
 } g_MultiplayStatus;
 
 #define MAGIC_START 0x11111111
-#define MAGIC_READY 0x22222222
-#define MAGIC_QUESTION 0x33333333
-#define MAGIC_ANSWER 0x44444444
-#define MAGIC_STOP 0x55555555
+#define MAGIC_COMPATIBLE 0x22222222
+#define MAGIC_UNCOMPATIBLE 0x22222223
+#define MAGIC_READY 0x33333333
+#define MAGIC_QUESTION 0x44444444
+#define MAGIC_ANSWER 0x55555555
+#define MAGIC_STOP 0x66666666
 
 static Thread g_Thread;
 static DWORD WINAPI WaitForPlayerThread(LPVOID param);
@@ -286,13 +288,35 @@ DWORD WINAPI WaitForPlayerThread(LPVOID param) {
 DWORD WINAPI JoinServerThread(LPVOID param) {
 	srand((unsigned)time(NULL));
 
+	LPTSTR serverVersion = NULL;
+	int protocolVersion;
 	if (!SendInt(&g_Multiplay, MAGIC_START) ||
+		!ReceiveVersion(&g_Multiplay, &serverVersion, &protocolVersion)) {
+		free(serverVersion);
+		goto Error;
+	} else if (protocolVersion != WR_MULTIPLAY_PROTOCOL_VERSION) {
+		const LPTSTR message = malloc((_tcslen(serverVersion) + 97) * sizeof(TCHAR));
+		_tcscpy(message, _T("서버의 버전과 클라이언트의 버전이 호환되지 않습니다.\n"));
+		_tcscat(message, serverVersion);
+		_tcscat(message, _T(" 버전의 단어 암기 프로그램을 설치해 보세요."));
+		MessageBox((HWND)param, message, _T("오류"), MB_OK | MB_ICONERROR);
+		free(serverVersion);
+		free(message);
+
+		SendInt(&g_Multiplay, MAGIC_UNCOMPATIBLE);
+		SendMessage((HWND)param, WM_CLOSE, 0, 0);
+		return 0;
+	}
+
+	free(serverVersion);
+	if (!SendInt(&g_Multiplay, MAGIC_COMPATIBLE) ||
 		!ReceiveInt(&g_Multiplay, (int*)&g_QuestionOption->QuestionType) ||
 		!ReceiveBool(&g_Multiplay, &g_QuestionOption->GivePronunciation) ||
 		!ReceiveInt(&g_Multiplay, (int*)&g_Multiplay.Option->Mode) ||
 		!ReceiveInt(&g_Multiplay, (int*)&g_Multiplay.Option->Role) ||
 		!ReceiveVocabulary(&g_Multiplay) ||
 		!SendInt(&g_Multiplay, MAGIC_READY)) {
+	Error:
 		MessageBox((HWND)param, _T("서버에 접속하는 중 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
 		SendMessage((HWND)param, WM_CLOSE, 0, 0);
 		return 0;
@@ -307,15 +331,18 @@ DWORD WINAPI ReceiveThread(LPVOID param) {
 		if (magic == MAGIC_START) {
 			g_MultiplayStatus = PlayerJoining;
 			InvalidateRect((HWND)param, NULL, TRUE);
+			if (!SendVersion(&g_Multiplay)) goto ConnectionError;
+		} else if (magic == MAGIC_COMPATIBLE) {
 			if (!SendInt(&g_Multiplay, g_QuestionOption->QuestionType) ||
 				!SendBool(&g_Multiplay, g_QuestionOption->GivePronunciation) ||
 				!SendInt(&g_Multiplay, g_Multiplay.Option->Mode) ||
 				!SendInt(&g_Multiplay, g_Multiplay.Option->Role == Examiner ? Examinee : Examiner) ||
-				!SendVocabulary(&g_Multiplay)) {
-				g_MultiplayStatus = WaitingForPlayer;
-				InvalidateRect((HWND)param, NULL, TRUE);
-				return WaitForPlayerThread(param);
-			}
+				!SendVocabulary(&g_Multiplay)) goto ConnectionError;
+		} else if (magic == MAGIC_UNCOMPATIBLE) {
+		ConnectionError:
+			g_MultiplayStatus = WaitingForPlayer;
+			InvalidateRect((HWND)param, NULL, TRUE);
+			return WaitForPlayerThread(param);
 		} else if (magic == MAGIC_READY) {
 			PrepareMultiplay((HWND)param);
 		} else if (magic == MAGIC_QUESTION) {

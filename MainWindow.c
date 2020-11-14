@@ -1,5 +1,7 @@
 #include "Window.h"
 
+#include "Version.h"
+
 static void ShowMultiplayButton();
 
 static HFONT g_TitleFont;
@@ -48,10 +50,13 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 	case WM_PAINT: {
 		PAINTSTRUCT ps;
 		const HDC dc = BeginPaint(handle, &ps);
-		SetTextAlign(dc, TA_CENTER);
 
+		SetTextAlign(dc, TA_CENTER);
 		DrawTextUsingFont(dc, g_TitleFont, WIDTH / 2, 40, STRING("단어 암기 프로그램"));
 		DrawTextUsingFont(dc, GlobalDefaultFont, WIDTH / 2, 95, STRING("(C) 2020. kmc7468 All rights reserved."));
+
+		SetTextAlign(dc, TA_LEFT);
+		DrawTextUsingFont(dc, GlobalDefaultFont, 5, HEIGHT - 62, WR_APPLICATION_VERSION, ARRAYSIZE(WR_APPLICATION_VERSION));
 
 		EndPaint(handle, &ps);
 		return 0;
