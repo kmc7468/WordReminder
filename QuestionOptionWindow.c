@@ -30,18 +30,19 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			10, 130, 150, 15, handle, 1);
 		g_GuessWordButton = CreateAndShowChild(_T("button"), _T("뜻 보고 단어 맞추기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
 			180, 130, 150, 15, handle, 2);
-		SendMessage(g_GuessMeaningButton, BM_SETCHECK, Setting.GuessMeaning, 0);
-		SendMessage(g_GuessWordButton, BM_SETCHECK, Setting.GuessWord, 0);
+		SendMessage(g_GuessMeaningButton, BM_SETCHECK, !!Setting.GuessMeaning, 0);
+		SendMessage(g_GuessWordButton, BM_SETCHECK, !!Setting.GuessWord, 0);
 
 		g_GivePronunciationButton = CreateAndShowChild(_T("button"), _T("발음 표시하기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
 			10, 190, 200, 15, handle, 3);
-		SendMessage(g_GivePronunciationButton, BM_SETCHECK, Setting.GivePronunciation, 0);
+		SendMessage(g_GivePronunciationButton, BM_SETCHECK, !!Setting.GivePronunciation, 0);
 
 		g_StartButton = CreateAndShowChild(_T("button"), _T("시작하기"), GlobalBoldFont, BS_PUSHBUTTON,
 			10, 225, 465, 50, handle, 4);
 		return 0;
 
 	case WM_DESTROY:
+		g_VocabularyPath = NULL;
 		if (g_Vocabularary) {
 			DestroyVocabulary(g_Vocabularary);
 			free(g_Vocabularary);
@@ -51,6 +52,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			free(g_MultiplayOption);
 			g_MultiplayOption = NULL;
 		}
+
 		if (g_ShouldEnableMainWindow) {
 			EnableWindow(MainWindow, TRUE);
 			SetWindowPos(MainWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);

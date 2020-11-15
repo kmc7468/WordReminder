@@ -144,7 +144,7 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 			110, 105, 120, 15, handle, 3);
 		CheckRadioButton(handle, 2, 3, 2);
 		SendMessage(g_TurnModeButton, BM_SETCHECK, !Setting.NewServerMode, 0);
-		SendMessage(g_FixedModeButton, BM_SETCHECK, Setting.NewServerMode, 0);
+		SendMessage(g_FixedModeButton, BM_SETCHECK, !!Setting.NewServerMode, 0);
 
 		g_ExaminerButton = CreateAndShowChild(_T("button"), _T("출제자"), GlobalDefaultFont, BS_AUTORADIOBUTTON | WS_GROUP,
 			10, 165, 70, 15, handle, 4);
@@ -152,7 +152,7 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 			90, 165, 70, 15, handle, 5);
 		CheckRadioButton(handle, 4, 5, 4);
 		SendMessage(g_ExaminerButton, BM_SETCHECK, !Setting.NewServerRole, 0);
-		SendMessage(g_ExamineeButton, BM_SETCHECK, Setting.NewServerRole, 0);
+		SendMessage(g_ExamineeButton, BM_SETCHECK, !!Setting.NewServerRole, 0);
 
 		SetWindowText(g_StartButton, _T("다음으로"));
 		SetWindowPos(g_StartButton, HWND_TOP, 10, 225, 0, 0, SWP_NOSIZE);
