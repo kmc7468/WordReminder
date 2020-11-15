@@ -196,6 +196,9 @@ typedef enum {
 	ReadyCode,
 	QuestionCode,
 	AnswerCode,
+	RequestChangeRoleCode,
+	AcceptChangeRoleCode,
+	DenyChangeRoleCode,
 	StopCode,
 } ProtocolMagicNumber;
 
@@ -252,6 +255,9 @@ void SendQuestion(Multiplay* multiplay, HWND* buttons, int answer) {
 }
 void SendAnswer(Multiplay* multiplay) {
 	SendMessage(multiplay->Window, WM_USER + 5 - SendInt(multiplay, AnswerCode), 0, 0);
+}
+void RequestChangeRole(Multiplay* multiplay) {
+	SendInt(multiplay, RequestChangeRoleCode);
 }
 
 DWORD WINAPI WaitForPlayerThread(LPVOID param) {
@@ -340,6 +346,17 @@ DWORD WINAPI ReceiveThread(LPVOID param) {
 			SendMessage(Context.Window, WM_USER + 3, 0, 0);
 		} else if (magic == AnswerCode) {
 			SendMessage(Context.Window, WM_USER + 4, 0, 0);
+		} else if (magic == RequestChangeRoleCode) {
+			const bool accept = MessageBox(Context.Window, _T("상대방이 역할 변경을 요청했습니다. 수락하시겠습니까?"), _T("정보"), MB_YESNO | MB_ICONQUESTION) == IDYES;
+			SendInt(&Context, DenyChangeRoleCode - accept);
+			if (accept) {
+				SendMessage(Context.Window, WM_USER + 8, 0, 0);
+			}
+		} else if (magic == AcceptChangeRoleCode) {
+			MessageBox(Context.Window, _T("상대방이 역할 변경을 수락했습니다."), _T("정보"), MB_OK | MB_ICONINFORMATION);
+			SendMessage(Context.Window, WM_USER + 8, 0, (LPARAM)&param);
+		} else if (magic == DenyChangeRoleCode) {
+			MessageBox(Context.Window, _T("상대방이 역할 변경을 거절했습니다."), _T("정보"), MB_OK | MB_ICONINFORMATION);
 		} else {
 			SendMessage(Context.Window, WM_USER + 6, 0, 0);
 			return 0;

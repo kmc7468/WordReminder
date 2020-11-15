@@ -14,7 +14,7 @@ static HWND g_Buttons[5], g_StopButton;
 static QuestionOption* g_QuestionOption;
 static Question g_Question;
 static bool g_IsWrong;
-static Multiplay g_Multiplay;
+static Multiplay* g_Multiplay;
 
 static bool g_ShouldEnableMainWindow = true;
 
@@ -42,11 +42,15 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		DeleteObject(g_PronunciationFont);
 		DeleteObject(g_ButtonFont);
 
-		DestroyVocabulary(&g_QuestionOption->Vocabulary);
-		free(g_QuestionOption);
+		if (g_QuestionOption) {
+			DestroyVocabulary(&g_QuestionOption->Vocabulary);
+			free(g_QuestionOption);
+		}
 		g_IsWrong = false;
-		if (g_Multiplay.Status != Singleplay) {
-			StopMultiplay(&g_Multiplay);
+		if (g_Multiplay) {
+			StopMultiplay(g_Multiplay);
+			free(g_Multiplay);
+			g_Multiplay = NULL;
 		}
 
 		if (g_ShouldEnableMainWindow) {
@@ -72,8 +76,8 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		const HDC dc = BeginPaint(handle, &ps);
 		SetTextAlign(dc, TA_CENTER);
 
-		if (g_Multiplay.Status != Singleplay) {
-			switch (g_Multiplay.Status) {
+		if (g_Multiplay) {
+			switch (g_Multiplay->Status) {
 			case OpeningServer:
 				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("서버를 여는 중..."));
 				break;
@@ -89,9 +93,9 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 
 			case Connected:
 			case SentAnswer:
-				if (g_Multiplay.Option->Role == Examiner) {
+				if (g_Multiplay->Option->Role == Examiner) {
 					DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("당신은 출제자입니다."));
-					if (g_Multiplay.Status == Connected) {
+					if (g_Multiplay->Status == Connected) {
 						DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, STRING("어떤 단어를 정답으로 할까요?"));
 					} else {
 						DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, STRING("응시자를 기다리는 중..."));
@@ -134,7 +138,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		const WORD menu = LOWORD(wParam);
 		if (menu == 5) {
 			SendMessage(handle, WM_USER + 7, 0, 0);
-		} else if (g_Multiplay.Status == Singleplay || g_Multiplay.Option->Role == Examinee) {
+		} else if (!g_Multiplay || g_Multiplay->Option->Role == Examinee) {
 			if (menu != g_Question.Answer) {
 				g_Question.Words[menu]->IsWrong = g_IsWrong = true;
 				InvalidateRect(handle, NULL, TRUE);
@@ -143,13 +147,13 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			}
 
 			g_IsWrong = false;
-			if (g_Multiplay.Status == Singleplay) {
-				ShowNextQuestion(handle, true);
+			if (g_Multiplay) {
+				SendAnswer(g_Multiplay);
 			} else {
-				SendAnswer(&g_Multiplay);
+				ShowNextQuestion(handle, true);
 			}
 		} else {
-			SendQuestion(&g_Multiplay, g_Buttons, menu);
+			SendQuestion(g_Multiplay, g_Buttons, menu);
 		}
 		return 0;
 	}
@@ -167,17 +171,17 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		}
 		ShowWindow(g_StopButton, SW_HIDE);
 
-		StartMultiplay(&g_Multiplay, (MultiplayOption*)lParam, &g_Question, g_QuestionOption, handle);
+		StartMultiplay(g_Multiplay = calloc(1, sizeof(Multiplay)), (MultiplayOption*)lParam, &g_Question, g_QuestionOption, handle);
 		return 0;
 
 	case WM_USER + 2:
 		for (int i = 0; i < 5; ++i) {
 			ShowWindow(g_Buttons[i], SW_SHOW);
-			EnableWindow(g_Buttons[i], g_Multiplay.Option->Role == Examiner);
+			EnableWindow(g_Buttons[i], g_Multiplay->Option->Role == Examiner);
 		}
 		ShowWindow(g_StopButton, SW_SHOW);
 
-		if (g_Multiplay.Option->Role == Examiner) {
+		if (g_Multiplay->Option->Role == Examiner) {
 			ShowNextQuestion(handle, true);
 		} else {
 			for (int i = 0; i < 5; ++i) {
@@ -187,7 +191,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			g_Question.Answer = -1;
 		}
 
-		g_Multiplay.Status = Connected;
+		g_Multiplay->Status = Connected;
 		InvalidateRect(handle, NULL, TRUE);
 		return 0;
 
@@ -198,18 +202,18 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	case WM_USER + 4:
 		for (int i = 0; i < 5; ++i) {
 			SetWindowText(g_Buttons[i], _T(""));
-			EnableWindow(g_Buttons[i], g_Multiplay.Option->Mode == TurnMode);
+			EnableWindow(g_Buttons[i], g_Multiplay->Option->Mode == TurnMode);
 		}
 
 		g_Question.Answer = -1;
-		if (g_Multiplay.Option->Mode == TurnMode) {
-			g_Multiplay.Option->Role = g_Multiplay.Option->Role == Examiner ? Examinee : Examiner;
-			if (g_Multiplay.Option->Role == Examiner) {
+		if (g_Multiplay->Option->Mode == TurnMode) {
+			g_Multiplay->Option->Role = g_Multiplay->Option->Role == Examiner ? Examinee : Examiner;
+			if (g_Multiplay->Option->Role == Examiner) {
 				ShowNextQuestion(handle, true);
 			}
 		}
 
-		g_Multiplay.Status = Connected;
+		g_Multiplay->Status = Connected;
 		InvalidateRect(handle, NULL, TRUE);
 		return 0;
 
@@ -237,6 +241,29 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 	}
 
+	case WM_USER + 8: {
+		const HWND examinerWindow = CreateAndShowWindow(_T("ExaminerWindow"), _T("멀티 플레이"), SW_SHOW);
+		SendMessage(examinerWindow, WM_USER + 9, 0, (LPARAM)g_Multiplay);
+
+		g_Multiplay = NULL;
+		g_QuestionOption = NULL;
+
+		g_ShouldEnableMainWindow = false;
+		SendMessage(handle, WM_CLOSE, 0, 0);
+		return 0;
+	}
+
+	case WM_USER + 9: {
+		g_Multiplay = (Multiplay*)lParam;
+		g_Multiplay->Option->Role = Examinee;
+		g_Multiplay->Window = handle;
+		g_Multiplay->Question = &g_Question;
+		g_QuestionOption = g_Multiplay->QuestionOption;
+
+		SendMessage(handle, WM_USER + 4, 0, 0);
+		return 0;
+	}
+
 	case WM_GETMINMAXINFO: {
 		LPMINMAXINFO size = (LPMINMAXINFO)lParam;
 		size->ptMinTrackSize.x = 640;
@@ -257,7 +284,7 @@ void ShowNextQuestion(HWND handle, bool generateQuestion) {
 	}
 
 	for (int i = 0; i < 5; ++i) {
-		if (g_Multiplay.Status != Singleplay && g_Multiplay.Option->Role == Examiner ||
+		if (g_Multiplay && g_Multiplay->Option->Role == Examiner ||
 			g_Question.Type == GuessWord) {
 			if (g_QuestionOption->GivePronunciation &&
 				(g_Question.Words[i]->Pronunciation[0] == 0 || _tcscmp(g_Question.Words[i]->Word, g_Question.Words[i]->Pronunciation))) {

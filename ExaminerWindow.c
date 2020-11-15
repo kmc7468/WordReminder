@@ -3,6 +3,8 @@
 #include "Multiplay.h"
 #include "Word.h"
 
+static void CreateChildren(HWND handle, RECT windowSize);
+
 static HFONT g_RoleFont, g_StatusFont;
 static HWND g_WordList;
 static HWND g_WordEdit, g_PronunciationEdit, g_MeaningEdit;
@@ -10,7 +12,7 @@ static HWND g_SendButton, g_ChangeRoleButton, g_StopButton;
 
 static QuestionOption* g_QuestionOption;
 static Question g_Question;
-static Multiplay g_Multiplay;
+static Multiplay* g_Multiplay;
 
 static bool g_ShouldEnableMainWindow = true;
 
@@ -19,13 +21,22 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	case WM_CREATE:
 		g_RoleFont = CreateGlobalFont(23, true);
 		g_StatusFont = CreateGlobalFont(40, true);
+
+		g_Multiplay = malloc(sizeof(Multiplay));
 		return 0;
 
 	case WM_DESTROY:
 		DeleteObject(g_RoleFont);
 		DeleteObject(g_StatusFont);
 
-		StopMultiplay(&g_Multiplay);
+		if (g_QuestionOption) {
+			DestroyVocabulary(&g_QuestionOption->Vocabulary);
+			free(g_QuestionOption);
+		}
+		if (g_Multiplay) {
+			StopMultiplay(g_Multiplay);
+			free(g_Multiplay);
+		}
 
 		if (g_ShouldEnableMainWindow) {
 			EnableWindow(MainWindow, TRUE);
@@ -51,7 +62,7 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		const HDC dc = BeginPaint(handle, &ps);
 		SetTextAlign(dc, TA_CENTER);
 
-		switch (g_Multiplay.Status) {
+		switch (g_Multiplay->Status) {
 		case OpeningServer:
 			DrawTextUsingFont(dc, g_RoleFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("서버를 여는 중..."));
 			break;
@@ -65,7 +76,7 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		case Connected:
 		case SentAnswer:
 			DrawTextUsingFont(dc, g_RoleFont, WIDTH / 2, 10, STRING("당신은 출제자입니다."));
-			if (g_Multiplay.Status == Connected) {
+			if (g_Multiplay->Status == Connected) {
 				DrawTextUsingFont(dc, g_StatusFont, WIDTH / 2, 50, STRING("어떤 단어를 정답으로 할까요?"));
 			} else {
 				DrawTextUsingFont(dc, g_StatusFont, WIDTH / 2, 50, STRING("응시자를 기다리는 중..."));
@@ -105,12 +116,14 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 
 			EnableWindow(g_SendButton, FALSE);
 			GenerateQuestion(&g_Question, g_QuestionOption, g_QuestionOption->Vocabulary.Array + index);
-			SendQuestion(&g_Multiplay, NULL, g_Question.Answer);
+			SendQuestion(g_Multiplay, NULL, g_Question.Answer);
 			break;
 		}
 
 		case 5:
-			// TODO
+			if (MessageBox(handle, _T("상대방에게 역할 변경을 요청하시겠습니까?"), _T("정보"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
+				RequestChangeRole(g_Multiplay);
+			}
 			break;
 
 		case 6:
@@ -124,41 +137,20 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 
 	case WM_USER + 1:
-		StartMultiplay(&g_Multiplay, (MultiplayOption*)lParam, &g_Question, g_QuestionOption, handle);
+		StartMultiplay(g_Multiplay, (MultiplayOption*)lParam, &g_Question, g_QuestionOption, handle);
 		return 0;
 
 	case WM_USER + 2:
-		g_WordList = CreateAndShowChild(_T("listbox"), NULL, GlobalDefaultFont, WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
-			10, 120, WIDTH / 3, HEIGHT - 160, handle, 0);
-		for (int i = 0; i < g_QuestionOption->Vocabulary.Count; ++i) {
-			SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)g_QuestionOption->Vocabulary.Array[i].Word);
-		}
+		CreateChildren(handle, windowSize);
 
-		g_WordEdit = CreateAndShowChild(_T("edit"), NULL, GlobalDefaultFont, WS_BORDER | WS_GROUP | WS_TABSTOP,
-			WIDTH / 3 + 20, 145, WIDTH / 3 * 2 - 45, 25, handle, 1);
-		g_PronunciationEdit = CreateAndShowChild(_T("edit"), NULL, GlobalDefaultFont, WS_BORDER | WS_GROUP | WS_TABSTOP,
-			WIDTH / 3 + 20, 205, WIDTH / 3 * 2 - 45, 25, handle, 2);
-		g_MeaningEdit = CreateAndShowChild(_T("edit"), NULL, GlobalDefaultFont, WS_BORDER | WS_GROUP | WS_TABSTOP,
-			WIDTH / 3 + 20, 265, WIDTH / 3 * 2 - 45, 25, handle, 3);
-		SendMessage(g_WordEdit, EM_SETREADONLY, TRUE, 0);
-		SendMessage(g_PronunciationEdit, EM_SETREADONLY, TRUE, 0);
-		SendMessage(g_MeaningEdit, EM_SETREADONLY, TRUE, 0);
-
-		g_SendButton = CreateAndShowChild(_T("button"), _T("출제하기"), GlobalBoldFont, BS_PUSHBUTTON,
-			WIDTH / 3 + 20, 300, WIDTH / 3 * 2 - 45, 50, handle, 4);
-		g_ChangeRoleButton = CreateAndShowChild(_T("button"), _T("역할 변경 요청하기"), GlobalBoldFont, BS_PUSHBUTTON,
-			WIDTH / 3 + 20, HEIGHT - 103, WIDTH / 3 - 25, 50, handle, 5);
-		g_StopButton = CreateAndShowChild(_T("button"), _T("그만 외우기"), GlobalBoldFont, BS_PUSHBUTTON,
-			WIDTH / 3 * 2 + 1, HEIGHT - 103, WIDTH / 3 - 25, 50, handle, 6);
-
-		g_Multiplay.Status = Connected;
+		g_Multiplay->Status = Connected;
 		InvalidateRect(handle, NULL, TRUE);
 		return 0;
 
 	case WM_USER + 4:
 		EnableWindow(g_SendButton, TRUE);
 
-		g_Multiplay.Status = Connected;
+		g_Multiplay->Status = Connected;
 		InvalidateRect(handle, NULL, TRUE);
 		return 0;
 
@@ -186,6 +178,30 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 	}
 
+	case WM_USER + 8: {
+		const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("멀티 플레이"), SW_SHOW);
+		SendMessage(questionWindow, WM_USER + 9, 0, (LPARAM)g_Multiplay);
+
+		g_Multiplay = NULL;
+		g_QuestionOption = NULL;
+
+		g_ShouldEnableMainWindow = false;
+		SendMessage(handle, WM_CLOSE, 0, 0);
+		return 0;
+	}
+
+	case WM_USER + 9: {
+		g_Multiplay = (Multiplay*)lParam;
+		g_Multiplay->Option->Role = Examiner;
+		g_Multiplay->Window = handle;
+		g_Multiplay->Question = &g_Question;
+		g_QuestionOption = g_Multiplay->QuestionOption;
+
+		CreateChildren(handle, windowSize);
+		SendMessage(handle, WM_USER + 4, 0, 0);
+		return 0;
+	}
+
 	case WM_GETMINMAXINFO: {
 		LPMINMAXINFO size = (LPMINMAXINFO)lParam;
 		size->ptMinTrackSize.x = 640;
@@ -198,4 +214,29 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 	}
 	return DefWindowProc(handle, message, wParam, lParam);
+}
+
+void CreateChildren(HWND handle, RECT windowSize) {
+	g_WordList = CreateAndShowChild(_T("listbox"), NULL, GlobalDefaultFont, WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
+		10, 120, WIDTH / 3, HEIGHT - 160, handle, 0);
+	for (int i = 0; i < g_QuestionOption->Vocabulary.Count; ++i) {
+		SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)g_QuestionOption->Vocabulary.Array[i].Word);
+	}
+
+	g_WordEdit = CreateAndShowChild(_T("edit"), NULL, GlobalDefaultFont, WS_BORDER | WS_GROUP | WS_TABSTOP,
+		WIDTH / 3 + 20, 145, WIDTH / 3 * 2 - 45, 25, handle, 1);
+	g_PronunciationEdit = CreateAndShowChild(_T("edit"), NULL, GlobalDefaultFont, WS_BORDER | WS_GROUP | WS_TABSTOP,
+		WIDTH / 3 + 20, 205, WIDTH / 3 * 2 - 45, 25, handle, 2);
+	g_MeaningEdit = CreateAndShowChild(_T("edit"), NULL, GlobalDefaultFont, WS_BORDER | WS_GROUP | WS_TABSTOP,
+		WIDTH / 3 + 20, 265, WIDTH / 3 * 2 - 45, 25, handle, 3);
+	SendMessage(g_WordEdit, EM_SETREADONLY, TRUE, 0);
+	SendMessage(g_PronunciationEdit, EM_SETREADONLY, TRUE, 0);
+	SendMessage(g_MeaningEdit, EM_SETREADONLY, TRUE, 0);
+
+	g_SendButton = CreateAndShowChild(_T("button"), _T("출제하기"), GlobalBoldFont, BS_PUSHBUTTON,
+		WIDTH / 3 + 20, 300, WIDTH / 3 * 2 - 45, 50, handle, 4);
+	g_ChangeRoleButton = CreateAndShowChild(_T("button"), _T("역할 변경 요청하기"), GlobalBoldFont, BS_PUSHBUTTON,
+		WIDTH / 3 + 20, HEIGHT - 103, WIDTH / 3 - 25, 50, handle, 5);
+	g_StopButton = CreateAndShowChild(_T("button"), _T("그만 외우기"), GlobalBoldFont, BS_PUSHBUTTON,
+		WIDTH / 3 * 2 + 1, HEIGHT - 103, WIDTH / 3 - 25, 50, handle, 6);
 }

@@ -81,3 +81,4 @@ void StartMultiplay(Multiplay* multiplay, MultiplayOption* option, Question* que
 void StopMultiplay(Multiplay* multiplay);
 void SendQuestion(Multiplay* multiplay, HWND* buttons, int answer);
 void SendAnswer(Multiplay* multiplay);
+void RequestChangeRole(Multiplay* multiplay);

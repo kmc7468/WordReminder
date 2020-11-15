@@ -162,7 +162,7 @@ void WriteString(FILE* file, LPCTSTR string) {
 	FreeRawString(raw);
 }
 
-void GenerateQuestion(Question* question, const QuestionOption* option, const Word* answer) {
+void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer) {
 	const Word* const oldAnswer = question->Answer >= 0 ? question->Words[question->Answer] : NULL;
 	if (answer) {
 		question->Words[0] = answer;
