@@ -8,12 +8,10 @@
 #include <tchar.h>
 #include <time.h>
 
+static SOCKET GetClientSocket(Multiplay* multiplay);
+
 #define My multiplay->Players[0]
 #define Other multiplay->Players[1]
-
-static SOCKET GetClientSocket(Multiplay* multiplay) {
-	return multiplay->Option->SocketType == Server ? Other.Socket : My.Socket;
-}
 
 bool OpenServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
 	multiplay->Option = multiplayOption;
@@ -147,6 +145,10 @@ bool ReceiveVocabulary(Multiplay* multiplay) {
 	return true;
 }
 
+SOCKET GetClientSocket(Multiplay* multiplay) {
+	return multiplay->Option->SocketType == Server ? Other.Socket : My.Socket;
+}
+
 bool SendHttpRequest(LPCSTR address, LPCSTR request, int requestLength, LPSTR response, int responseLength) {
 	const SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (sock == SOCKET_ERROR) return false;
@@ -214,6 +216,7 @@ void StartMultiplay(Multiplay* multiplay, MultiplayOption* option, Question* que
 	multiplay->Window = handle;
 	multiplay->Question = question;
 	multiplay->QuestionOption = questionOption;
+
 	if (option->SocketType == Server) {
 		if (OpenServer(multiplay, option)) {
 			StartThread(&g_Thread, WaitForPlayerThread, multiplay);
@@ -238,6 +241,7 @@ void SendQuestion(Multiplay* multiplay, HWND* buttons, int answer) {
 		SendMessage(multiplay->Window, WM_USER + 5, 0, 0);
 		return;
 	}
+
 	for (int i = 0; i < 5; ++i) {
 		if (buttons) {
 			EnableWindow(buttons[i], FALSE);
@@ -247,6 +251,7 @@ void SendQuestion(Multiplay* multiplay, HWND* buttons, int answer) {
 			return;
 		}
 	}
+
 	if (SendInt(multiplay, (multiplay->Question->Answer = answer))) {
 		multiplay->Status = SentAnswer;
 		InvalidateRect(multiplay->Window, NULL, TRUE);

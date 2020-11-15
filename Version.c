@@ -1,7 +1,5 @@
 #include "Version.h"
 
-#include <string.h>
-
 static DWORD ReadRegistryDWord(HKEY key, LPCTSTR name, DWORD defaultValue);
 static void WriteRegistryDWord(HKEY key, LPCTSTR name, DWORD value);
 static LPTSTR ReadRegistryString(HKEY key, LPCTSTR name);
