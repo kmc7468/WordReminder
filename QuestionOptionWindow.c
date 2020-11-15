@@ -123,7 +123,9 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 					SendMessage(questionWindow, WM_USER + 1, 0, (LPARAM)g_MultiplayOption);
 				}
 			} else {
-				// TODO
+				const HWND examinerWindow = CreateAndShowWindow(_T("ExaminerWindow"), _T("멀티 플레이"), SW_SHOW);
+				SendMessage(examinerWindow, WM_USER, 0, (LPARAM)option);
+				SendMessage(examinerWindow, WM_USER + 1, 0, (LPARAM)g_MultiplayOption);
 			}
 			g_MultiplayOption = NULL;
 

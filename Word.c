@@ -162,10 +162,13 @@ void WriteString(FILE* file, LPCTSTR string) {
 	FreeRawString(raw);
 }
 
-void GenerateQuestion(Question* question, const QuestionOption* option) {
+void GenerateQuestion(Question* question, const QuestionOption* option, const Word* answer) {
 	const Word* const oldAnswer = question->Answer >= 0 ? question->Words[question->Answer] : NULL;
+	if (answer) {
+		question->Words[0] = answer;
+	}
 
-	for (int i = 0; i < 5; ++i) {
+	for (int i = (bool)answer; i < 5; ++i) {
 		bool unique = false;
 		do {
 			question->Words[i] = option->Vocabulary.Array + rand() % option->Vocabulary.Count;
@@ -183,7 +186,13 @@ void GenerateQuestion(Question* question, const QuestionOption* option) {
 		question->Type = option->QuestionType;
 	}
 
-	do {
+	if (answer) {
 		question->Answer = rand() % 5;
-	} while (oldAnswer && CompareWord(oldAnswer, question->Words[question->Answer]));
+		question->Words[0] = question->Words[question->Answer];
+		question->Words[question->Answer] = answer;
+	} else {
+		do {
+			question->Answer = rand() % 5;
+		} while (oldAnswer && CompareWord(oldAnswer, question->Words[question->Answer]));
+	}
 }

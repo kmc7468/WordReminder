@@ -235,7 +235,9 @@ void SendQuestion(Multiplay* multiplay, HWND* buttons, int answer) {
 		return;
 	}
 	for (int i = 0; i < 5; ++i) {
-		EnableWindow(buttons[i], FALSE); // TODO
+		if (buttons) {
+			EnableWindow(buttons[i], FALSE);
+		}
 		if (!SendInt(multiplay, (int)(multiplay->Question->Words[i] - multiplay->QuestionOption->Vocabulary.Array))) {
 			SendMessage(multiplay->Window, WM_USER + 5, 0, 0);
 			return;

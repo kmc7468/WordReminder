@@ -26,6 +26,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 
 #define EVENT RECT windowSize; GetWindowRect(handle, &windowSize); switch (message)
 #define WIDTH (windowSize.right - windowSize.left)
