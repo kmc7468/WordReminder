@@ -72,6 +72,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 
 		if (g_MultiplayStatus != Singleplay) {
 			SendInt(&g_Multiplay, MAGIC_STOP);
+			StopThread(&g_Thread);
 			DestroyMultiplay(&g_Multiplay);
 		}
 		g_MultiplayStatus = Singleplay;
