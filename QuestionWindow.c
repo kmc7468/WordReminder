@@ -182,7 +182,12 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		ShowWindow(g_StopButton, SW_SHOW);
 
 		if (g_Multiplay->Option->Role == Examiner) {
-			ShowNextQuestion(handle, true);
+			if (g_Multiplay->Option->Mode == TurnMode) {
+				ShowNextQuestion(handle, true);
+			} else {
+				SendMessage(handle, WM_USER + 8, 0, 0);
+				return 0;
+			}
 		} else {
 			for (int i = 0; i < 5; ++i) {
 				SetWindowText(g_Buttons[i], _T(""));
@@ -202,7 +207,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	case WM_USER + 4:
 		for (int i = 0; i < 5; ++i) {
 			SetWindowText(g_Buttons[i], _T(""));
-			EnableWindow(g_Buttons[i], g_Multiplay->Option->Mode == TurnMode);
+			EnableWindow(g_Buttons[i], g_Multiplay->Option->Mode == TurnMode && g_Multiplay->Option->Role == Examinee);
 		}
 
 		g_Question.Answer = -1;
