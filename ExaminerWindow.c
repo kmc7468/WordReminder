@@ -219,6 +219,7 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 void CreateChildren(HWND handle, RECT windowSize) {
 	g_WordList = CreateAndShowChild(_T("listbox"), NULL, GlobalDefaultFont, WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
 		10, 120, WIDTH / 3, HEIGHT - 160, handle, 0);
+	SendMessage(handle, WM_SIZE, 0, 0);
 	for (int i = 0; i < g_QuestionOption->Vocabulary.Count; ++i) {
 		SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)g_QuestionOption->Vocabulary.Array[i].Word);
 	}

@@ -46,7 +46,7 @@
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/QuestionWindow_Examiner2.png" width="49%" />
 </p>
 
-턴제 모드에서, 먼저 출제자는 컴퓨터가 생성한 5개의 선지를 확인할 수 있습니다. 출제자는 이 중 하나의 단어를 골라 응시자에게 해당 단어를 맞히도록 할 수 있습니다. 응시자가 문제를 맞힐 때까지 출제자는 대기하게 됩니다.
+턴제 모드에서, 먼저 출제자는 컴퓨터가 생성한 5개의 선지를 확인할 수 있습니다. 출제자는 이 중 하나의 단어를 골라 응시자에게 해당 단어를 맞히도록 할 수 있습니다. 이후 응시자가 문제를 맞힐 때까지 출제자는 대기하게 됩니다.
 
 <p float="left">
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/QuestionWindow_Examinee1.png" width="49%" />
@@ -65,7 +65,7 @@
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/ExaminerWindow_2.png" width="49%" />
 </p>
 
-역할 고정 모드에서, 먼저 출제자는 단어 목록을 확인할 수 있습니다. 출제자는 이 중 하나의 단어를 골라 응시자에게 해당 단어를 맞히도록 할 수 있습니다. 선택한 단어 외의 선지는 컴퓨터가 자동으로 생성합니다. 응시자가 문제를 맞힐 때까지 출제자는 대기하게 됩니다.
+역할 고정 모드에서, 먼저 출제자는 단어 목록을 확인할 수 있습니다. 출제자는 이 중 하나의 단어를 골라 응시자에게 해당 단어를 맞히도록 할 수 있습니다. 선택한 단어 외의 선지는 컴퓨터가 자동으로 생성합니다. 이후 응시자가 문제를 맞힐 때까지 출제자는 대기하게 됩니다.
 
 <p float="left">
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/QuestionWindow_FixedExaminee1.png" width="49%" />
