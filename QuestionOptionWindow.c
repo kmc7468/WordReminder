@@ -117,19 +117,17 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 
 			if (!g_MultiplayOption || g_MultiplayOption->Mode == TurnMode || g_MultiplayOption->Role == Examinee) {
 				const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("단어 암기하기"), SW_SHOW);
-				g_ShouldEnableMainWindow = false;
 				SendMessage(questionWindow, WM_USER, 0, (LPARAM)option);
 				if (g_MultiplayOption) {
-					if (g_MultiplayOption->Mode == TurnMode) {
-						SendMessage(questionWindow, WM_USER + 1, 0, (LPARAM)g_MultiplayOption);
-					} else {
-						SendMessage(questionWindow, WM_USER + 9, 0, (LPARAM)g_MultiplayOption);
-					}
-					g_MultiplayOption = NULL;
+					SetWindowText(questionWindow, _T("멀티 플레이"));
+					SendMessage(questionWindow, WM_USER + 1, 0, (LPARAM)g_MultiplayOption);
 				}
 			} else {
 				// TODO
 			}
+			g_MultiplayOption = NULL;
+
+			g_ShouldEnableMainWindow = false;
 			SendMessage(handle, WM_CLOSE, 0, 0);
 			break;
 		}

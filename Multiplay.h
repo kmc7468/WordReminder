@@ -28,7 +28,6 @@ typedef struct {
 	SocketType SocketType;
 	MultiplayMode Mode;
 	MultiplayRole Role;
-	Vocabulary* Vocabulary;
 } MultiplayOption;
 
 typedef struct {
@@ -52,6 +51,10 @@ typedef struct {
 	MultiplayOption* Option;
 	MultiplayPlayer Players[2];
 	MultiplayStatus Status;
+
+	HWND Window;
+	Question* Question;
+	QuestionOption* QuestionOption;
 } Multiplay;
 
 bool OpenServer(Multiplay* multiplay, MultiplayOption* multiplayOption);
@@ -73,3 +76,8 @@ bool SendVocabulary(Multiplay* multiplay);
 bool ReceiveVocabulary(Multiplay* multiplay);
 
 bool SendHttpRequest(LPCSTR address, LPCSTR request, int requestLength, LPSTR response, int responseLength);
+
+void StartMultiplay(Multiplay* multiplay, MultiplayOption* option, Question* question, QuestionOption* questionOption, HWND handle);
+void StopMultiplay(Multiplay* multiplay);
+void SendQuestion(Multiplay* multiplay, HWND* buttons, int answer);
+void SendAnswer(Multiplay* multiplay);

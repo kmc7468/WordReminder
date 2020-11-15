@@ -30,11 +30,11 @@ LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, L
 		SendMessage(g_MeaningEdit, EM_SETREADONLY, TRUE, 0);
 
 		g_AllWordRemindButton = CreateAndShowChild(_T("button"), _T("모든 단어 다시 암기하기"), GlobalBoldFont, BS_PUSHBUTTON,
-			WIDTH / 4 + 20, HEIGHT - 103, WIDTH / 5 - 25, 50, handle, 4);
+			WIDTH / 3 + 20, HEIGHT - 163, WIDTH / 3 - 25, 50, handle, 4);
 		g_WrongWordRemindButton = CreateAndShowChild(_T("button"), _T("틀린 단어만 다시 암기하기"), GlobalBoldFont, BS_PUSHBUTTON,
-			WIDTH / 4 * 2 + 1, HEIGHT - 103, WIDTH / 5 - 25, 50, handle, 5);
+			WIDTH / 3 * 2 + 1, HEIGHT - 163, WIDTH / 3 - 25, 50, handle, 5);
 		g_DoneButton = CreateAndShowChild(_T("button"), _T("창 닫기"), GlobalBoldFont, BS_PUSHBUTTON,
-			WIDTH / 4 * 3 + 1, HEIGHT - 103, WIDTH / 5 - 25, 50, handle, 6);
+			WIDTH / 3 + 20, HEIGHT - 103, WIDTH / 3 * 2 - 45, 50, handle, 6);
 		return 0;
 
 	case WM_DESTROY:
