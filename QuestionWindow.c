@@ -6,10 +6,12 @@
 #include <stdlib.h>
 #include <time.h>
 
+static void CreateChangeRoleButton(HWND handle, RECT windowSize);
 static void ShowNextQuestion(HWND handle, bool generateQuestion);
 
 static HFONT g_QuestionFont, g_WordOrMeaningFont, g_PronunciationFont, g_ButtonFont;
-static HWND g_Buttons[5], g_StopButton;
+static HWND g_Buttons[5];
+static HWND g_ChangeRoleButton, g_StopButton;
 
 static QuestionOption* g_QuestionOption;
 static Question g_Question;
@@ -30,8 +32,9 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			g_Buttons[i] = CreateAndShowChild(_T("button"), _T(""), g_ButtonFont, BS_PUSHBUTTON | BS_MULTILINE,
 				WIDTH / 2 - WIDTH / 4, 140 + ((HEIGHT / 10 + HEIGHT / 50) * i), WIDTH / 2, HEIGHT / 10, handle, i);
 		}
+
 		g_StopButton = CreateAndShowChild(_T("button"), _T("그만 외우기"), g_ButtonFont, BS_PUSHBUTTON,
-			WIDTH - WIDTH / 4 + 10, 140 + ((HEIGHT / 10 + HEIGHT / 50) * 4), WIDTH / 4 - 37, HEIGHT / 10, handle, 5);
+			WIDTH - WIDTH / 4 + 10, 140 + ((HEIGHT / 10 + HEIGHT / 50) * 4), WIDTH / 4 - 37, HEIGHT / 10, handle, 6);
 
 		g_Question.Answer = -1;
 		return 0;
@@ -41,6 +44,8 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		DeleteObject(g_WordOrMeaningFont);
 		DeleteObject(g_PronunciationFont);
 		DeleteObject(g_ButtonFont);
+
+		g_ChangeRoleButton = NULL;
 
 		if (g_QuestionOption) {
 			DestroyVocabulary(&g_QuestionOption->Vocabulary);
@@ -67,7 +72,10 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			SetWindowPos(g_Buttons[i], HWND_TOP, WIDTH / 2 - WIDTH / 4, 140 + ((HEIGHT / 10 + HEIGHT / 50) * i), WIDTH / 2, HEIGHT / 10, 0);
 			SendMessage(g_Buttons[i], WM_SETFONT, (WPARAM)g_ButtonFont, true);
 		}
+
+		SetWindowPos(g_ChangeRoleButton, HWND_TOP, WIDTH - WIDTH / 4 + 10, 140 + ((HEIGHT / 10 + HEIGHT / 50) * 3), WIDTH / 4 - 37, HEIGHT / 10, 0);
 		SetWindowPos(g_StopButton, HWND_TOP, WIDTH - WIDTH / 4 + 10, 140 + ((HEIGHT / 10 + HEIGHT / 50) * 4), WIDTH / 4 - 37, HEIGHT / 10, 0);
+		SendMessage(g_ChangeRoleButton, WM_SETFONT, (WPARAM)g_ButtonFont, true);
 		SendMessage(g_StopButton, WM_SETFONT, (WPARAM)g_ButtonFont, true);
 		return 0;
 
@@ -137,6 +145,10 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	case WM_COMMAND: {
 		const WORD menu = LOWORD(wParam);
 		if (menu == 5) {
+			if (MessageBox(handle, _T("상대방에게 역할 변경을 요청하시겠습니까?"), _T("정보"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
+				RequestChangeRole(g_Multiplay);
+			}
+		} else if (menu == 6) {
 			SendMessage(handle, WM_USER + 7, 0, 0);
 		} else if (!g_Multiplay || g_Multiplay->Option->Role == Examinee) {
 			if (menu != g_Question.Answer) {
@@ -169,6 +181,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		for (int i = 0; i < 5; ++i) {
 			ShowWindow(g_Buttons[i], SW_HIDE);
 		}
+
 		ShowWindow(g_StopButton, SW_HIDE);
 
 		StartMultiplay(g_Multiplay = calloc(1, sizeof(Multiplay)), (MultiplayOption*)lParam, &g_Question, g_QuestionOption, handle);
@@ -178,6 +191,10 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		for (int i = 0; i < 5; ++i) {
 			ShowWindow(g_Buttons[i], SW_SHOW);
 			EnableWindow(g_Buttons[i], g_Multiplay->Option->Role == Examiner);
+		}
+
+		if (g_Multiplay->Option->Mode == FixedMode) {
+			CreateChangeRoleButton(handle, windowSize);
 		}
 		ShowWindow(g_StopButton, SW_SHOW);
 
@@ -265,6 +282,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		g_Multiplay->Question = &g_Question;
 		g_QuestionOption = g_Multiplay->QuestionOption;
 
+		CreateChangeRoleButton(handle, windowSize);
 		SendMessage(handle, WM_USER + 4, 0, 0);
 		return 0;
 	}
@@ -283,6 +301,10 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	return DefWindowProc(handle, message, wParam, lParam);
 }
 
+void CreateChangeRoleButton(HWND handle, RECT windowSize) {
+	g_ChangeRoleButton = CreateAndShowChild(_T("button"), _T("역할 변경\n요청하기"), g_ButtonFont, BS_PUSHBUTTON | BS_MULTILINE,
+		WIDTH - WIDTH / 4 + 10, 140 + ((HEIGHT / 10 + HEIGHT / 50) * 3), WIDTH / 4 - 37, HEIGHT / 10, handle, 5);
+}
 void ShowNextQuestion(HWND handle, bool generateQuestion) {
 	if (generateQuestion) {
 		GenerateQuestion(&g_Question, g_QuestionOption, NULL);
