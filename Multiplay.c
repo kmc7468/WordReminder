@@ -14,6 +14,7 @@ static SOCKET GetClientSocket(Multiplay* multiplay) {
 bool OpenServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
 	multiplay->Option = multiplayOption;
 	memset(multiplay->Players, 0, sizeof(multiplay->Players));
+	multiplay->Status = OpeningServer;
 
 	if ((My.Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == SOCKET_ERROR) return false;
 
@@ -26,12 +27,15 @@ bool OpenServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
 	} else return true;
 }
 bool WaitForPlayer(Multiplay* multiplay) {
+	multiplay->Status = WaitingForPlayer;
+
 	if (listen(My.Socket, 1) == SOCKET_ERROR) return false;
 	else return (Other.Socket = accept(My.Socket, (SOCKADDR*)&Other.Address, NULL)) != SOCKET_ERROR;
 }
 bool JoinServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
 	multiplay->Option = multiplayOption;
 	memset(multiplay->Players, 0, sizeof(multiplay->Players));
+	multiplay->Status = JoiningServer;
 
 	if ((My.Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == SOCKET_ERROR) return false;
 

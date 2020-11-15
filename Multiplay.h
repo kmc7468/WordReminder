@@ -38,9 +38,20 @@ typedef struct {
 	int Wrong;
 } MultiplayPlayer;
 
+typedef enum {
+	Singleplay,
+	OpeningServer,
+	WaitingForPlayer,
+	PlayerJoining,
+	JoiningServer,
+	Connected,
+	SentAnswer,
+} MultiplayStatus;
+
 typedef struct {
 	MultiplayOption* Option;
 	MultiplayPlayer Players[2];
+	MultiplayStatus Status;
 } Multiplay;
 
 bool OpenServer(Multiplay* multiplay, MultiplayOption* multiplayOption);
