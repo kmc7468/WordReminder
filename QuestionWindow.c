@@ -152,7 +152,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			SendMessage(handle, WM_USER + 7, 0, 0);
 		} else if (!g_Multiplay || g_Multiplay->Option->Role == Examinee) {
 			if (menu != g_Question.Answer) {
-				g_Question.Words[g_Question.Answer]->IsWrong = g_IsWrong = true;
+				g_Question.Words[g_Question.Answer]->IsWrong = g_Question.Words[menu]->IsWrong = g_IsWrong = true;
 				InvalidateRect(handle, NULL, TRUE);
 				EnableWindow(g_Buttons[menu], FALSE);
 				return 0;
