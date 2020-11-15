@@ -218,12 +218,10 @@ void StartMultiplay(Multiplay* multiplay, MultiplayOption* option, Question* que
 			SendMessage(handle, WM_CLOSE, 0, 0);
 		}
 	} else {
-		if (JoinServer(multiplay, option)) {
-			StartThread(&g_Thread, JoinServerThread, multiplay);
-		} else {
-			MessageBox(handle, _T("서버를 접속하는 중 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
-			SendMessage(handle, WM_CLOSE, 0, 0);
-		}
+		void** const temp = malloc(sizeof(void*) * 2);
+		temp[0] = multiplay;
+		temp[1] = option;
+		StartThread(&g_Thread, JoinServerThread, temp);
 	}
 }
 void StopMultiplay(Multiplay* multiplay) {
@@ -261,6 +259,17 @@ DWORD WINAPI WaitForPlayerThread(LPVOID param) {
 	return ReceiveThread(param);
 }
 DWORD WINAPI JoinServerThread(LPVOID param) {
+	void** const temp = (void**)param;
+	MultiplayOption* const option = temp[1];
+	param = temp[0];
+	free(temp);
+
+	if (!JoinServer(&Context, option)) {
+		MessageBox(Context.Window, _T("서버에 접속하는 중 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+		SendMessage(Context.Window, WM_CLOSE, 0, 0);
+		return 0;
+	}
+
 	srand((unsigned)time(NULL));
 
 	LPTSTR serverVersion = NULL;
