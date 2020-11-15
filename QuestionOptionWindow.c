@@ -1,13 +1,14 @@
 #include "Window.h"
 
 #include "Multiplay.h"
+#include "Version.h"
 #include "Word.h"
 
 #include <stdlib.h>
 
 static HWND g_SelectVocabularyButton;
 static HWND g_GuessMeaningButton, g_GuessWordButton;
-static HWND g_ShouldGivePronunciationButton;
+static HWND g_GivePronunciationButton;
 static HWND g_StartButton;
 
 static LPCTSTR g_VocabularyPath;
@@ -29,9 +30,12 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			10, 130, 150, 15, handle, 1);
 		g_GuessWordButton = CreateAndShowChild(_T("button"), _T("뜻 보고 단어 맞추기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
 			180, 130, 150, 15, handle, 2);
+		SendMessage(g_GuessMeaningButton, BM_SETCHECK, Setting.GuessMeaning, 0);
+		SendMessage(g_GuessWordButton, BM_SETCHECK, Setting.GuessWord, 0);
 
-		g_ShouldGivePronunciationButton = CreateAndShowChild(_T("button"), _T("발음 표시하기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
+		g_GivePronunciationButton = CreateAndShowChild(_T("button"), _T("발음 표시하기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
 			10, 190, 200, 15, handle, 3);
+		SendMessage(g_GivePronunciationButton, BM_SETCHECK, Setting.GivePronunciation, 0);
 
 		g_StartButton = CreateAndShowChild(_T("button"), _T("시작하기"), GlobalBoldFont, BS_PUSHBUTTON,
 			10, 225, 465, 50, handle, 4);
@@ -69,7 +73,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 	case WM_CTLCOLORSTATIC: {
 		const HWND btnHandle = (HWND)lParam;
 		if (btnHandle == g_GuessMeaningButton || btnHandle == g_GuessWordButton ||
-			btnHandle == g_ShouldGivePronunciationButton) {
+			btnHandle == g_GivePronunciationButton) {
 			SetBkMode((HDC)wParam, TRANSPARENT);
 		}
 		return 0;
@@ -128,6 +132,10 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 				SendMessage(examinerWindow, WM_USER + 1, 0, (LPARAM)g_MultiplayOption);
 			}
 			g_MultiplayOption = NULL;
+
+			Setting.GuessMeaning = (bool)IsDlgButtonChecked(handle, 1);
+			Setting.GuessWord = (bool)IsDlgButtonChecked(handle, 2);
+			Setting.GivePronunciation = (bool)IsDlgButtonChecked(handle, 3);
 
 			g_ShouldEnableMainWindow = false;
 			SendMessage(handle, WM_CLOSE, 0, 0);

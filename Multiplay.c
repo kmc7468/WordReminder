@@ -1,5 +1,6 @@
 #include "Multiplay.h"
 
+#include "Version.h"
 #include "Window.h"
 
 #include <stdlib.h>

@@ -1,5 +1,7 @@
 #include "Window.h"
 
+#include "Version.h"
+
 #include <ShlObj.h>
 #include <stdlib.h>
 #include <time.h>
@@ -15,6 +17,8 @@ HFONT GlobalDefaultFont, GlobalBoldFont;
 bool Initialize(HINSTANCE instance) {
 	g_Instance = instance;
 	srand((unsigned)time(NULL));
+
+	LoadSetting();
 
 	RegisterWindow(_T("MainWindow"), MainWindowProc);
 	RegisterWindow(_T("VocabularyWindow"), VocabularyWindowProc);
@@ -43,6 +47,9 @@ bool Initialize(HINSTANCE instance) {
 	return WSAStartup(MAKEWORD(2, 2), &data) == ERROR_SUCCESS;
 }
 void Destroy() {
+	SaveSetting();
+	free(Setting.ServerIp);
+
 	WSACleanup();
 }
 void RegisterWindow(LPCTSTR name, WNDPROC wndProc) {

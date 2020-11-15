@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Version.h"
 #include "Word.h"
 
 #include <stdbool.h>
