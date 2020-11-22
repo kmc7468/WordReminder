@@ -14,6 +14,7 @@ static HWND g_StartButton;
 static LPCTSTR g_VocabularyPath;
 static Vocabulary* g_Vocabularary;
 static MultiplayOption* g_MultiplayOption;
+static bool g_IsLocalMultiplay;
 
 static bool g_ShouldEnableMainWindow = true;
 
@@ -52,6 +53,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			free(g_MultiplayOption);
 			g_MultiplayOption = NULL;
 		}
+		g_IsLocalMultiplay = false;
 
 		if (g_ShouldEnableMainWindow) {
 			EnableWindow(MainWindow, TRUE);
@@ -157,6 +159,10 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 	case WM_USER + 1:
 		g_MultiplayOption = (MultiplayOption*)lParam;
 		SetWindowText(g_StartButton, _T("서버 만들기"));
+		return 0;
+
+	case WM_USER + 2:
+		g_IsLocalMultiplay = true;
 		return 0;
 
 	case WM_CLOSE:
