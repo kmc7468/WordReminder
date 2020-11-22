@@ -27,6 +27,7 @@ bool Initialize(HINSTANCE instance) {
 	RegisterWindow(_T("StatisticWindow"), StatisticWindowProc);
 	RegisterWindow(_T("OnlineMultiplayWindow"), OnlineMultiplayWindowProc);
 	RegisterWindow(_T("ExaminerWindow"), ExaminerWindowProc);
+	RegisterWindow(_T("LocalMultiplayWindow"), LocalMultiplayWindowProc);
 
 	g_GlobalFont.lfCharSet = HANGUL_CHARSET;
 	_tcscpy(g_GlobalFont.lfFaceName, _T("³ª´®°íµñ"));

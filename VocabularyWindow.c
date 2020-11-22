@@ -95,9 +95,9 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 			AddWord(&g_Vocabulary, &word);
 			g_IsSaved = false;
 
-			SetWindowText(g_WordEdit, _T(""));
-			SetWindowText(g_PronunciationEdit, _T(""));
-			SetWindowText(g_MeaningEdit, _T(""));
+			SetWindowText(g_WordEdit, NULL);
+			SetWindowText(g_PronunciationEdit, NULL);
+			SetWindowText(g_MeaningEdit, NULL);
 			SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)word.Word);
 			break;
 		}
@@ -127,9 +127,9 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 				for (int i = 0; i < g_Vocabulary.Count; ++i) {
 					SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)g_Vocabulary.Array[i].Word);
 				}
-				SetWindowText(g_WordEdit, _T(""));
-				SetWindowText(g_PronunciationEdit, _T(""));
-				SetWindowText(g_MeaningEdit, _T(""));
+				SetWindowText(g_WordEdit, NULL);
+				SetWindowText(g_PronunciationEdit, NULL);
+				SetWindowText(g_MeaningEdit, NULL);
 			}
 			break;
 		}

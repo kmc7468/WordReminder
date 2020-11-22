@@ -196,3 +196,24 @@ void GenerateQuestion(Question* question, const QuestionOption* option, Word* an
 		} while (oldAnswer && CompareWord(oldAnswer, question->Words[question->Answer]));
 	}
 }
+void SetSelectorText(const Question* question, const QuestionOption* option, HWND* buttons, int selector, bool mustSetWord) {
+	for (int i = 0; i < selector; ++i) {
+		if (mustSetWord || question->Type == GuessWord) {
+			if (option->GivePronunciation &&
+				(question->Words[i]->Pronunciation[0] == 0 || _tcscmp(question->Words[i]->Word, question->Words[i]->Pronunciation))) {
+				LPTSTR text = malloc(sizeof(TCHAR) * (_tcslen(question->Words[i]->Word) + _tcslen(question->Words[i]->Pronunciation) + 4));
+				_tcscpy(text, question->Words[i]->Word);
+				_tcscat(text, _T("\n("));
+				_tcscat(text, question->Words[i]->Pronunciation);
+				_tcscat(text, _T(")"));
+				SetWindowText(buttons[i], text);
+				free(text);
+			} else {
+				SetWindowText(buttons[i], question->Words[i]->Word);
+			}
+		} else {
+			SetWindowText(buttons[i], question->Words[i]->Meaning);
+		}
+		EnableWindow(buttons[i], TRUE);
+	}
+}

@@ -123,7 +123,10 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			option->QuestionType |= guessWord ? GuessWord : 0;
 			option->GivePronunciation = (bool)IsDlgButtonChecked(handle, 3);
 
-			if (!g_MultiplayOption || g_MultiplayOption->Mode == TurnMode || g_MultiplayOption->Role == Examinee) {
+			if (g_IsLocalMultiplay) {
+				const HWND localMultiplayWindow = CreateAndShowWindow(_T("LocalMultiplayWindow"), _T("로컬 멀티 플레이"), SW_SHOW);
+				SendMessage(localMultiplayWindow, WM_USER, 0, (LPARAM)option);
+			} else if (!g_MultiplayOption || g_MultiplayOption->Mode == TurnMode || g_MultiplayOption->Role == Examinee) {
 				const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("단어 암기하기"), SW_SHOW);
 				SendMessage(questionWindow, WM_USER, 0, (LPARAM)option);
 				if (g_MultiplayOption) {

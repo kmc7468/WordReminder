@@ -81,3 +81,15 @@ void StopOnlineMultiplay(OnlineMultiplay* multiplay);
 void SendQuestion(OnlineMultiplay* multiplay, HWND* buttons, int answer);
 void SendAnswer(OnlineMultiplay* multiplay);
 void RequestChangeRole(OnlineMultiplay* multiplay);
+
+typedef struct {
+	int Score;
+	int FirstCorrect;
+	int SecondCorrect;
+	int Wrong;
+} LocalMultiplayPlayer;
+
+typedef struct {
+	LocalMultiplayPlayer Players[2];
+	int Phase;
+} LocalMultiplay;

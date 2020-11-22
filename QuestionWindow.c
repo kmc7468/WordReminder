@@ -29,7 +29,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		g_ButtonFont = CreateGlobalFont(18, false);
 
 		for (int i = 0; i < 5; ++i) {
-			g_Buttons[i] = CreateAndShowChild(_T("button"), _T(""), g_ButtonFont, BS_PUSHBUTTON | BS_MULTILINE,
+			g_Buttons[i] = CreateAndShowChild(_T("button"), NULL, g_ButtonFont, BS_PUSHBUTTON | BS_MULTILINE,
 				WIDTH / 2 - WIDTH / 4, 140 + ((HEIGHT / 10 + HEIGHT / 50) * i), WIDTH / 2, HEIGHT / 10, handle, i);
 		}
 
@@ -68,6 +68,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	case WM_SIZE:
 		DeleteObject(g_ButtonFont);
 		g_ButtonFont = CreateGlobalFont(18 * HEIGHT / 480, false);
+
 		for (int i = 0; i < 5; ++i) {
 			SetWindowPos(g_Buttons[i], HWND_TOP, WIDTH / 2 - WIDTH / 4, 140 + ((HEIGHT / 10 + HEIGHT / 50) * i), WIDTH / 2, HEIGHT / 10, 0);
 			SendMessage(g_Buttons[i], WM_SETFONT, (WPARAM)g_ButtonFont, true);
@@ -207,7 +208,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			}
 		} else {
 			for (int i = 0; i < 5; ++i) {
-				SetWindowText(g_Buttons[i], _T(""));
+				SetWindowText(g_Buttons[i], NULL);
 			}
 
 			g_Question.Answer = -1;
@@ -223,7 +224,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 
 	case WM_USER + 4:
 		for (int i = 0; i < 5; ++i) {
-			SetWindowText(g_Buttons[i], _T(""));
+			SetWindowText(g_Buttons[i], NULL);
 			EnableWindow(g_Buttons[i], g_Multiplay->Option->Mode == TurnMode && g_Multiplay->Option->Role == Examinee);
 		}
 
@@ -309,26 +310,6 @@ void ShowNextQuestion(HWND handle, bool generateQuestion) {
 	if (generateQuestion) {
 		GenerateQuestion(&g_Question, g_QuestionOption, NULL, 5);
 	}
-
-	for (int i = 0; i < 5; ++i) {
-		if (g_Multiplay && g_Multiplay->Option->Role == Examiner ||
-			g_Question.Type == GuessWord) {
-			if (g_QuestionOption->GivePronunciation &&
-				(g_Question.Words[i]->Pronunciation[0] == 0 || _tcscmp(g_Question.Words[i]->Word, g_Question.Words[i]->Pronunciation))) {
-				LPTSTR text = malloc(sizeof(TCHAR) * (_tcslen(g_Question.Words[i]->Word) + _tcslen(g_Question.Words[i]->Pronunciation) + 4));
-				_tcscpy(text, g_Question.Words[i]->Word);
-				_tcscat(text, _T("\n("));
-				_tcscat(text, g_Question.Words[i]->Pronunciation);
-				_tcscat(text, _T(")"));
-				SetWindowText(g_Buttons[i], text);
-				free(text);
-			} else {
-				SetWindowText(g_Buttons[i], g_Question.Words[i]->Word);
-			}
-		} else {
-			SetWindowText(g_Buttons[i], g_Question.Words[i]->Meaning);
-		}
-		EnableWindow(g_Buttons[i], TRUE);
-	}
+	SetSelectorText(&g_Question, g_QuestionOption, g_Buttons, 5, g_Multiplay && g_Multiplay->Option->Role == Examiner);
 	InvalidateRect(handle, NULL, TRUE);
 }

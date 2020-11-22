@@ -51,3 +51,4 @@ typedef struct {
 } QuestionOption;
 
 void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector);
+void SetSelectorText(const Question* question, const QuestionOption* option, HWND* buttons, int selector, bool mustSetWord);
