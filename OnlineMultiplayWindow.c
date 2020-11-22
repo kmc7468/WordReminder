@@ -92,15 +92,15 @@ LRESULT CALLBACK OnlineMultiplayWindowProc(HWND handle, UINT message, WPARAM wPa
 			GetWindowTextA(g_ServerAddressEdit, address, addressLength + 1);
 			GetWindowText(g_ServerPortEdit, port, ARRAYSIZE(port));
 
-			MultiplayOption* const option = calloc(1, sizeof(MultiplayOption));
+			OnlineMultiplayOption* const option = calloc(1, sizeof(OnlineMultiplayOption));
 			option->ServerIp = address;
 			if ((option->ServerPort = StringToInteger(port)) == -1 || option->ServerPort > 65535) {
 				MessageBox(handle, _T("접속할 서버의 포트(0~65535)를 올바르게 입력해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}
 			option->SocketType = Client - g_IsServerCreation;
-			option->Mode = (MultiplayMode)IsDlgButtonChecked(handle, 3);
-			option->Role = (MultiplayRole)IsDlgButtonChecked(handle, 5);
+			option->Mode = (OnlineMultiplayMode)IsDlgButtonChecked(handle, 3);
+			option->Role = (OnlineMultiplayRole)IsDlgButtonChecked(handle, 5);
 
 			if (g_IsServerCreation) {
 				const HWND questionOptionWindow = CreateAndShowWindow(_T("QuestionOptionWindow"), _T("서버 만들기"), SW_SHOW);

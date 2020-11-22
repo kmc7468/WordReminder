@@ -14,27 +14,27 @@ typedef enum {
 typedef enum {
 	TurnMode, // 턴제 모드
 	FixedMode, // 역할 고정 모드
-} MultiplayMode;
+} OnlineMultiplayMode;
 
 typedef enum {
 	Examiner, // 출제자
 	Examinee, // 응시자
-} MultiplayRole;
+} OnlineMultiplayRole;
 
 typedef struct {
 	LPSTR ServerIp;
 	int ServerPort;
 	SocketType SocketType;
-	MultiplayMode Mode;
-	MultiplayRole Role;
-} MultiplayOption;
+	OnlineMultiplayMode Mode;
+	OnlineMultiplayRole Role;
+} OnlineMultiplayOption;
 
 typedef struct {
 	SOCKET Socket;
 	SOCKADDR_IN Address;
 	int Correct;
 	int Wrong;
-} MultiplayPlayer;
+} OnlineMultiplayPlayer;
 
 typedef enum {
 	Singleplay,
@@ -44,40 +44,40 @@ typedef enum {
 	JoiningServer,
 	Connected,
 	SentAnswer,
-} MultiplayStatus;
+} OnlineMultiplayStatus;
 
 typedef struct {
-	MultiplayOption* Option;
-	MultiplayPlayer Players[2];
-	MultiplayStatus Status;
+	OnlineMultiplayOption* Option;
+	OnlineMultiplayPlayer Players[2];
+	OnlineMultiplayStatus Status;
 
 	HWND Window;
 	Question* Question;
 	QuestionOption* QuestionOption;
-} Multiplay;
+} OnlineMultiplay;
 
-bool OpenServer(Multiplay* multiplay, MultiplayOption* multiplayOption);
-bool WaitForPlayer(Multiplay* multiplay);
-bool JoinServer(Multiplay* multiplay, MultiplayOption* multiplayOption);
-void DestroyMultiplay(Multiplay* multiplay);
+bool OpenServer(OnlineMultiplay* multiplay, OnlineMultiplayOption* multiplayOption);
+bool WaitForPlayer(OnlineMultiplay* multiplay);
+bool JoinServer(OnlineMultiplay* multiplay, OnlineMultiplayOption* multiplayOption);
+void DestroyOnlineMultiplay(OnlineMultiplay* multiplay);
 
-bool Send(Multiplay* multiplay, const void* data, int length);
-bool Receive(Multiplay* multiplay, void* buffer, int length);
-bool SendVersion(Multiplay* multiplay);
-bool ReceiveVersion(Multiplay* multiplay, LPTSTR* serverVersion, int* protocolVersion);
-bool SendBool(Multiplay* multiplay, bool data);
-bool ReceiveBool(Multiplay* multiplay, bool* buffer);
-bool SendInt(Multiplay* multiplay, int data);
-bool ReceiveInt(Multiplay* multiplay, int* buffer);
-bool SendString(Multiplay* multiplay, LPCTSTR data);
-bool ReceiveString(Multiplay* multiplay, LPTSTR* buffer);
-bool SendVocabulary(Multiplay* multiplay);
-bool ReceiveVocabulary(Multiplay* multiplay);
+bool Send(OnlineMultiplay* multiplay, const void* data, int length);
+bool Receive(OnlineMultiplay* multiplay, void* buffer, int length);
+bool SendVersion(OnlineMultiplay* multiplay);
+bool ReceiveVersion(OnlineMultiplay* multiplay, LPTSTR* serverVersion, int* protocolVersion);
+bool SendBool(OnlineMultiplay* multiplay, bool data);
+bool ReceiveBool(OnlineMultiplay* multiplay, bool* buffer);
+bool SendInt(OnlineMultiplay* multiplay, int data);
+bool ReceiveInt(OnlineMultiplay* multiplay, int* buffer);
+bool SendString(OnlineMultiplay* multiplay, LPCTSTR data);
+bool ReceiveString(OnlineMultiplay* multiplay, LPTSTR* buffer);
+bool SendVocabulary(OnlineMultiplay* multiplay);
+bool ReceiveVocabulary(OnlineMultiplay* multiplay);
 
 bool SendHttpRequest(LPCSTR address, LPCSTR request, int requestLength, LPSTR response, int responseLength);
 
-void StartMultiplay(Multiplay* multiplay, MultiplayOption* option, Question* question, QuestionOption* questionOption, HWND handle);
-void StopMultiplay(Multiplay* multiplay);
-void SendQuestion(Multiplay* multiplay, HWND* buttons, int answer);
-void SendAnswer(Multiplay* multiplay);
-void RequestChangeRole(Multiplay* multiplay);
+void StartOnlineMultiplay(OnlineMultiplay* multiplay, OnlineMultiplayOption* option, Question* question, QuestionOption* questionOption, HWND handle);
+void StopOnlineMultiplay(OnlineMultiplay* multiplay);
+void SendQuestion(OnlineMultiplay* multiplay, HWND* buttons, int answer);
+void SendAnswer(OnlineMultiplay* multiplay);
+void RequestChangeRole(OnlineMultiplay* multiplay);

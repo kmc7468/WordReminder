@@ -16,8 +16,8 @@ void LoadSetting() {
 	Setting.GivePronunciation = (bool)ReadRegistryDWord(key, _T("GivePronunciation"), false);
 
 	Setting.NewServerPort = (int)ReadRegistryDWord(key, _T("NewServerPort"), 1234);
-	Setting.NewServerMode = (MultiplayMode)ReadRegistryDWord(key, _T("NewServerMode"), TurnMode);
-	Setting.NewServerRole = (MultiplayRole)ReadRegistryDWord(key, _T("NewServerRole"), Examiner);
+	Setting.NewServerMode = (OnlineMultiplayMode)ReadRegistryDWord(key, _T("NewServerMode"), TurnMode);
+	Setting.NewServerRole = (OnlineMultiplayRole)ReadRegistryDWord(key, _T("NewServerRole"), Examiner);
 
 	Setting.ServerIp = ReadRegistryString(key, _T("ServerIp"));
 	Setting.ServerPort = (int)ReadRegistryDWord(key, _T("ServerPort"), 1234);

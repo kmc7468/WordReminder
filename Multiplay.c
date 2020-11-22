@@ -8,12 +8,12 @@
 #include <tchar.h>
 #include <time.h>
 
-static SOCKET GetClientSocket(Multiplay* multiplay);
+static SOCKET GetClientSocket(OnlineMultiplay* multiplay);
 
 #define My multiplay->Players[0]
 #define Other multiplay->Players[1]
 
-bool OpenServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
+bool OpenServer(OnlineMultiplay* multiplay, OnlineMultiplayOption* multiplayOption) {
 	multiplay->Option = multiplayOption;
 	memset(multiplay->Players, 0, sizeof(multiplay->Players));
 	multiplay->Status = OpeningServer;
@@ -29,14 +29,14 @@ bool OpenServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
 		return false;
 	} else return true;
 }
-bool WaitForPlayer(Multiplay* multiplay) {
+bool WaitForPlayer(OnlineMultiplay* multiplay) {
 	multiplay->Status = WaitingForPlayer;
 	InvalidateRect(multiplay->Window, NULL, TRUE);
 
 	if (listen(My.Socket, 1) == SOCKET_ERROR) return false;
 	else return (Other.Socket = accept(My.Socket, (SOCKADDR*)&Other.Address, NULL)) != SOCKET_ERROR;
 }
-bool JoinServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
+bool JoinServer(OnlineMultiplay* multiplay, OnlineMultiplayOption* multiplayOption) {
 	multiplay->Option = multiplayOption;
 	memset(multiplay->Players, 0, sizeof(multiplay->Players));
 	multiplay->Status = JoiningServer;
@@ -55,14 +55,14 @@ bool JoinServer(Multiplay* multiplay, MultiplayOption* multiplayOption) {
 		return false;
 	} else return true;
 }
-void DestroyMultiplay(Multiplay* multiplay) {
+void DestroyOnlineMultiplay(OnlineMultiplay* multiplay) {
 	closesocket(My.Socket);
 	free(multiplay->Option->ServerIp);
 	free(multiplay->Option);
 	multiplay->Status = Singleplay;
 }
 
-bool Send(Multiplay* multiplay, const void* data, int length) {
+bool Send(OnlineMultiplay* multiplay, const void* data, int length) {
 	int sent = 0;
 	do {
 		const int result = send(GetClientSocket(multiplay), (const char*)data + sent, length - sent, 0);
@@ -71,7 +71,7 @@ bool Send(Multiplay* multiplay, const void* data, int length) {
 	} while (sent < length);
 	return true;
 }
-bool Receive(Multiplay* multiplay, void* buffer, int length) {
+bool Receive(OnlineMultiplay* multiplay, void* buffer, int length) {
 	int received = 0;
 	do {
 		const int result = recv(GetClientSocket(multiplay), (char*)buffer + received, length - received, 0);
@@ -80,31 +80,31 @@ bool Receive(Multiplay* multiplay, void* buffer, int length) {
 	} while (received < length);
 	return true;
 }
-bool SendVersion(Multiplay* multiplay) {
+bool SendVersion(OnlineMultiplay* multiplay) {
 	return SendString(multiplay, WR_APPLICATION_VERSION) && SendInt(multiplay, WR_MULTIPLAY_PROTOCOL_VERSION);
 }
-bool ReceiveVersion(Multiplay* multiplay, LPTSTR* serverVersion, int* protocolVersion) {
+bool ReceiveVersion(OnlineMultiplay* multiplay, LPTSTR* serverVersion, int* protocolVersion) {
 	return ReceiveString(multiplay, serverVersion) && ReceiveInt(multiplay, protocolVersion);
 }
-bool SendBool(Multiplay* multiplay, bool data) {
+bool SendBool(OnlineMultiplay* multiplay, bool data) {
 	return Send(multiplay, &data, sizeof(data));
 }
-bool ReceiveBool(Multiplay* multiplay, bool* buffer) {
+bool ReceiveBool(OnlineMultiplay* multiplay, bool* buffer) {
 	return Receive(multiplay, buffer, sizeof(*buffer));
 }
-bool SendInt(Multiplay* multiplay, int data) {
+bool SendInt(OnlineMultiplay* multiplay, int data) {
 	return Send(multiplay, &data, sizeof(data));
 }
-bool ReceiveInt(Multiplay* multiplay, int* buffer) {
+bool ReceiveInt(OnlineMultiplay* multiplay, int* buffer) {
 	return Receive(multiplay, buffer, sizeof(*buffer));
 }
-bool SendString(Multiplay* multiplay, LPCTSTR data) {
+bool SendString(OnlineMultiplay* multiplay, LPCTSTR data) {
 	const LPCWSTR raw = GetRawString(data);
 	const int rawLength = (int)wcslen(raw);
 	const bool result = SendInt(multiplay, rawLength) && Send(multiplay, raw, sizeof(WCHAR) * rawLength);
 	return FreeRawString(raw), result;
 }
-bool ReceiveString(Multiplay* multiplay, LPTSTR* buffer) {
+bool ReceiveString(OnlineMultiplay* multiplay, LPTSTR* buffer) {
 	int rawLength;
 	if (!ReceiveInt(multiplay, &rawLength)) return false;
 	const LPWSTR raw = calloc(rawLength + 1, sizeof(WCHAR));
@@ -116,7 +116,7 @@ bool ReceiveString(Multiplay* multiplay, LPTSTR* buffer) {
 		return false;
 	}
 }
-bool SendVocabulary(Multiplay* multiplay) {
+bool SendVocabulary(OnlineMultiplay* multiplay) {
 	if (!SendInt(multiplay, multiplay->QuestionOption->Vocabulary.Count)) return false;
 	for (int i = 0; i < multiplay->QuestionOption->Vocabulary.Count; ++i) {
 		if (!SendString(multiplay, multiplay->QuestionOption->Vocabulary.Array[i].Word)) return false;
@@ -125,7 +125,7 @@ bool SendVocabulary(Multiplay* multiplay) {
 	}
 	return true;
 }
-bool ReceiveVocabulary(Multiplay* multiplay) {
+bool ReceiveVocabulary(OnlineMultiplay* multiplay) {
 	int count;
 	if (!ReceiveInt(multiplay, &count)) return false;
 	for (int i = 0; i < count; ++i) {
@@ -145,7 +145,7 @@ bool ReceiveVocabulary(Multiplay* multiplay) {
 	return true;
 }
 
-SOCKET GetClientSocket(Multiplay* multiplay) {
+SOCKET GetClientSocket(OnlineMultiplay* multiplay) {
 	return multiplay->Option->SocketType == Server ? Other.Socket : My.Socket;
 }
 
@@ -210,9 +210,9 @@ static DWORD WINAPI WaitForPlayerThread(LPVOID param);
 static DWORD WINAPI JoinServerThread(LPVOID param);
 static DWORD WINAPI ReceiveThread(LPVOID param);
 
-#define Context (*(Multiplay*)param)
+#define Context (*(OnlineMultiplay*)param)
 
-void StartMultiplay(Multiplay* multiplay, MultiplayOption* option, Question* question, QuestionOption* questionOption, HWND handle) {
+void StartOnlineMultiplay(OnlineMultiplay* multiplay, OnlineMultiplayOption* option, Question* question, QuestionOption* questionOption, HWND handle) {
 	multiplay->Window = handle;
 	multiplay->Question = question;
 	multiplay->QuestionOption = questionOption;
@@ -231,11 +231,11 @@ void StartMultiplay(Multiplay* multiplay, MultiplayOption* option, Question* que
 		StartThread(&g_Thread, JoinServerThread, temp);
 	}
 }
-void StopMultiplay(Multiplay* multiplay) {
+void StopOnlineMultiplay(OnlineMultiplay* multiplay) {
 	SendInt(multiplay, StopCode);
-	DestroyMultiplay(multiplay);
+	DestroyOnlineMultiplay(multiplay);
 }
-void SendQuestion(Multiplay* multiplay, HWND* buttons, int answer) {
+void SendQuestion(OnlineMultiplay* multiplay, HWND* buttons, int answer) {
 	if (!SendInt(multiplay, QuestionCode) ||
 		!SendInt(multiplay, multiplay->Question->Type)) {
 		SendMessage(multiplay->Window, WM_USER + 5, 0, 0);
@@ -259,10 +259,10 @@ void SendQuestion(Multiplay* multiplay, HWND* buttons, int answer) {
 		SendMessage(multiplay->Window, WM_USER + 5, 0, 0);
 	}
 }
-void SendAnswer(Multiplay* multiplay) {
+void SendAnswer(OnlineMultiplay* multiplay) {
 	SendMessage(multiplay->Window, WM_USER + 5 - SendInt(multiplay, AnswerCode), 0, 0);
 }
-void RequestChangeRole(Multiplay* multiplay) {
+void RequestChangeRole(OnlineMultiplay* multiplay) {
 	SendInt(multiplay, RequestChangeRoleCode);
 }
 
@@ -274,7 +274,7 @@ DWORD WINAPI WaitForPlayerThread(LPVOID param) {
 }
 DWORD WINAPI JoinServerThread(LPVOID param) {
 	void** const temp = (void**)param;
-	MultiplayOption* const option = temp[1];
+	OnlineMultiplayOption* const option = temp[1];
 	param = temp[0];
 	free(temp);
 

@@ -13,7 +13,7 @@ static HWND g_StartButton;
 
 static LPCTSTR g_VocabularyPath;
 static Vocabulary* g_Vocabularary;
-static MultiplayOption* g_MultiplayOption;
+static OnlineMultiplayOption* g_MultiplayOption;
 static bool g_IsLocalMultiplay;
 
 static bool g_ShouldEnableMainWindow = true;
@@ -157,7 +157,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		return 0;
 
 	case WM_USER + 1:
-		g_MultiplayOption = (MultiplayOption*)lParam;
+		g_MultiplayOption = (OnlineMultiplayOption*)lParam;
 		SetWindowText(g_StartButton, _T("서버 만들기"));
 		return 0;
 

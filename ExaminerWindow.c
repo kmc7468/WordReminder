@@ -12,7 +12,7 @@ static HWND g_SendButton, g_ChangeRoleButton, g_StopButton;
 
 static QuestionOption* g_QuestionOption;
 static Question g_Question;
-static Multiplay* g_Multiplay;
+static OnlineMultiplay* g_Multiplay;
 
 static bool g_ShouldEnableMainWindow = true;
 
@@ -22,7 +22,7 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		g_RoleFont = CreateGlobalFont(23, true);
 		g_StatusFont = CreateGlobalFont(40, true);
 
-		g_Multiplay = malloc(sizeof(Multiplay));
+		g_Multiplay = malloc(sizeof(OnlineMultiplay));
 		return 0;
 
 	case WM_DESTROY:
@@ -34,7 +34,7 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			free(g_QuestionOption);
 		}
 		if (g_Multiplay) {
-			StopMultiplay(g_Multiplay);
+			StopOnlineMultiplay(g_Multiplay);
 			free(g_Multiplay);
 		}
 
@@ -137,7 +137,7 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 
 	case WM_USER + 1:
-		StartMultiplay(g_Multiplay, (MultiplayOption*)lParam, &g_Question, g_QuestionOption, handle);
+		StartOnlineMultiplay(g_Multiplay, (OnlineMultiplayOption*)lParam, &g_Question, g_QuestionOption, handle);
 		return 0;
 
 	case WM_USER + 2:
@@ -191,7 +191,7 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	}
 
 	case WM_USER + 9: {
-		g_Multiplay = (Multiplay*)lParam;
+		g_Multiplay = (OnlineMultiplay*)lParam;
 		g_Multiplay->Option->Role = Examiner;
 		g_Multiplay->Window = handle;
 		g_Multiplay->Question = &g_Question;

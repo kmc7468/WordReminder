@@ -18,8 +18,8 @@ typedef struct {
 
 	// OnlineMultiplayWindow(Create)
 	int NewServerPort;
-	MultiplayMode NewServerMode;
-	MultiplayRole NewServerRole;
+	OnlineMultiplayMode NewServerMode;
+	OnlineMultiplayRole NewServerRole;
 
 	// OnlineMultiplayWindow(Join)
 	LPTSTR ServerIp;

@@ -16,7 +16,7 @@ static HWND g_ChangeRoleButton, g_StopButton;
 static QuestionOption* g_QuestionOption;
 static Question g_Question;
 static bool g_IsWrong;
-static Multiplay* g_Multiplay;
+static OnlineMultiplay* g_Multiplay;
 
 static bool g_ShouldEnableMainWindow = true;
 
@@ -53,7 +53,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		}
 		g_IsWrong = false;
 		if (g_Multiplay) {
-			StopMultiplay(g_Multiplay);
+			StopOnlineMultiplay(g_Multiplay);
 			free(g_Multiplay);
 			g_Multiplay = NULL;
 		}
@@ -184,7 +184,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 
 		ShowWindow(g_StopButton, SW_HIDE);
 
-		StartMultiplay(g_Multiplay = calloc(1, sizeof(Multiplay)), (MultiplayOption*)lParam, &g_Question, g_QuestionOption, handle);
+		StartOnlineMultiplay(g_Multiplay = calloc(1, sizeof(OnlineMultiplay)), (OnlineMultiplayOption*)lParam, &g_Question, g_QuestionOption, handle);
 		return 0;
 
 	case WM_USER + 2:
@@ -276,7 +276,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	}
 
 	case WM_USER + 9: {
-		g_Multiplay = (Multiplay*)lParam;
+		g_Multiplay = (OnlineMultiplay*)lParam;
 		g_Multiplay->Option->Role = Examinee;
 		g_Multiplay->Window = handle;
 		g_Multiplay->Question = &g_Question;
