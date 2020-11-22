@@ -307,7 +307,7 @@ void CreateChangeRoleButton(HWND handle, RECT windowSize) {
 }
 void ShowNextQuestion(HWND handle, bool generateQuestion) {
 	if (generateQuestion) {
-		GenerateQuestion(&g_Question, g_QuestionOption, NULL);
+		GenerateQuestion(&g_Question, g_QuestionOption, NULL, 5);
 	}
 
 	for (int i = 0; i < 5; ++i) {

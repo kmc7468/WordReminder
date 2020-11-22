@@ -18,14 +18,14 @@ void DrawTextUsingFont(HDC dc, HFONT font, int x, int y, LPCTSTR string, int len
 LPCTSTR ShowOpenFileDialog(HWND handle);
 LPCTSTR ShowSaveFileDialog(HWND handle);
 
-extern HWND MainWindow, VocabularyWindow, MultiplayStartWindow;
+extern HWND MainWindow, VocabularyWindow, OnlineMultiplayWindow;
 
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK OnlineMultiplayWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 
 #define EVENT RECT windowSize; GetWindowRect(handle, &windowSize); switch (message)

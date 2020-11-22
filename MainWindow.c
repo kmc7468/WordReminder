@@ -95,9 +95,9 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 		case 4:
 		case 5: {
 			const WORD id = LOWORD(wParam);
-			MultiplayStartWindow = CreateAndShowWindow(_T("MultiplayStartWindow"), id == 4 ? _T("서버 만들기") : _T("서버 접속하기"), SW_SHOW);
+			OnlineMultiplayWindow = CreateAndShowWindow(_T("OnlineMultiplayWindow"), id == 4 ? _T("서버 만들기") : _T("서버 접속하기"), SW_SHOW);
 			if (id == 4) {
-				SendMessage(MultiplayStartWindow, WM_USER + 2, 0, 0);
+				SendMessage(OnlineMultiplayWindow, WM_USER + 2, 0, 0);
 			}
 			EnableWindow(handle, FALSE);
 			break;

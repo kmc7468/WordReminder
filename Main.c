@@ -18,7 +18,7 @@ int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdArgs, 
 	MSG message;
 	while (GetMessage(&message, NULL, 0, 0)) {
 		if (IsDialogMessage(VocabularyWindow, &message) == 0 &&
-			IsDialogMessage(MultiplayStartWindow, &message) == 0) {
+			IsDialogMessage(OnlineMultiplayWindow, &message) == 0) {
 			TranslateMessage(&message);
 			DispatchMessage(&message);
 		}

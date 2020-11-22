@@ -19,7 +19,7 @@ static DWORD WINAPI GetExternalIpThread(LPVOID param);
 static bool g_ShouldEnableMainWindow = true;
 static bool g_IsServerCreation = false;
 
-LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK OnlineMultiplayWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
 	case WM_CREATE: {
 		SetWindowLong(handle, GWL_STYLE, GetWindowLong(handle, GWL_STYLE) & ~WS_SIZEBOX & ~WS_MAXIMIZEBOX);
@@ -133,6 +133,7 @@ LRESULT CALLBACK MultiplayStartWindowProc(HWND handle, UINT message, WPARAM wPar
 		SetWindowPos(handle, HWND_TOP, 0, 0, 500, 325, SWP_NOMOVE);
 
 		StartThread(&g_Thread, GetExternalIpThread, NULL);
+		SetWindowText(g_ServerAddressEdit, NULL);
 		SendMessage(g_ServerAddressEdit, EM_SETREADONLY, TRUE, 0);
 		char serverPort[12] = { 0 };
 		_itoa(Setting.NewServerPort, serverPort, 10);

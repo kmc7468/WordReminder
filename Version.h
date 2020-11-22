@@ -16,12 +16,12 @@ typedef struct {
 	bool GuessWord;
 	bool GivePronunciation;
 
-	// MultiplayStartWindow(Create)
+	// OnlineMultiplayWindow(Create)
 	int NewServerPort;
 	MultiplayMode NewServerMode;
 	MultiplayRole NewServerRole;
 
-	// MultiplayStartWindow(Join)
+	// OnlineMultiplayWindow(Join)
 	LPTSTR ServerIp;
 	int ServerPort;
 } RegistryData;

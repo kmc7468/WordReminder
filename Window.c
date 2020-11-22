@@ -25,7 +25,7 @@ bool Initialize(HINSTANCE instance) {
 	RegisterWindow(_T("QuestionOptionWindow"), QuestionOptionWindowProc);
 	RegisterWindow(_T("QuestionWindow"), QuestionWindowProc);
 	RegisterWindow(_T("StatisticWindow"), StatisticWindowProc);
-	RegisterWindow(_T("MultiplayStartWindow"), MultiplayStartWindowProc);
+	RegisterWindow(_T("OnlineMultiplayWindow"), OnlineMultiplayWindowProc);
 	RegisterWindow(_T("ExaminerWindow"), ExaminerWindowProc);
 
 	g_GlobalFont.lfCharSet = HANGUL_CHARSET;
@@ -100,7 +100,7 @@ LPCTSTR ShowSaveFileDialog(HWND handle) {
 	return NULL;
 }
 
-HWND MainWindow, VocabularyWindow, MultiplayStartWindow;
+HWND MainWindow, VocabularyWindow, OnlineMultiplayWindow;
 
 void StartThread(Thread* thread, LPTHREAD_START_ROUTINE function, LPVOID param) {
 	thread->Handle = CreateThread(NULL, 0, function, param, 0, &thread->Id);

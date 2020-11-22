@@ -50,4 +50,4 @@ typedef struct {
 	bool GivePronunciation;
 } QuestionOption;
 
-void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer);
+void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector);
