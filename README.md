@@ -10,7 +10,9 @@
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/MainWindow_MultiplayClicked.png" width="49%" />
 </p>
 
-프로그램을 실행하면 가장 먼저 볼 수 있는 화면입니다. 단어 암기하기 버튼을 눌러 단어를 암기할 수 있으며, 단어장 만들기/수정하기 버튼을 눌러 암기에 필요한 단어장을 만들거나 수정할 수도 있습니다. 멀티 플레이 버튼을 눌러 친구와 함께 단어를 암기할 수도 있습니다. 멀티 플레이 버튼을 누르면 버튼이 5초간 서버 만들기와 서버 접속하기 버튼으로 나뉘는데, 멀티 플레이 서버를 직접 열거나 친구가 만든 멀티 플레이 서버에 접속할 수 있습니다.
+프로그램을 실행하면 가장 먼저 볼 수 있는 화면입니다. 단어 암기하기 버튼을 눌러 단어를 암기할 수 있으며, 단어장 만들기/수정하기 버튼을 눌러 암기에 필요한 단어장을 만들거나 수정할 수도 있습니다. 로컬 멀티 플레이 또는 온라인 멀티 플레이 버튼을 눌러 친구와 함께 단어를 암기할 수도 있습니다.
+
+온라인 멀티 플레이 버튼을 누르면 버튼이 5초간 서버 만들기와 서버 접속하기 버튼으로 나뉘는데, 멀티 플레이 서버를 직접 열거나 친구가 만든 멀티 플레이 서버에 접속할 수 있습니다.
 
 ### 단어장 만들기/수정하기
 ![VocabularyWindow](https://github.com/kmc7468/WordReminder/blob/master/img/VocabularyWindow.png)
@@ -31,16 +33,34 @@
 그만 외우기 버튼을 누르면 암기를 종료할 수 있습니다. 이 화면에서는 잘 외우지 못한 단어 목록을 확인하고, 잘 외우지 못한 단어만 모아서 다시 암기할 수도 있습니다. 이러한 경우 적어도 뜻이 다른 5개 이상의 단어를 틀렸어야 합니다.
 
 ### 멀티 플레이
+WordReminder에는 2가지 멀티 플레이 모드가 있어 친구와 함께 단어를 암기할 수 있습니다.
+
+#### 로컬 멀티 플레이
+첫 번째로, 로컬 멀티 플레이는 지금 같이 있는 친구와 컴퓨터 1대를 사용해 암기하는 모드입니다. 메인 화면에서 로컬 멀티 플레이 버튼을 누르면 싱글 플레이 버튼을 눌렀을 때와 같은 화면이 나타납니다. 친구와 함께 암기할 단어장을 선택하고, 문제 유형을 선택할 수 있습니다. 
+
+![LocalMultiplayWindow](https://github.com/kmc7468/WordReminder/blob/master/img/LocalMultiplayWindow.png)
+
+그 창에서 시작하기 버튼을 누르면 볼 수 있는 화면입니다. 로컬 멀티 플레이에서는 친구와 경쟁하며 최대한 빨리, 더 많은 단어를 맞혀야 합니다. 상대적으로 왼쪽에 있는 플레이어(이하 "왼쪽 플레이어")는 키보드의 WASD키, 상대적으로 오른쪽에 있는 플레이어(이하 "오른쪽 플레이어")는 키보드의 방향키를 사용해 선지를 고를 수 있습니다.
+
+제일 먼저 선지를 고른 플레이어를 A, 그렇지 않은 플레이어를 B라고 하겠습니다. A가 고른 선지가 정답일 경우 A는 2점을 얻고 B의 점수에는 변화가 없습니다. 그러나, 정답이 아니였을 경우 B에게 선지를 고를 기회가 주어집니다. 이때, B가 선지를 고를 때까지 A는 선지를 고를 수 없습니다. B가 고른 선지가 정답일 경우 A는 1점을 잃고 B는 2점을 얻습니다. 그러나, 정답이 아니었을 경우 다시 A에게 선지를 고를 기회가 주어지며, B는 더이상 선지를 고를 수 없게됩니다. A가 고른 선지가 정답일 경우 B는 1점을 잃고 A는 1점을 얻습니다. 그러나, 정답이 아니었을 경우 A는 1점을 잃고 B의 점수에는 변화가 없습니다.
+
+![LocalMultiplayWindow_Score](https://github.com/kmc7468/WordReminder/blob/master/img/LocalMultiplayWindow_Score.png)
+
+그만 외우기 버튼을 누르면 두 플레이어의 점수를 확인하고 암기를 종료할 수 있습니다. 싱글 플레이와 달리 잘 외우지 못한 단어 목록을 확인할 수는 없습니다.
+
+#### 온라인 멀티 플레이
+두 번째로, 온라인 멀티 플레이는 멀리 떨어진 친구와 컴퓨터 2대와 인터넷을 사용해 암기하는 모드입니다.
+
 <p float="left">
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/MultiplayStartWindow_ServerCreation.png" width="49%" />
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/MultiplayStartWindow_ServerJoining.png" width="49%" />
 </p>
 
-메인 화면에서 서버 만들기, 서버 접속하기 버튼을 누르면 볼 수 있는 화면입니다. 서버 만들기를 눌렀을 경우 컴퓨터의 외부 IP를 확인하고, 서버를 열 포트와 플레이 모드, 자신의 역할을 고를 수 있습니다. 서버 접속하기 버튼을 눌렀을 경우 접속할 서버의 주소를 입력할 수 있습니다.
+메인 화면에서 각각 서버 만들기, 서버 접속하기 버튼을 누르면 볼 수 있는 화면입니다. 서버 만들기를 눌렀을 경우 컴퓨터의 외부 IP를 확인하고, 서버를 열 포트와 플레이 모드, 자신의 역할을 고를 수 있습니다. 서버 접속하기 버튼을 눌렀을 경우 접속할 서버의 주소를 입력할 수 있습니다.
 
 턴제 모드는 두 사람의 역할이 매 턴마다 바뀌는 플레이 모드이고, 역할 고정 모드는 역할이 바뀌지 않는 플레이 모드입니다.
 
-#### 턴제 모드
+##### 턴제 모드
 <p float="left">
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/QuestionWindow_Examiner1.png" width="49%" />
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/QuestionWindow_Examiner2.png" width="49%" />
@@ -59,7 +79,7 @@
 
 응시자가 올바른 답을 고르면 1회의 턴이 끝나고, 출제자와 응시자의 역할이 바뀝니다. 게임은 언제든지 그만 외우기 버튼을 눌러 중지할 수 있습니다. 그만 외우기 버튼을 누르면 싱글 플레이와 같이 잘 외우지 못한 단어 목록을 확인하고, 잘 외우지 못한 단어만 모아서 다시 암기할 수도 있습니다. 단, 다시 암기하는 것은 멀티 플레이가 아닌 싱글 플레이로 진행됩니다.
 
-### 역할 고정 모드
+##### 역할 고정 모드
 <p float="left">
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/ExaminerWindow_1.png" width="49%" />
 	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/ExaminerWindow_2.png" width="49%" />
