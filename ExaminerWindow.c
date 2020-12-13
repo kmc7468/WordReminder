@@ -72,6 +72,9 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		case PlayerJoining:
 			DrawTextUsingFont(dc, g_RoleFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("상대방이 접속하는 중..."));
 			break;
+		case JoiningServer:
+			DrawTextUsingFont(dc, g_RoleFont, WIDTH / 2, HEIGHT / 2 - 30, STRING("서버에 접속하는 중..."));
+			break;
 
 		case Connected:
 		case SentAnswer:

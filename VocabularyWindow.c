@@ -130,6 +130,8 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 				SetWindowText(g_WordEdit, NULL);
 				SetWindowText(g_PronunciationEdit, NULL);
 				SetWindowText(g_MeaningEdit, NULL);
+
+				g_IsSaved = true;
 			}
 			break;
 		}

@@ -132,9 +132,10 @@ LRESULT CALLBACK OnlineMultiplayWindowProc(HWND handle, UINT message, WPARAM wPa
 		g_IsServerCreation = true;
 		SetWindowPos(handle, HWND_TOP, 0, 0, 500, 325, SWP_NOMOVE);
 
-		StartThread(&g_Thread, GetExternalIpThread, NULL);
 		SetWindowText(g_ServerAddressEdit, NULL);
 		SendMessage(g_ServerAddressEdit, EM_SETREADONLY, TRUE, 0);
+		StartThread(&g_Thread, GetExternalIpThread, NULL);
+
 		char serverPort[12] = { 0 };
 		_itoa(Setting.NewServerPort, serverPort, 10);
 		SetWindowTextA(g_ServerPortEdit, serverPort);

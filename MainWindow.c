@@ -11,7 +11,7 @@ static HWND g_CreateServerButton, g_JoinServerButton;
 static const TCHAR g_Version[] = _T("v") WR_APPLICATION_VERSION;
 
 static Thread g_Thread;
-static DWORD WINAPI ShowMultiplayButtonThread(LPVOID param);
+static DWORD WINAPI ShowOnlineMultiplayButtonThread(LPVOID param);
 
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
@@ -89,7 +89,7 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 			ShowWindow(g_OnlineMultiplayButton, SW_HIDE);
 			ShowWindow(g_CreateServerButton, SW_SHOW);
 			ShowWindow(g_JoinServerButton, SW_SHOW);
-			StartThread(&g_Thread, ShowMultiplayButtonThread, NULL);
+			StartThread(&g_Thread, ShowOnlineMultiplayButtonThread, NULL);
 			return 0;
 
 		case 4:
@@ -123,7 +123,7 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 	return DefWindowProc(handle, message, wParam, lParam);
 }
 
-DWORD WINAPI ShowMultiplayButtonThread(LPVOID param) {
+DWORD WINAPI ShowOnlineMultiplayButtonThread(LPVOID param) {
 	(void)param;
 	Sleep(5000);
 	ShowMultiplayButton();

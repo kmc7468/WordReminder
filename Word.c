@@ -206,6 +206,7 @@ void SetSelectorText(const Question* question, const QuestionOption* option, HWN
 				_tcscat(text, _T("\n("));
 				_tcscat(text, question->Words[i]->Pronunciation);
 				_tcscat(text, _T(")"));
+
 				SetWindowText(buttons[i], text);
 				free(text);
 			} else {
@@ -214,6 +215,7 @@ void SetSelectorText(const Question* question, const QuestionOption* option, HWN
 		} else {
 			SetWindowText(buttons[i], question->Words[i]->Meaning);
 		}
+
 		EnableWindow(buttons[i], TRUE);
 	}
 }
