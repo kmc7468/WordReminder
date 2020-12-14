@@ -199,8 +199,8 @@ void GenerateQuestion(Question* question, const QuestionOption* option, Word* an
 void SetSelectorText(const Question* question, const QuestionOption* option, HWND* buttons, int selector, bool mustSetWord) {
 	for (int i = 0; i < selector; ++i) {
 		if (mustSetWord || question->Type == GuessWord) {
-			if (option->GivePronunciation &&
-				(question->Words[i]->Pronunciation[0] == 0 || _tcscmp(question->Words[i]->Word, question->Words[i]->Pronunciation))) {
+			if (option->GivePronunciation && question->Words[i]->Pronunciation[0] != 0 &&
+				_tcscmp(question->Words[i]->Word, question->Words[i]->Pronunciation)) {
 				LPTSTR text = malloc(sizeof(TCHAR) * (_tcslen(question->Words[i]->Word) + _tcslen(question->Words[i]->Pronunciation) + 4));
 				_tcscpy(text, question->Words[i]->Word);
 				_tcscat(text, _T("\n("));
