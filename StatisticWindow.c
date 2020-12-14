@@ -64,6 +64,13 @@ LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, L
 		PAINTSTRUCT ps;
 		const HDC dc = BeginPaint(handle, &ps);
 
+		TCHAR title[18] = _T("틀린 단어 목록(");
+		TCHAR temp[11];
+		_itot(g_WrongVocabulary.Count, temp, 10);
+		_tcscat(title, temp);
+		_tcscat(title, _T("개)"));
+		DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, title, (int)_tcslen(title));
+
 		DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("틀린 단어 목록"));
 		DrawTextUsingFont(dc, GlobalDefaultFont, WIDTH / 3 + 20, 40, STRING("단어"));
 		DrawTextUsingFont(dc, GlobalDefaultFont, WIDTH / 3 + 20, 100, STRING("발음"));
