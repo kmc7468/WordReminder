@@ -16,8 +16,8 @@ static bool g_ShouldEnableMainWindow = true;
 LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
 	case WM_CREATE:
-		g_WordList = CreateAndShowChild(_T("listbox"), NULL, GlobalDefaultFont, WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
-			10, 40, WIDTH / 3, HEIGHT - 80, handle, 0);
+		g_WordList = CreateAndShowChild(_T("listbox"), NULL, GlobalDefaultFont, WS_BORDER | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
+			10, 40, WIDTH / 3, HEIGHT - 93, handle, 0);
 
 		g_WordEdit = CreateAndShowChild(_T("edit"), NULL, GlobalDefaultFont, WS_BORDER | WS_GROUP | WS_TABSTOP,
 			WIDTH / 3 + 20, 65, WIDTH / 3 * 2 - 45, 25, handle, 1);
@@ -49,7 +49,7 @@ LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, L
 		return 0;
 
 	case WM_SIZE:
-		SetWindowPos(g_WordList, HWND_TOP, 0, 0, WIDTH / 3, HEIGHT - 80, SWP_NOMOVE);
+		SetWindowPos(g_WordList, HWND_TOP, 0, 0, WIDTH / 3, HEIGHT - 93, SWP_NOMOVE);
 
 		SetWindowPos(g_WordEdit, HWND_TOP, WIDTH / 3 + 20, 65, WIDTH / 3 * 2 - 45, 25, SWP_NOZORDER);
 		SetWindowPos(g_PronunciationEdit, HWND_TOP, WIDTH / 3 + 20, 125, WIDTH / 3 * 2 - 45, 25, SWP_NOZORDER);

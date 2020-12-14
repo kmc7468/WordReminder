@@ -46,7 +46,7 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 
 	case WM_SIZE:
-		SetWindowPos(g_WordList, HWND_TOP, 0, 0, WIDTH / 3, HEIGHT - 160, SWP_NOMOVE);
+		SetWindowPos(g_WordList, HWND_TOP, 0, 0, WIDTH / 3, HEIGHT - 172, SWP_NOMOVE);
 
 		SetWindowPos(g_WordEdit, HWND_TOP, WIDTH / 3 + 20, 145, WIDTH / 3 * 2 - 45, 25, 0);
 		SetWindowPos(g_PronunciationEdit, HWND_TOP, WIDTH / 3 + 20, 205, WIDTH / 3 * 2 - 45, 25, 0);
@@ -220,8 +220,8 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 }
 
 void CreateChildren(HWND handle, RECT windowSize) {
-	g_WordList = CreateAndShowChild(_T("listbox"), NULL, GlobalDefaultFont, WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
-		10, 120, WIDTH / 3, HEIGHT - 160, handle, 0);
+	g_WordList = CreateAndShowChild(_T("listbox"), NULL, GlobalDefaultFont, WS_BORDER | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
+		10, 120, WIDTH / 3, HEIGHT - 172, handle, 0);
 	SendMessage(handle, WM_SIZE, 0, 0);
 	for (int i = 0; i < g_QuestionOption->Vocabulary.Count; ++i) {
 		SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)g_QuestionOption->Vocabulary.Array[i].Word);
