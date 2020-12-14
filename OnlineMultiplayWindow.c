@@ -110,7 +110,7 @@ LRESULT CALLBACK OnlineMultiplayWindowProc(HWND handle, UINT message, WPARAM wPa
 				Setting.NewServerMode = option->Mode;
 				Setting.NewServerRole = option->Role;
 			} else {
-				const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("멀티 플레이"), SW_SHOW);
+				const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("온라인 멀티 플레이"), SW_SHOW);
 				SendMessage(questionWindow, WM_USER, 0, (LPARAM)calloc(1, sizeof(QuestionOption)));
 				SendMessage(questionWindow, WM_USER + 1, 0, (LPARAM)option);
 

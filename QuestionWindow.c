@@ -256,7 +256,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		g_QuestionOption->Vocabulary.Array = NULL;
 		g_QuestionOption->Vocabulary.Count = 0;
 
-		const HWND statisticWindow = CreateAndShowWindow(_T("StatisticWindow"), _T("단어 암기하기"), SW_SHOW);
+		const HWND statisticWindow = CreateAndShowWindow(_T("StatisticWindow"), g_Multiplay ? _T("온라인 멀티 플레이") : _T("단어 암기하기"), SW_SHOW);
 		SendMessage(statisticWindow, WM_USER, 0, (LPARAM)vocabulary);
 
 		g_ShouldEnableMainWindow = false;
@@ -265,7 +265,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	}
 
 	case WM_USER + 8: {
-		const HWND examinerWindow = CreateAndShowWindow(_T("ExaminerWindow"), _T("멀티 플레이"), SW_SHOW);
+		const HWND examinerWindow = CreateAndShowWindow(_T("ExaminerWindow"), _T("온라인 멀티 플레이"), SW_SHOW);
 		SendMessage(examinerWindow, WM_USER + 9, 0, (LPARAM)g_Multiplay);
 
 		g_Multiplay = NULL;

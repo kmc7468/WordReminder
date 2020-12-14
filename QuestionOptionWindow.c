@@ -130,11 +130,11 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 				const HWND questionWindow = CreateAndShowWindow(_T("QuestionWindow"), _T("단어 암기하기"), SW_SHOW);
 				SendMessage(questionWindow, WM_USER, 0, (LPARAM)option);
 				if (g_MultiplayOption) {
-					SetWindowText(questionWindow, _T("멀티 플레이"));
+					SetWindowText(questionWindow, _T("온라인 멀티 플레이"));
 					SendMessage(questionWindow, WM_USER + 1, 0, (LPARAM)g_MultiplayOption);
 				}
 			} else {
-				const HWND examinerWindow = CreateAndShowWindow(_T("ExaminerWindow"), _T("멀티 플레이"), SW_SHOW);
+				const HWND examinerWindow = CreateAndShowWindow(_T("ExaminerWindow"), _T("온라인 멀티 플레이"), SW_SHOW);
 				SendMessage(examinerWindow, WM_USER, 0, (LPARAM)option);
 				SendMessage(examinerWindow, WM_USER + 1, 0, (LPARAM)g_MultiplayOption);
 			}
