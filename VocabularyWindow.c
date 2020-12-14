@@ -13,8 +13,8 @@ static bool g_IsSaved = true;
 LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
 	case WM_CREATE:
-		g_WordList = CreateAndShowChild(_T("listbox"), NULL, GlobalDefaultFont, WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
-			10, 40, WIDTH / 3, HEIGHT - 80, handle, 0);
+		g_WordList = CreateAndShowChild(_T("listbox"), NULL, GlobalDefaultFont, WS_BORDER | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
+			10, 40, WIDTH / 3, HEIGHT - 93, handle, 0);
 
 		g_WordEdit = CreateAndShowChild(_T("edit"), NULL, GlobalDefaultFont, WS_BORDER | WS_GROUP | WS_TABSTOP,
 			WIDTH / 3 + 20, 65, WIDTH / 3 * 2 - 45, 25, handle, 1);
@@ -43,7 +43,7 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 		return 0;
 
 	case WM_SIZE:
-		SetWindowPos(g_WordList, HWND_TOP, 0, 0, WIDTH / 3, HEIGHT - 80, SWP_NOMOVE);
+		SetWindowPos(g_WordList, HWND_TOP, 0, 0, WIDTH / 3, HEIGHT - 93, SWP_NOMOVE);
 
 		SetWindowPos(g_WordEdit, 0, WIDTH / 3 + 20, 65, WIDTH / 3 * 2 - 45, 25, SWP_NOZORDER);
 		SetWindowPos(g_PronunciationEdit, 0, WIDTH / 3 + 20, 125, WIDTH / 3 * 2 - 45, 25, SWP_NOZORDER);
@@ -59,7 +59,13 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 		PAINTSTRUCT ps;
 		const HDC dc = BeginPaint(handle, &ps);
 
-		DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("단어 목록"));
+		TCHAR title[15] = _T("단어 목록(");
+		TCHAR temp[11];
+		_itot(g_Vocabulary.Count, temp, 10);
+		_tcscat(title, temp);
+		_tcscat(title, _T("개)"));
+		DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, title, (int)_tcslen(title));
+
 		DrawTextUsingFont(dc, GlobalDefaultFont, WIDTH / 3 + 20, 40, STRING("단어"));
 		DrawTextUsingFont(dc, GlobalDefaultFont, WIDTH / 3 + 20, 100, STRING("발음"));
 		DrawTextUsingFont(dc, GlobalDefaultFont, WIDTH / 3 + 20, 160, STRING("뜻"));
@@ -99,6 +105,8 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 			SetWindowText(g_PronunciationEdit, NULL);
 			SetWindowText(g_MeaningEdit, NULL);
 			SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)word.Word);
+
+			InvalidateRect(handle, NULL, TRUE);
 			break;
 		}
 
@@ -109,6 +117,8 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 			g_IsSaved = false;
 			RemoveWord(&g_Vocabulary, index);
 			SendMessage(g_WordList, LB_DELETESTRING, index, 0);
+
+			InvalidateRect(handle, NULL, TRUE);
 			break;
 		}
 
@@ -132,6 +142,7 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 				SetWindowText(g_MeaningEdit, NULL);
 
 				g_IsSaved = true;
+				InvalidateRect(handle, NULL, TRUE);
 			}
 			break;
 		}
@@ -163,6 +174,8 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 	}
 
 	case WM_CLOSE:
+		if (!g_IsSaved &&
+			MessageBox(handle, _T("단어장이 저장되지 않았습니다. 창을 닫으면 저장되지 않은 내용은 삭제됩니다. 정말 창을 닫으시겠습니까?"), _T("경고"), MB_YESNO | MB_ICONWARNING) != IDYES) return 0;
 		DestroyWindow(handle);
 		return 0;
 	}
