@@ -13,7 +13,21 @@ void RegisterWindow(LPCTSTR name, WNDPROC wndProc);
 HWND CreateAndShowWindow(LPCTSTR name, LPCTSTR title, int cmdShow);
 HWND CreateAndShowChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu);
 HFONT CreateGlobalFont(int height, bool isBold);
+
+typedef struct {
+	HDC OriginalDC;
+	HDC BufferDC;
+	HBITMAP OriginalBitmap;
+	PAINTSTRUCT PaintStruct;
+	RECT ClientRect;
+} DoubleBufferingContext;
+
+HDC StartDraw(HWND handle, DoubleBufferingContext* context);
+void EndDraw(HWND handle, DoubleBufferingContext* context);
 void DrawTextUsingFont(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length);
+
+#define BEGINPAINT DoubleBufferingContext context; const HDC dc = StartDraw(handle, &context)
+#define ENDPAINT EndDraw(handle, &context), 0
 
 LPCTSTR ShowOpenFileDialog(HWND handle);
 LPCTSTR ShowSaveFileDialog(HWND handle);

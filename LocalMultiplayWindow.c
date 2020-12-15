@@ -69,8 +69,7 @@ LRESULT CALLBACK LocalMultiplayWindowProc(HWND handle, UINT message, WPARAM wPar
 		return 0;
 
 	case WM_PAINT: {
-		PAINTSTRUCT ps;
-		const HDC dc = BeginPaint(handle, &ps);
+		BEGINPAINT;
 		SetTextAlign(dc, TA_CENTER);
 
 		const Word* const answer = g_Question.Words[g_Question.Answer];
@@ -130,8 +129,7 @@ LRESULT CALLBACK LocalMultiplayWindowProc(HWND handle, UINT message, WPARAM wPar
 			SetTextColor(dc, RGB(0, 0, 0));
 		}
 
-		EndPaint(handle, &ps);
-		return 0;
+		return ENDPAINT;
 	}
 
 	case WM_KEYDOWN: {
@@ -176,7 +174,7 @@ LRESULT CALLBACK LocalMultiplayWindowProc(HWND handle, UINT message, WPARAM wPar
 				g_Winner = -2 + (player == g_Multiplay->Players);
 			}
 
-			InvalidateRect(handle, NULL, TRUE);
+			InvalidateRect(handle, NULL, FALSE);
 			EnableWindow(g_Buttons[answer], FALSE);
 		} else {
 			if (abs(g_Multiplay->Phase) <= 1) {
@@ -243,5 +241,5 @@ LRESULT CALLBACK LocalMultiplayWindowProc(HWND handle, UINT message, WPARAM wPar
 void ShowNextQuestion(HWND handle) {
 	GenerateQuestion(&g_Question, g_QuestionOption, NULL, 4);
 	SetSelectorText(&g_Question, g_QuestionOption, g_Buttons, 4, false);
-	InvalidateRect(handle, NULL, TRUE);
+	InvalidateRect(handle, NULL, FALSE);
 }

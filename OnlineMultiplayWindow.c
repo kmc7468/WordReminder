@@ -48,8 +48,7 @@ LRESULT CALLBACK OnlineMultiplayWindowProc(HWND handle, UINT message, WPARAM wPa
 		return 0;
 
 	case WM_PAINT: {
-		PAINTSTRUCT ps;
-		const HDC dc = BeginPaint(handle, &ps);
+		BEGINPAINT;
 
 		DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("서버 주소"));
 		DrawTextUsingFont(dc, GlobalBoldFont, 320, 10, STRING("서버 포트"));
@@ -58,8 +57,7 @@ LRESULT CALLBACK OnlineMultiplayWindowProc(HWND handle, UINT message, WPARAM wPa
 			DrawTextUsingFont(dc, GlobalBoldFont, 10, 140, STRING("역할"));
 		}
 
-		EndPaint(handle, &ps);
-		return 0;
+		return ENDPAINT;
 	}
 
 	case WM_CTLCOLORSTATIC: {

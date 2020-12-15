@@ -66,7 +66,7 @@ void RegisterWindow(LPCTSTR name, WNDPROC wndProc) {
 	RegisterClass(&wc);
 }
 HWND CreateAndShowWindow(LPCTSTR name, LPCTSTR title, int cmdShow) {
-	const HWND handle = CreateWindow(name, title, WS_OVERLAPPEDWINDOW,
+	const HWND handle = CreateWindow(name, title, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, NULL, NULL, g_Instance, NULL);
 	return ShowWindow(handle, cmdShow), handle;
 }
@@ -81,6 +81,27 @@ HFONT CreateGlobalFont(int height, bool isBold) {
 	g_GlobalFont.lfHeight = height;
 	g_GlobalFont.lfWeight = isBold ? FW_BOLD : FW_NORMAL;
 	return CreateFontIndirect(&g_GlobalFont);
+}
+
+HDC StartDraw(HWND handle, DoubleBufferingContext* context) {
+	context->OriginalDC = BeginPaint(handle, &context->PaintStruct);
+	context->BufferDC = CreateCompatibleDC(context->OriginalDC);
+
+	GetClientRect(handle, &context->ClientRect);
+	const HBITMAP bufferBitmap = CreateCompatibleBitmap(context->OriginalDC, context->ClientRect.right, context->ClientRect.bottom);
+	context->OriginalBitmap = SelectObject(context->BufferDC, bufferBitmap);
+
+	PatBlt(context->BufferDC, 0, 0, context->ClientRect.right, context->ClientRect.bottom, WHITENESS);
+	return context->BufferDC;
+}
+void EndDraw(HWND handle, DoubleBufferingContext* context) {
+	BitBlt(context->OriginalDC, 0, 0, context->ClientRect.right, context->ClientRect.bottom, context->BufferDC, 0, 0, SRCCOPY);
+
+	const HBITMAP bufferBitmap = SelectObject(context->BufferDC, context->OriginalBitmap);
+	DeleteObject(bufferBitmap);
+	DeleteDC(context->BufferDC);
+
+	EndPaint(handle, &context->PaintStruct);
 }
 void DrawTextUsingFont(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length) {
 	const HGDIOBJ oldFont = SelectObject(dc, font);

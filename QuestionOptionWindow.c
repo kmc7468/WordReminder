@@ -63,15 +63,13 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		return 0;
 
 	case WM_PAINT: {
-		PAINTSTRUCT ps;
-		const HDC dc = BeginPaint(handle, &ps);
+		BEGINPAINT;
 
 		DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("단어장"));
 		DrawTextUsingFont(dc, GlobalBoldFont, 10, 105, STRING("문제 유형"));
 		DrawTextUsingFont(dc, GlobalBoldFont, 10, 165, STRING("기타 옵션"));
 
-		EndPaint(handle, &ps);
-		return 0;
+		return ENDPAINT;
 	}
 
 	case WM_CTLCOLORSTATIC: {

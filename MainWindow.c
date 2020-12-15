@@ -53,8 +53,7 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 		return 0;
 
 	case WM_PAINT: {
-		PAINTSTRUCT ps;
-		const HDC dc = BeginPaint(handle, &ps);
+		BEGINPAINT;
 		SetTextAlign(dc, TA_CENTER);
 
 		DrawTextUsingFont(dc, g_TitleFont, WIDTH / 2, 40, STRING("단어 암기 프로그램"));
@@ -62,8 +61,7 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 
 		DrawTextUsingFont(dc, GlobalDefaultFont, WIDTH / 2, HEIGHT - 70, g_Version, ARRAYSIZE(g_Version));
 
-		EndPaint(handle, &ps);
-		return 0;
+		return ENDPAINT;
 	}
 
 	case WM_COMMAND:

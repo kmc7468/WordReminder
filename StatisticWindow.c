@@ -61,8 +61,7 @@ LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, L
 		return 0;
 
 	case WM_PAINT: {
-		PAINTSTRUCT ps;
-		const HDC dc = BeginPaint(handle, &ps);
+		BEGINPAINT;
 
 		TCHAR title[18] = _T("틀린 단어 목록(");
 		TCHAR temp[11];
@@ -76,8 +75,7 @@ LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, L
 		DrawTextUsingFont(dc, GlobalDefaultFont, WIDTH / 3 + 20, 100, STRING("발음"));
 		DrawTextUsingFont(dc, GlobalDefaultFont, WIDTH / 3 + 20, 160, STRING("뜻"));
 
-		EndPaint(handle, &ps);
-		return 0;
+		return ENDPAINT;
 	}
 
 	case WM_COMMAND:

@@ -58,8 +58,7 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 
 	case WM_PAINT: {
-		PAINTSTRUCT ps;
-		const HDC dc = BeginPaint(handle, &ps);
+		BEGINPAINT;
 		SetTextAlign(dc, TA_CENTER);
 
 		switch (g_Multiplay->Status) {
@@ -92,8 +91,7 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			break;
 		}
 
-		EndPaint(handle, &ps);
-		return 0;
+		return ENDPAINT;
 	}
 
 	case WM_COMMAND:
@@ -147,14 +145,14 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		CreateChildren(handle, windowSize);
 
 		g_Multiplay->Status = Connected;
-		InvalidateRect(handle, NULL, TRUE);
+		InvalidateRect(handle, NULL, FALSE);
 		return 0;
 
 	case WM_USER + 4:
 		EnableWindow(g_SendButton, TRUE);
 
 		g_Multiplay->Status = Connected;
-		InvalidateRect(handle, NULL, TRUE);
+		InvalidateRect(handle, NULL, FALSE);
 		return 0;
 
 	case WM_USER + 5:

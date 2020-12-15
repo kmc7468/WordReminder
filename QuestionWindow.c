@@ -81,8 +81,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return 0;
 
 	case WM_PAINT: {
-		PAINTSTRUCT ps;
-		const HDC dc = BeginPaint(handle, &ps);
+		BEGINPAINT;
 		SetTextAlign(dc, TA_CENTER);
 
 		if (g_Multiplay) {
@@ -139,8 +138,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			}
 		}
 
-		EndPaint(handle, &ps);
-		return 0;
+		return ENDPAINT;
 	}
 
 	case WM_COMMAND: {
@@ -154,7 +152,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		} else if (!g_Multiplay || g_Multiplay->Option->Role == Examinee) {
 			if (menu != g_Question.Answer) {
 				g_Question.Words[g_Question.Answer]->IsWrong = g_Question.Words[menu]->IsWrong = g_IsWrong = true;
-				InvalidateRect(handle, NULL, TRUE);
+				InvalidateRect(handle, NULL, FALSE);
 				EnableWindow(g_Buttons[menu], FALSE);
 				return 0;
 			}
@@ -215,7 +213,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		}
 
 		g_Multiplay->Status = Connected;
-		InvalidateRect(handle, NULL, TRUE);
+		InvalidateRect(handle, NULL, FALSE);
 		return 0;
 
 	case WM_USER + 3:
@@ -237,7 +235,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		}
 
 		g_Multiplay->Status = Connected;
-		InvalidateRect(handle, NULL, TRUE);
+		InvalidateRect(handle, NULL, FALSE);
 		return 0;
 
 	case WM_USER + 5:
@@ -311,5 +309,5 @@ void ShowNextQuestion(HWND handle, bool generateQuestion) {
 		GenerateQuestion(&g_Question, g_QuestionOption, NULL, 5);
 	}
 	SetSelectorText(&g_Question, g_QuestionOption, g_Buttons, 5, g_Multiplay && g_Multiplay->Option->Role == Examiner);
-	InvalidateRect(handle, NULL, TRUE);
+	InvalidateRect(handle, NULL, FALSE);
 }

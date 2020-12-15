@@ -56,8 +56,7 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 		return 0;
 
 	case WM_PAINT: {
-		PAINTSTRUCT ps;
-		const HDC dc = BeginPaint(handle, &ps);
+		BEGINPAINT;
 
 		TCHAR title[15] = _T("단어 목록(");
 		TCHAR temp[11];
@@ -70,8 +69,7 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 		DrawTextUsingFont(dc, GlobalDefaultFont, WIDTH / 3 + 20, 100, STRING("발음"));
 		DrawTextUsingFont(dc, GlobalDefaultFont, WIDTH / 3 + 20, 160, STRING("뜻"));
 
-		EndPaint(handle, &ps);
-		return 0;
+		return ENDPAINT;
 	}
 
 	case WM_COMMAND:
@@ -106,7 +104,7 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 			SetWindowText(g_MeaningEdit, NULL);
 			SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)word.Word);
 
-			InvalidateRect(handle, NULL, TRUE);
+			InvalidateRect(handle, NULL, FALSE);
 			break;
 		}
 
@@ -118,7 +116,7 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 			RemoveWord(&g_Vocabulary, index);
 			SendMessage(g_WordList, LB_DELETESTRING, index, 0);
 
-			InvalidateRect(handle, NULL, TRUE);
+			InvalidateRect(handle, NULL, FALSE);
 			break;
 		}
 
@@ -142,7 +140,7 @@ LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, 
 				SetWindowText(g_MeaningEdit, NULL);
 
 				g_IsSaved = true;
-				InvalidateRect(handle, NULL, TRUE);
+				InvalidateRect(handle, NULL, FALSE);
 			}
 			break;
 		}
