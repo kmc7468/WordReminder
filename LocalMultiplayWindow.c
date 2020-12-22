@@ -4,6 +4,7 @@
 #include "Word.h"
 
 #include <math.h>
+#include <stdlib.h>
 
 static void ShowNextQuestion(HWND handle);
 

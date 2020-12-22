@@ -3,6 +3,8 @@
 #include "Multiplay.h"
 #include "Word.h"
 
+#include <stdlib.h>
+
 static void CreateChildren(HWND handle, RECT windowSize);
 
 static HFONT g_RoleFont, g_StatusFont;

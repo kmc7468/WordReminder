@@ -1,36 +1,14 @@
 #include "Word.h"
 
+#include "String.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
 
-static LPSTR WCS2MBS(LPCWSTR wcs, bool destroyWCS);
-static LPWSTR MBS2WCS(LPCSTR mbs, bool destroyMBS);
 static LPTSTR ReadString(FILE* file);
 static void WriteString(FILE* file, LPCTSTR string);
-
-LPTSTR MakeUniString(LPWSTR raw) {
-#if defined(UNICODE) || defined(_UNICODE)
-	return raw;
-#else
-	return WCS2MBS(raw, true);
-#endif
-}
-LPCWSTR GetRawString(LPCTSTR tcs) {
-#if defined(UNICODE) || defined(_UNICODE)
-	return tcs;
-#else
-	return MBS2WCS(tcs, false);
-#endif
-}
-void FreeRawString(LPCWSTR raw) {
-#if defined(UNICODE) || defined(_UNICODE)
-	(void)raw;
-#else
-	free((LPWSTR)raw);
-#endif
-}
 
 bool CopyWord(Word* dest, const Word* source) {
 	bool success = true;
@@ -126,42 +104,6 @@ void DestroyVocabulary(Vocabulary* vocabulary) {
 	memset(vocabulary, 0, sizeof(*vocabulary));
 }
 
-LPSTR WCS2MBS(LPCWSTR wcs, bool destroyWCS) {
-	const int length = WideCharToMultiByte(CP_ACP, 0, wcs, -1, NULL, 0, NULL, NULL);
-	const LPSTR result = malloc(sizeof(CHAR) * length);
-	WideCharToMultiByte(CP_ACP, 0, wcs, -1, result, length, NULL, NULL);
-
-	if (destroyWCS) {
-		free((LPWSTR)wcs);
-	}
-	return result;
-}
-LPWSTR MBS2WCS(LPCSTR mbs, bool destroyMBS) {
-	const int length = MultiByteToWideChar(CP_ACP, 0, mbs, -1, NULL, 0);
-	const LPWSTR result = malloc(sizeof(WCHAR) * length);
-	MultiByteToWideChar(CP_ACP, 0, mbs, -1, result, length);
-
-	if (destroyMBS) {
-		free((LPSTR)mbs);
-	}
-	return result;
-}
-LPTSTR ReadString(FILE* file) {
-	int length;
-	fread(&length, sizeof(length), 1, file);
-	const LPWSTR rawStr = malloc(sizeof(WCHAR) * (length + 1));
-	fread(rawStr, sizeof(*rawStr), length, file);
-	rawStr[length] = 0;
-	return MakeUniString(rawStr);
-}
-void WriteString(FILE* file, LPCTSTR string) {
-	const LPCWSTR raw = GetRawString(string);
-	const int rawLength = (int)wcslen(raw);
-	fwrite(&rawLength, sizeof(rawLength), 1, file);
-	fwrite(raw, sizeof(WCHAR), rawLength, file);
-	FreeRawString(raw);
-}
-
 void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector) {
 	const Word* const oldAnswer = question->Answer >= 0 ? question->Words[question->Answer] : NULL;
 	if (answer) {
@@ -218,4 +160,20 @@ void SetSelectorText(const Question* question, const QuestionOption* option, HWN
 
 		EnableWindow(buttons[i], TRUE);
 	}
+}
+
+LPTSTR ReadString(FILE* file) {
+	int length;
+	fread(&length, sizeof(length), 1, file);
+	const LPWSTR rawStr = malloc(sizeof(WCHAR) * (length + 1));
+	fread(rawStr, sizeof(*rawStr), length, file);
+	rawStr[length] = 0;
+	return MakeUniString(rawStr);
+}
+void WriteString(FILE* file, LPCTSTR string) {
+	const LPCWSTR raw = GetRawString(string);
+	const int rawLength = (int)wcslen(raw);
+	fwrite(&rawLength, sizeof(rawLength), 1, file);
+	fwrite(raw, sizeof(WCHAR), rawLength, file);
+	FreeRawString(raw);
 }
