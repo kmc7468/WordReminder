@@ -13,7 +13,7 @@ file(GLOB_RECURSE SOURCE_LIST "./*.c")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 
 add_executable(${PROJECT_NAME} WIN32 ${SOURCE_LIST})
-target_link_libraries(${PROJECT_NAME} ws2_32)
+target_link_libraries(${PROJECT_NAME} ws2_32 winhttp)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
 	check_ipo_supported(RESULT isIPOSupported)

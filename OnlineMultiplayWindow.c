@@ -1,5 +1,6 @@
 #include "Window.h"
 
+#include "Http.h"
 #include "Multiplay.h"
 #include "Version.h"
 
@@ -168,14 +169,22 @@ LRESULT CALLBACK OnlineMultiplayWindowProc(HWND handle, UINT message, WPARAM wPa
 DWORD WINAPI GetExternalIpThread(LPVOID param) {
 	(void)param;
 
-	const char request[] = "GET /raw HTTP/1.1\r\nHost: myexternalip.com\r\nConnection: close\r\n\r\n";
-	char buffer[512] = { 0 };
-	if (!SendHttpRequest("myexternalip.com", request, ARRAYSIZE(request) - 1, buffer, ARRAYSIZE(buffer))) return 0;
+	HttpRequest request;
+	if (!CreateHttpRequest(&request, _T("https://myexternalip.com/raw"), _T("GET"), true)) return 0;
 
-	const char* const body = strstr(buffer, "\r\n\r\n");
-	if (body) {
-		SetWindowTextA(g_ServerAddressEdit, body + 4);
+	if (SendHttpRequest(&request, NULL)) {
+		const HttpResponseBody response = GetHttpResponseBody(&request);
+		if (!response.Data) return 0;
+
+		const LPSTR address = calloc(response.Length + 1, sizeof(CHAR));
+		strncpy(address, (LPCSTR)response.Data, response.Length);
+
+		SetWindowTextA(g_ServerAddressEdit, address);
+		free(address);
+		free(response.Data);
 	}
+
+	DestroyHttpRequest(&request);
 	return 0;
 }
 

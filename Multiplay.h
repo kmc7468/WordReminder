@@ -74,8 +74,6 @@ bool ReceiveString(OnlineMultiplay* multiplay, LPTSTR* buffer);
 bool SendVocabulary(OnlineMultiplay* multiplay);
 bool ReceiveVocabulary(OnlineMultiplay* multiplay);
 
-bool SendHttpRequest(LPCSTR address, LPCSTR request, int requestLength, LPSTR response, int responseLength);
-
 void StartOnlineMultiplay(OnlineMultiplay* multiplay, OnlineMultiplayOption* option, Question* question, QuestionOption* questionOption, HWND handle);
 void StopOnlineMultiplay(OnlineMultiplay* multiplay);
 void SendQuestion(OnlineMultiplay* multiplay, HWND* buttons, int answer);

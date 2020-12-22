@@ -150,49 +150,6 @@ SOCKET GetClientSocket(OnlineMultiplay* multiplay) {
 	return multiplay->Option->SocketType == Server ? Other.Socket : My.Socket;
 }
 
-bool SendHttpRequest(LPCSTR address, LPCSTR request, int requestLength, LPSTR response, int responseLength) {
-	const SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (sock == SOCKET_ERROR) return false;
-
-	const PHOSTENT host = gethostbyname(address);
-	if (!host) {
-		closesocket(sock);
-		return false;
-	}
-
-	SOCKADDR_IN server;
-	server.sin_addr.s_addr = *(ULONG*)host->h_addr;
-	server.sin_family = AF_INET;
-	server.sin_port = htons(80);
-	if (connect(sock, (SOCKADDR*)&server, sizeof(server))) {
-		closesocket(sock);
-		return false;
-	}
-
-	int result, processed = 0;
-	do {
-		result = send(sock, request + processed, requestLength - processed, 0);
-		if (result == SOCKET_ERROR) {
-			closesocket(sock);
-			return false;
-		}
-		processed += result;
-	} while (processed < requestLength);
-
-	processed = 0;
-	do {
-		result = recv(sock, response + processed, responseLength - processed, 0);
-		if (result == SOCKET_ERROR) {
-			closesocket(sock);
-			return false;
-		}
-		processed += result;
-	} while (result > 0 && processed < responseLength);
-
-	closesocket(sock);
-	return true;
-}
-
 typedef enum {
 	StartCode,
 	CompatibleCode,
@@ -222,7 +179,7 @@ void StartOnlineMultiplay(OnlineMultiplay* multiplay, OnlineMultiplayOption* opt
 		if (OpenServer(multiplay, option)) {
 			StartThread(&g_Thread, WaitForPlayerThread, multiplay);
 		} else {
-			MessageBox(handle, _T("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½."), _T("ï¿½ï¿½ï¿½ï¿½"), MB_OK | MB_ICONERROR);
+			MessageBox(handle, _T("¼­¹ö¸¦ ¿©´Â Áß ¿À·ù°¡ ¹ß»ýÇß½À´Ï´Ù."), _T("¿À·ù"), MB_OK | MB_ICONERROR);
 			SendMessage(handle, WM_CLOSE, 0, 0);
 		}
 	} else {
@@ -280,7 +237,7 @@ DWORD WINAPI JoinServerThread(LPVOID param) {
 	free(temp);
 
 	if (!JoinServer(&Context, option)) {
-		MessageBox(Context.Window, _T("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½."), _T("ï¿½ï¿½ï¿½ï¿½"), MB_OK | MB_ICONERROR);
+		MessageBox(Context.Window, _T("¼­¹ö¿¡ Á¢¼ÓÇÏ´Â Áß ¿À·ù°¡ ¹ß»ýÇß½À´Ï´Ù."), _T("¿À·ù"), MB_OK | MB_ICONERROR);
 		SendMessage(Context.Window, WM_CLOSE, 0, 0);
 		return 0;
 	}
@@ -295,10 +252,10 @@ DWORD WINAPI JoinServerThread(LPVOID param) {
 		goto Error;
 	} else if (protocolVersion != WR_MULTIPLAY_PROTOCOL_VERSION) {
 		const LPTSTR message = malloc((_tcslen(serverVersion) + 97) * sizeof(TCHAR));
-		_tcscpy(message, _T("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È£È¯ï¿½ï¿½ï¿½ï¿½ ï¿½Ê½ï¿½ï¿½Ï´ï¿½.\n"));
+		_tcscpy(message, _T("¼­¹öÀÇ ¹öÀü°ú Å¬¶óÀÌ¾ðÆ®ÀÇ ¹öÀüÀÌ È£È¯µÇÁö ¾Ê½À´Ï´Ù.\n"));
 		_tcscat(message, serverVersion);
-		_tcscat(message, _T(" ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ü¾ï¿½ ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½Î±×·ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½."));
-		MessageBox(Context.Window, message, _T("ï¿½ï¿½ï¿½ï¿½"), MB_OK | MB_ICONERROR);
+		_tcscat(message, _T(" ¹öÀüÀÇ ´Ü¾î ¾Ï±â ÇÁ·Î±×·¥À» ¼³Ä¡ÇØ º¸¼¼¿ä."));
+		MessageBox(Context.Window, message, _T("¿À·ù"), MB_OK | MB_ICONERROR);
 		free(serverVersion);
 		free(message);
 
@@ -316,7 +273,7 @@ DWORD WINAPI JoinServerThread(LPVOID param) {
 		!ReceiveVocabulary(&Context) ||
 		!SendInt(&Context, ReadyCode)) {
 	Error:
-		MessageBox(Context.Window, _T("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½."), _T("ï¿½ï¿½ï¿½ï¿½"), MB_OK | MB_ICONERROR);
+		MessageBox(Context.Window, _T("¼­¹ö¿¡ Á¢¼ÓÇÏ´Â Áß ¿À·ù°¡ ¹ß»ýÇß½À´Ï´Ù."), _T("¿À·ù"), MB_OK | MB_ICONERROR);
 		SendMessage(Context.Window, WM_CLOSE, 0, 0);
 		return 0;
 	} else {
@@ -354,16 +311,16 @@ DWORD WINAPI ReceiveThread(LPVOID param) {
 		} else if (magic == AnswerCode) {
 			SendMessage(Context.Window, WM_USER + 4, 0, 0);
 		} else if (magic == RequestChangeRoleCode) {
-			const bool accept = MessageBox(Context.Window, _T("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã»ï¿½ß½ï¿½ï¿½Ï´ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½Ï½Ã°Ú½ï¿½ï¿½Ï±ï¿½?"), _T("ï¿½ï¿½ï¿½ï¿½"), MB_YESNO | MB_ICONQUESTION) == IDYES;
+			const bool accept = MessageBox(Context.Window, _T("»ó´ë¹æÀÌ ¿ªÇÒ º¯°æÀ» ¿äÃ»Çß½À´Ï´Ù. ¼ö¶ôÇÏ½Ã°Ú½À´Ï±î?"), _T("Á¤º¸"), MB_YESNO | MB_ICONQUESTION) == IDYES;
 			SendInt(&Context, DenyChangeRoleCode - accept);
 			if (accept) {
 				SendMessage(Context.Window, WM_USER + 8, 0, 0);
 			}
 		} else if (magic == AcceptChangeRoleCode) {
-			MessageBox(Context.Window, _T("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½."), _T("ï¿½ï¿½ï¿½ï¿½"), MB_OK | MB_ICONINFORMATION);
+			MessageBox(Context.Window, _T("»ó´ë¹æÀÌ ¿ªÇÒ º¯°æÀ» ¼ö¶ôÇß½À´Ï´Ù."), _T("Á¤º¸"), MB_OK | MB_ICONINFORMATION);
 			SendMessage(Context.Window, WM_USER + 8, 0, (LPARAM)&param);
 		} else if (magic == DenyChangeRoleCode) {
-			MessageBox(Context.Window, _T("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½."), _T("ï¿½ï¿½ï¿½ï¿½"), MB_OK | MB_ICONINFORMATION);
+			MessageBox(Context.Window, _T("»ó´ë¹æÀÌ ¿ªÇÒ º¯°æÀ» °ÅÀýÇß½À´Ï´Ù."), _T("Á¤º¸"), MB_OK | MB_ICONINFORMATION);
 		} else {
 			SendMessage(Context.Window, WM_USER + 6, 0, 0);
 			return 0;
