@@ -1,22 +1,26 @@
 #include "Window.h"
 
+#include "Http.h"
 #include "Version.h"
 
 static void ShowMultiplayButton();
 
-static HFONT g_TitleFont;
+static HFONT g_TitleFont, g_UpdateFont;
 static HWND g_SingleplayButton, g_VocabularyButton, g_LocalMultiplayButton, g_OnlineMultiplayButton;
 static HWND g_CreateServerButton, g_JoinServerButton;
+static HWND g_UpdateButton;
 
 static const TCHAR g_Version[] = _T("v") WR_APPLICATION_VERSION;
 
-static Thread g_Thread;
+static Thread g_ButtonThread, g_UpdateThread;
 static DWORD WINAPI ShowOnlineMultiplayButtonThread(LPVOID param);
+static DWORD WINAPI UpdateThread(LPVOID param);
 
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	EVENT {
 	case WM_CREATE:
 		g_TitleFont = CreateGlobalFont(50, true);
+		g_UpdateFont = CreateGlobalFont(14, true);
 
 		g_SingleplayButton = CreateAndShowChild(_T("button"), _T("단어 암기하기"), GlobalBoldFont, BS_PUSHBUTTON,
 			WIDTH / 2 - 150, 140, 300, 50, handle, 0);
@@ -33,11 +37,15 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 			WIDTH / 2 + 2, 320, 148, 50, handle, 5);
 		ShowWindow(g_CreateServerButton, SW_HIDE);
 		ShowWindow(g_JoinServerButton, SW_HIDE);
+
+		StartThread(&g_UpdateThread, UpdateThread, handle);
 		return 0;
 
 	case WM_DESTROY:
 		DeleteObject(g_TitleFont);
-		StopThread(&g_Thread);
+		DeleteObject(g_UpdateFont);
+		StopThread(&g_ButtonThread);
+		StopThread(&g_UpdateThread);
 
 		Destroy();
 		return 0;
@@ -50,6 +58,8 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 
 		SetWindowPos(g_CreateServerButton, HWND_TOP, WIDTH / 2 - 150, 320, 0, 0, SWP_NOSIZE);
 		SetWindowPos(g_JoinServerButton, HWND_TOP, WIDTH / 2 + 2, 320, 0, 0, SWP_NOSIZE);
+
+		SetWindowPos(g_UpdateButton, HWND_TOP, WIDTH / 2 - 75, HEIGHT - 73, 0, 0, SWP_NOSIZE);
 		return 0;
 
 	case WM_PAINT: {
@@ -87,7 +97,7 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 			ShowWindow(g_OnlineMultiplayButton, SW_HIDE);
 			ShowWindow(g_CreateServerButton, SW_SHOW);
 			ShowWindow(g_JoinServerButton, SW_SHOW);
-			StartThread(&g_Thread, ShowOnlineMultiplayButtonThread, NULL);
+			StartThread(&g_ButtonThread, ShowOnlineMultiplayButtonThread, NULL);
 			return 0;
 
 		case 4:
@@ -100,10 +110,19 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 			EnableWindow(handle, FALSE);
 			break;
 		}
+
+		case 6:
+			ShellExecute(NULL, _T("open"), _T("https://github.com/kmc7468/WordReminder/releases/latest"), NULL, NULL, SW_SHOWNORMAL);
+			break;
 		}
 
-		StopThread(&g_Thread);
+		StopThread(&g_ButtonThread);
 		ShowMultiplayButton();
+		return 0;
+
+	case WM_USER:
+		g_UpdateButton = CreateAndShowChild(_T("button"), _T("새 버전이 있습니다"), g_UpdateFont, BS_PUSHBUTTON,
+			WIDTH / 2 - 75, HEIGHT - 73, 150, 25, handle, 6);
 		return 0;
 
 	case WM_GETMINMAXINFO: {
@@ -125,6 +144,32 @@ DWORD WINAPI ShowOnlineMultiplayButtonThread(LPVOID param) {
 	(void)param;
 	Sleep(5000);
 	ShowMultiplayButton();
+	return 0;
+}
+DWORD WINAPI UpdateThread(LPVOID param) {
+	(void)param;
+
+	HttpRequest request;
+	if (!CreateHttpRequest(&request, _T("https://github.com/kmc7468/WordReminder/releases/latest"), _T("GET"), true)) return 0;
+
+	if (SendHttpRequest(&request, NULL)) {
+		const LPTSTR result = GetHttpResponseHeader(&request, HeaderLocation);
+		const LPTSTR end = result + _tcslen(result);
+		if (result) {
+			LPTSTR begin = result;
+			LPTSTR temp = _tcschr(result, '/');
+			while (begin < end && (temp = _tcschr(begin, '/'))) {
+				begin = temp + 1;
+			}
+
+			if (_tcsncmp(begin, WR_APPLICATION_VERSION, ARRAYSIZE(WR_APPLICATION_VERSION))) {
+				SendMessage((HWND)param, WM_USER, 0, 0);
+			}
+			free(result);
+		}
+	}
+
+	DestroyHttpRequest(&request);
 	return 0;
 }
 
