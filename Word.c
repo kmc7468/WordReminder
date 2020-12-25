@@ -151,9 +151,8 @@ void GenerateQuestion(Question* question, QuestionOption* option, Word* answer, 
 	if (unusedVocabularies) {
 		do {
 			answer = unusedVocabularies[questionType].Array + rand() % unusedVocabularies[questionType].Count;
-		} while (oldAnswer && CompareWord(oldAnswer, answer) &&
-			(question->Type == GuessPronunciation && _tcscmp(oldAnswer->Pronunciation, answer->Pronunciation) == 0 ||
-				question->Type != GuessPronunciation));
+		} while (oldAnswer && (CompareWord(oldAnswer, answer) ||
+			question->Type == GuessPronunciation && _tcscmp(oldAnswer->Pronunciation, answer->Pronunciation) == 0));
 		answer = FindEqualWord(&option->Vocabulary, answer);
 	}
 	if (answer) {
@@ -167,9 +166,8 @@ void GenerateQuestion(Question* question, QuestionOption* option, Word* answer, 
 			for (int j = 0; j <= i; ++j) {
 				if (i == j) {
 					unique = true;
-				} else if (CompareWord(question->Words[i], question->Words[j]) &&
-					(question->Type == GuessPronunciation && _tcscmp(question->Words[i]->Pronunciation, question->Words[j]->Pronunciation) == 0 ||
-						question->Type != GuessPronunciation)) break;
+				} else if (CompareWord(question->Words[i], question->Words[j]) ||
+					question->Type == GuessPronunciation && _tcscmp(question->Words[i]->Pronunciation, question->Words[j]->Pronunciation) == 0) break;
 			}
 		} while (!unique);
 	}
