@@ -9,16 +9,16 @@ typedef struct {
 } HttpRequest;
 
 typedef enum {
-	HeaderLocation = WINHTTP_QUERY_LOCATION,
+	Location = WINHTTP_QUERY_LOCATION,
 } HttpResponseHeader;
 
 typedef struct {
-	LPBYTE Data;
+	LPBYTE Buffer;
 	DWORD Length;
 } HttpResponseBody;
 
-bool CreateHttpRequest(HttpRequest* request, LPCTSTR url, LPCTSTR method, bool https);
-bool SendHttpRequest(HttpRequest* request, LPCTSTR header);
-LPTSTR GetHttpResponseHeader(HttpRequest* request, HttpResponseHeader header);
-HttpResponseBody GetHttpResponseBody(HttpRequest* request);
-void DestroyHttpRequest(HttpRequest* request);
+bool CreateHttpRequest(HttpRequest* httpRequest, LPCTSTR url, LPCTSTR method, bool enableSsl);
+bool SendHttpRequest(HttpRequest* httpRequest, LPCTSTR headers);
+LPCTSTR GetHttpResponseHeader(HttpRequest* httpRequest, HttpResponseHeader header);
+HttpResponseBody GetHttpResponseBody(HttpRequest* httpRequest);
+void DestroyHttpRequest(HttpRequest* httpRequest);

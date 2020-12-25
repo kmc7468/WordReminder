@@ -3,48 +3,32 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-static LPSTR WCS2MBS(LPCWSTR wcs, bool destroyWCS);
-static LPWSTR MBS2WCS(LPCSTR mbs, bool destroyMBS);
-
-LPTSTR MakeUniString(LPWSTR raw) {
-#if defined(UNICODE) || defined(_UNICODE)
-	return raw;
+LPTSTR MakeGenericString(LPWSTR rawString) {
+#ifdef _UNICODE
+	return rawString;
 #else
-	return WCS2MBS(raw, true);
-#endif
-}
-LPCWSTR GetRawString(LPCTSTR tcs) {
-#if defined(UNICODE) || defined(_UNICODE)
-	return tcs;
-#else
-	return MBS2WCS(tcs, false);
-#endif
-}
-void FreeRawString(LPCWSTR raw) {
-#if defined(UNICODE) || defined(_UNICODE)
-	(void)raw;
-#else
-	free((LPWSTR)raw);
-#endif
-}
+	const int length = WideCharToMultiByte(CP_ACP, 0, rawString, -1, NULL, 0, NULL, NULL);
+	const LPTSTR result = malloc(sizeof(TCHAR) * length);
+	WideCharToMultiByte(CP_ACP, 0, rawString, -1, result, length, NULL, NULL);
 
-LPSTR WCS2MBS(LPCWSTR wcs, bool destroyWCS) {
-	const int length = WideCharToMultiByte(CP_ACP, 0, wcs, -1, NULL, 0, NULL, NULL);
-	const LPSTR result = malloc(sizeof(CHAR) * length);
-	WideCharToMultiByte(CP_ACP, 0, wcs, -1, result, length, NULL, NULL);
-
-	if (destroyWCS) {
-		free((LPWSTR)wcs);
-	}
+	free(rawString);
 	return result;
+#endif
 }
-LPWSTR MBS2WCS(LPCSTR mbs, bool destroyMBS) {
-	const int length = MultiByteToWideChar(CP_ACP, 0, mbs, -1, NULL, 0);
+LPCWSTR GetRawString(LPCTSTR genericString) {
+#ifdef _UNICODE
+	return genericString;
+#else
+	const int length = MultiByteToWideChar(CP_ACP, 0, genericString, -1, NULL, 0);
 	const LPWSTR result = malloc(sizeof(WCHAR) * length);
-	MultiByteToWideChar(CP_ACP, 0, mbs, -1, result, length);
-
-	if (destroyMBS) {
-		free((LPSTR)mbs);
-	}
+	MultiByteToWideChar(CP_ACP, 0, genericString, -1, result, length);
 	return result;
+#endif
+}
+void FreeRawString(LPCWSTR rawString) {
+#ifdef _UNICODE
+	(void)rawString;
+#else
+	free((LPWSTR)rawString);
+#endif
 }

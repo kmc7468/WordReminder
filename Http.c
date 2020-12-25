@@ -2,10 +2,13 @@
 
 #include "String.h"
 
-#include <stdlib.h>
-#include <tchar.h>
+#include <string.h>
 
-bool CreateHttpRequest(HttpRequest* request, LPCTSTR url, LPCTSTR method, bool https) {
+bool CreateHttpRequest(HttpRequest* httpRequest, LPCTSTR url, LPCTSTR method, bool enableSsl) {
+	httpRequest->Session = WinHttpOpen(L"WordReminder",
+		WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+	if (!httpRequest->Session) goto Destroy;
+
 	const LPCWSTR rawUrl = GetRawString(url);
 	const int rawUrlLength = (int)wcslen(rawUrl);
 
@@ -16,74 +19,56 @@ bool CreateHttpRequest(HttpRequest* request, LPCTSTR url, LPCTSTR method, bool h
 
 	const bool success = WinHttpCrackUrl(rawUrl, rawUrlLength, 0, &comp);
 	FreeRawString(rawUrl);
-	if (!success) return false;
+	if (!success) goto Destroy;
 
-	const HINTERNET session = WinHttpOpen(L"WordReminder",
-		WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-	if (!session) return false;
+	const LPWSTR serverName = calloc(comp.dwHostNameLength + 1, sizeof(WCHAR));
+	wcsncpy(serverName, comp.lpszHostName, comp.dwHostNameLength);
 
-	const LPWSTR urlPath = calloc(comp.dwHostNameLength + 1, sizeof(WCHAR));
-	_tcsncpy(urlPath, comp.lpszHostName, comp.dwHostNameLength);
-
-	const HINTERNET connect = WinHttpConnect(session, urlPath, comp.nPort, 0);
-	free(urlPath);
-	if (!connect) {
-		WinHttpCloseHandle(session);
-		return false;
-	}
+	httpRequest->Connect = WinHttpConnect(httpRequest->Session, serverName, comp.nPort, 0);
+	free(serverName);
+	if (!httpRequest->Connect) goto Destroy;
 
 	const LPCWSTR rawMethod = GetRawString(method);
-	const HINTERNET request2 = WinHttpOpenRequest(connect, rawMethod, comp.lpszUrlPath, NULL,
-		WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, https ? WINHTTP_FLAG_SECURE : 0);
+	httpRequest->Request = WinHttpOpenRequest(httpRequest->Connect, rawMethod, comp.lpszUrlPath,
+		NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, enableSsl ? WINHTTP_FLAG_SECURE : 0);
 	FreeRawString(rawMethod);
-	if (!request2) {
-		WinHttpCloseHandle(connect);
-		WinHttpCloseHandle(session);
-		return false;
-	}
+	if (!httpRequest->Request) goto Destroy;
 
-	DWORD buffer = WINHTTP_DISABLE_REDIRECTS;
-	WinHttpSetOption(request2, WINHTTP_OPTION_DISABLE_FEATURE, &buffer, sizeof(buffer));
-
-	request->Session = session;
-	request->Connect = connect;
-	request->Request = request2;
+	DWORD option = WINHTTP_DISABLE_REDIRECTS;
+	WinHttpSetOption(httpRequest->Request, WINHTTP_OPTION_DISABLE_FEATURE, &option, sizeof(option));
 	return true;
-}
-bool SendHttpRequest(HttpRequest* request, LPCTSTR header) {
-	LPCWSTR rawHeader = NULL;
-	int rawHeaderLength = 0;
-	if (header) {
-		rawHeader = GetRawString(rawHeader);
-		rawHeaderLength = (int)wcslen(rawHeader);
-	}
 
-	const bool success = WinHttpSendRequest(request->Request, rawHeader, rawHeaderLength, NULL, 0, 0, 0);
-	if (rawHeader) {
-		FreeRawString(rawHeader);
-	}
-	return success && WinHttpReceiveResponse(request->Request, NULL);
+Destroy:
+	DestroyHttpRequest(httpRequest);
+	return false;
 }
-LPTSTR GetHttpResponseHeader(HttpRequest* request, HttpResponseHeader header) {
-	DWORD bufferLength = 0;
-	WinHttpQueryHeaders(request->Request, (DWORD)header, NULL, WINHTTP_NO_OUTPUT_BUFFER, &bufferLength, NULL);
+bool SendHttpRequest(HttpRequest* httpRequest, LPCTSTR headers) {
+	const LPCWSTR rawHeaders = headers ? GetRawString(headers) : NULL;
+	const int rawHeadersLength = headers ? (int)wcslen(rawHeaders) : 0;
+
+	const bool success = WinHttpSendRequest(httpRequest->Request, rawHeaders, rawHeadersLength, NULL, 0, 0, 0);
+	FreeRawString(rawHeaders);
+	return success && (bool)WinHttpReceiveResponse(httpRequest->Request, NULL);
+}
+LPCTSTR GetHttpResponseHeader(HttpRequest* httpRequest, HttpResponseHeader header) {
+	DWORD length = 0;
+	WinHttpQueryHeaders(httpRequest->Request, (DWORD)header, NULL, WINHTTP_NO_OUTPUT_BUFFER, &length, NULL);
 	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
 
-	LPWSTR buffer = malloc(bufferLength);
-	WinHttpQueryHeaders(request->Request, (DWORD)header, NULL, buffer, &bufferLength, NULL);
-	return MakeUniString(buffer);
+	const LPWSTR result = malloc(length);
+	WinHttpQueryHeaders(httpRequest->Request, (DWORD)header, NULL, result, &length, NULL);
+	return MakeGenericString(result);
 }
-HttpResponseBody GetHttpResponseBody(HttpRequest* request) {
+HttpResponseBody GetHttpResponseBody(HttpRequest* httpRequest) {
 	HttpResponseBody result = { 0 };
+	if (!WinHttpQueryDataAvailable(httpRequest->Request, &result.Length)) return result;
 
-	if (!WinHttpQueryDataAvailable(request->Request, &result.Length)) return result;
-
-	result.Data = malloc(result.Length);
-	WinHttpReadData(request->Request, result.Data, result.Length, &result.Length);
+	result.Buffer = malloc(result.Length);
+	WinHttpReadData(httpRequest->Request, result.Buffer, result.Length, &result.Length);
 	return result;
 }
-void DestroyHttpRequest(HttpRequest* request) {
-	WinHttpCloseHandle(request->Request);
-	WinHttpCloseHandle(request->Connect);
-	WinHttpCloseHandle(request->Session);
+void DestroyHttpRequest(HttpRequest* httpRequest) {
+	WinHttpCloseHandle(httpRequest->Request);
+	WinHttpCloseHandle(httpRequest->Connect);
+	WinHttpCloseHandle(httpRequest->Session);
 }

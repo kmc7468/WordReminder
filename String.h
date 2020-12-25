@@ -2,6 +2,6 @@
 
 #include <Windows.h>
 
-LPTSTR MakeUniString(LPWSTR raw);
-LPCWSTR GetRawString(LPCTSTR tcs);
-void FreeRawString(LPCWSTR raw);
+LPTSTR MakeGenericString(LPWSTR rawString);
+LPCWSTR GetRawString(LPCTSTR genericString);
+void FreeRawString(LPCWSTR rawString);
