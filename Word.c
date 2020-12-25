@@ -138,19 +138,26 @@ void DestroyVocabulary(Vocabulary* vocabulary) {
 	memset(vocabulary, 0, sizeof(*vocabulary));
 }
 
-void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabulary) {
+const QuestionType QuestionTypes[2] = { GuessMeaning, GuessWord };
+
+void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabularies) {
+	int questionType;
+	do {
+		questionType = rand() % ARRAYSIZE(QuestionTypes);
+		question->Type = QuestionTypes[questionType];
+	} while ((question->Type & option->QuestionType) == 0 || unusedVocabularies && unusedVocabularies[questionType].Count == 0);
+
 	const Word* const oldAnswer = question->Answer >= 0 ? question->Words[question->Answer] : NULL;
-	if (unusedVocabulary) {
+	if (unusedVocabularies) {
 		do {
-			answer = unusedVocabulary->Array + rand() % unusedVocabulary->Count;
+			answer = unusedVocabularies[questionType].Array + rand() % unusedVocabularies[questionType].Count;
 		} while (oldAnswer && CompareWord(oldAnswer, answer));
-		answer = FindEqualWord(&option->Vocabulary, answer);
 	}
 	if (answer) {
 		question->Words[0] = answer;
 	}
 
-	for (int i = (bool)answer; i < selector; ++i) {
+	for (int i = answer != NULL; i < selector; ++i) {
 		bool unique = false;
 		do {
 			question->Words[i] = option->Vocabulary.Array + rand() % option->Vocabulary.Count;
@@ -160,12 +167,6 @@ void GenerateQuestion(Question* question, const QuestionOption* option, Word* an
 				} else if (CompareWord(question->Words[i], question->Words[j])) break;
 			}
 		} while (!unique);
-	}
-
-	if (option->QuestionType == GuessBoth) {
-		question->Type = (QuestionType)(rand() % 2 + 1);
-	} else {
-		question->Type = option->QuestionType;
 	}
 
 	if (answer) {

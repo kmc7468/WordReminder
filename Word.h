@@ -37,6 +37,8 @@ typedef enum {
 	GuessBoth = GuessMeaning | GuessWord,
 } QuestionType;
 
+extern const QuestionType QuestionTypes[2];
+
 typedef struct {
 	QuestionType Type;
 	Word* Words[5];
@@ -50,5 +52,5 @@ typedef struct {
 	bool ExcludeDuplicatedAnswer;
 } QuestionOption;
 
-void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabulary);
+void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabularies);
 void SetSelectorText(const Question* question, const QuestionOption* option, HWND* buttons, int selector, bool mustSetWord);
