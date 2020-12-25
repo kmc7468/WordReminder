@@ -67,6 +67,25 @@ bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path) {
 	fclose(file);
 	return true;
 }
+bool CopyVocabulary(Vocabulary* dest, const Vocabulary* source) {
+	Word* const array = malloc(sizeof(Word) * source->Count);
+	if (!array) return false;
+
+	for (int i = 0; i < source->Count; ++i) {
+		if (!CopyWord(array + i, source->Array + i)) {
+			for (int j = 0; j < i; ++j) {
+				DestroyWord(array + j);
+			}
+			free(array);
+			return false;
+		}
+	}
+
+	dest->Array = array;
+	dest->Count = source->Count;
+	dest->Capacity = source->Capacity;
+	return true;
+}
 bool AddWord(Vocabulary* vocabulary, const Word* word) {
 	if (vocabulary->Capacity == vocabulary->Count) {
 		const int newCapacity = max(1, vocabulary->Capacity * 2);
@@ -83,6 +102,21 @@ bool AddWord(Vocabulary* vocabulary, const Word* word) {
 void RemoveWord(Vocabulary* vocabulary, int index) {
 	DestroyWord(vocabulary->Array + index);
 	memmove(vocabulary->Array + index, vocabulary->Array + index + 1, sizeof(Word) * (--vocabulary->Count - index));
+}
+void RemoveEqualWord(Vocabulary* vocabulary, const Word* word) {
+	for (int i = 0; i < vocabulary->Count; ++i) {
+		if (CompareWord(vocabulary->Array + i, word)) {
+			DestroyWord(vocabulary->Array + i);
+			memmove(vocabulary->Array + i, vocabulary->Array + i + 1, sizeof(Word) * (--vocabulary->Count - i));
+			return;
+		}
+	}
+}
+Word* FindEqualWord(Vocabulary* vocabulary, const Word* word) {
+	for (int i = 0; i < vocabulary->Count; ++i) {
+		if (CompareWord(vocabulary->Array + i, word)) return vocabulary->Array + i;
+	}
+	return NULL;
 }
 int GetUniqueWordCount(const Vocabulary* vocabulary) {
 	int result = vocabulary->Count;
@@ -104,8 +138,14 @@ void DestroyVocabulary(Vocabulary* vocabulary) {
 	memset(vocabulary, 0, sizeof(*vocabulary));
 }
 
-void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector) {
+void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabulary) {
 	const Word* const oldAnswer = question->Answer >= 0 ? question->Words[question->Answer] : NULL;
+	if (unusedVocabulary) {
+		do {
+			answer = unusedVocabulary->Array + rand() % unusedVocabulary->Count;
+		} while (oldAnswer && CompareWord(oldAnswer, answer));
+		answer = FindEqualWord(&option->Vocabulary, answer);
+	}
 	if (answer) {
 		question->Words[0] = answer;
 	}

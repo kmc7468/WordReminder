@@ -23,8 +23,11 @@ typedef struct {
 
 bool LoadVocabulary(Vocabulary* vocabulary, LPCTSTR path);
 bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path);
+bool CopyVocabulary(Vocabulary* dest, const Vocabulary* source);
 bool AddWord(Vocabulary* vocabulary, const Word* word);
 void RemoveWord(Vocabulary* vocabulary, int index);
+void RemoveEqualWord(Vocabulary* vocabulary, const Word* word);
+Word* FindEqualWord(Vocabulary* vocabulary, const Word* word);
 int GetUniqueWordCount(const Vocabulary* vocabulary);
 void DestroyVocabulary(Vocabulary* vocabulary);
 
@@ -44,7 +47,8 @@ typedef struct {
 	Vocabulary Vocabulary;
 	QuestionType QuestionType;
 	bool GivePronunciation;
+	bool ExcludeDuplicatedAnswer;
 } QuestionOption;
 
-void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector);
+void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabulary);
 void SetSelectorText(const Question* question, const QuestionOption* option, HWND* buttons, int selector, bool mustSetWord);

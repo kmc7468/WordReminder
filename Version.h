@@ -15,6 +15,7 @@ typedef struct {
 	bool GuessMeaning;
 	bool GuessWord;
 	bool GivePronunciation;
+	bool ExcludeDuplicatedAnswer;
 
 	// OnlineMultiplayWindow(Create)
 	int NewServerPort;

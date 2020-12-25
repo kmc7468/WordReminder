@@ -16,6 +16,7 @@ static HWND g_ChangeRoleButton, g_StopButton;
 
 static QuestionOption* g_QuestionOption;
 static Question g_Question;
+static Vocabulary g_UnusedVocabulary;
 static bool g_IsWrong;
 static OnlineMultiplay* g_Multiplay;
 
@@ -51,6 +52,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		if (g_QuestionOption) {
 			DestroyVocabulary(&g_QuestionOption->Vocabulary);
 			free(g_QuestionOption);
+			DestroyVocabulary(&g_UnusedVocabulary);
 		}
 		g_IsWrong = false;
 		if (g_Multiplay) {
@@ -146,6 +148,15 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			}
 		}
 
+		if (g_QuestionOption->ExcludeDuplicatedAnswer) {
+			SetTextAlign(dc, TA_LEFT);
+			DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("남은 문제 수"));
+			TCHAR count[11 + ARRAYSIZE(_T("개"))] = { 0 };
+			_itot(g_UnusedVocabulary.Count - 1, count, 10);
+			_tcscat(count, _T("개"));
+			DrawTextUsingFont(dc, GlobalDefaultFont, 10, 30, count, (int)_tcslen(count));
+		}
+
 		return ENDPAINT;
 	}
 
@@ -165,6 +176,10 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 				return 0;
 			}
 
+			if (!g_IsWrong && g_QuestionOption->ExcludeDuplicatedAnswer) {
+				RemoveEqualWord(&g_UnusedVocabulary, g_Question.Words[g_Question.Answer]);
+			}
+
 			g_IsWrong = false;
 			if (g_Multiplay) {
 				SendAnswer(g_Multiplay);
@@ -179,6 +194,10 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 
 	case WM_USER:
 		g_QuestionOption = (QuestionOption*)lParam;
+		if (g_QuestionOption->ExcludeDuplicatedAnswer) {
+			CopyVocabulary(&g_UnusedVocabulary, &g_QuestionOption->Vocabulary);
+		}
+
 		if (g_QuestionOption->Vocabulary.Count) {
 			ShowNextQuestion(handle, true);
 		}
@@ -325,7 +344,12 @@ void CreateChangeRoleButton(HWND handle, RECT windowSize) {
 }
 void ShowNextQuestion(HWND handle, bool generateQuestion) {
 	if (generateQuestion) {
-		GenerateQuestion(&g_Question, g_QuestionOption, NULL, 5);
+		if (g_QuestionOption->ExcludeDuplicatedAnswer && g_UnusedVocabulary.Count == 0) {
+			MessageBox(handle, _T("남은 문제가 없습니다."), _T("정보"), MB_OK | MB_ICONINFORMATION);
+			SendMessage(handle, WM_USER + 7, 0, 0);
+			return;
+		}
+		GenerateQuestion(&g_Question, g_QuestionOption, NULL, 5, g_QuestionOption->ExcludeDuplicatedAnswer ? &g_UnusedVocabulary : NULL);
 	}
 	SetSelectorText(&g_Question, g_QuestionOption, g_Buttons, 5, g_Multiplay && g_Multiplay->Option->Role == Examiner);
 	InvalidateRect(handle, NULL, FALSE);

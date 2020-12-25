@@ -14,6 +14,7 @@ void LoadSetting() {
 	Setting.GuessMeaning = (bool)ReadRegistryDWord(key, _T("GuessMeaning"), false);
 	Setting.GuessWord = (bool)ReadRegistryDWord(key, _T("GuessWord"), false);
 	Setting.GivePronunciation = (bool)ReadRegistryDWord(key, _T("GivePronunciation"), false);
+	Setting.ExcludeDuplicatedAnswer = (bool)ReadRegistryDWord(key, _T("ExcludeDuplicatedAnswer"), false);
 
 	Setting.NewServerPort = (int)ReadRegistryDWord(key, _T("NewServerPort"), 1234);
 	Setting.NewServerMode = (OnlineMultiplayMode)ReadRegistryDWord(key, _T("NewServerMode"), TurnMode);
@@ -32,6 +33,7 @@ void SaveSetting() {
 	WriteRegistryDWord(key, _T("GuessMeaning"), Setting.GuessMeaning);
 	WriteRegistryDWord(key, _T("GuessWord"), Setting.GuessWord);
 	WriteRegistryDWord(key, _T("GivePronunciation"), Setting.GivePronunciation);
+	WriteRegistryDWord(key, _T("ExcludeDuplicatedAnswer"), Setting.ExcludeDuplicatedAnswer);
 
 	WriteRegistryDWord(key, _T("NewServerPort"), Setting.NewServerPort);
 	WriteRegistryDWord(key, _T("NewServerMode"), Setting.NewServerMode);

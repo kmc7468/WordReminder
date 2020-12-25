@@ -118,7 +118,7 @@ LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			}
 
 			EnableWindow(g_SendButton, FALSE);
-			GenerateQuestion(&g_Question, g_QuestionOption, g_QuestionOption->Vocabulary.Array + index, 5);
+			GenerateQuestion(&g_Question, g_QuestionOption, g_QuestionOption->Vocabulary.Array + index, 5, NULL);
 			SendQuestion(g_Multiplay, NULL, g_Question.Answer);
 			break;
 		}

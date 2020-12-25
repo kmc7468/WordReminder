@@ -240,7 +240,7 @@ LRESULT CALLBACK LocalMultiplayWindowProc(HWND handle, UINT message, WPARAM wPar
 }
 
 void ShowNextQuestion(HWND handle) {
-	GenerateQuestion(&g_Question, g_QuestionOption, NULL, 4);
+	GenerateQuestion(&g_Question, g_QuestionOption, NULL, 4, NULL);
 	SetSelectorText(&g_Question, g_QuestionOption, g_Buttons, 4, false);
 	InvalidateRect(handle, NULL, FALSE);
 }
