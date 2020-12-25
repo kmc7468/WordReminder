@@ -82,7 +82,7 @@ bool Receive(OnlineMultiplay* multiplay, void* buffer, int length) {
 	return true;
 }
 bool SendVersion(OnlineMultiplay* multiplay) {
-	return SendString(multiplay, WR_APPLICATION_VERSION) && SendInt(multiplay, WR_MULTIPLAY_PROTOCOL_VERSION);
+	return SendString(multiplay, WR_APPLICATION_VERSION) && SendInt(multiplay, WR_ONLINE_MULTIPLAY_PROTOCOL_VERSION);
 }
 bool ReceiveVersion(OnlineMultiplay* multiplay, LPTSTR* serverVersion, int* protocolVersion) {
 	return ReceiveString(multiplay, serverVersion) && ReceiveInt(multiplay, protocolVersion);
@@ -250,7 +250,7 @@ DWORD WINAPI JoinServerThread(LPVOID param) {
 		!ReceiveVersion(&Context, &serverVersion, &protocolVersion)) {
 		free(serverVersion);
 		goto Error;
-	} else if (protocolVersion != WR_MULTIPLAY_PROTOCOL_VERSION) {
+	} else if (protocolVersion != WR_ONLINE_MULTIPLAY_PROTOCOL_VERSION) {
 		const LPTSTR message = malloc((_tcslen(serverVersion) + 97) * sizeof(TCHAR));
 		_tcscpy(message, _T("서버의 버전과 클라이언트의 버전이 호환되지 않습니다.\n"));
 		_tcscat(message, serverVersion);

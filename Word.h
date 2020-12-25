@@ -52,5 +52,5 @@ typedef struct {
 	bool ExcludeDuplicatedAnswer;
 } QuestionOption;
 
-void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabularies);
+void GenerateQuestion(Question* question, QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabularies);
 void SetSelectorText(const Question* question, const QuestionOption* option, HWND* buttons, int selector, bool mustSetWord);

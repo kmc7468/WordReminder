@@ -8,7 +8,7 @@
 #include <Windows.h>
 
 #define WR_APPLICATION_VERSION _T("1.3.0")
-#define WR_MULTIPLAY_PROTOCOL_VERSION 0
+#define WR_ONLINE_MULTIPLAY_PROTOCOL_VERSION 1
 
 typedef struct {
 	// QuestionOptionWindow

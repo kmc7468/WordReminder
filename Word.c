@@ -140,7 +140,7 @@ void DestroyVocabulary(Vocabulary* vocabulary) {
 
 const QuestionType QuestionTypes[3] = { GuessMeaning, GuessWord, GuessPronunciation };
 
-void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabularies) {
+void GenerateQuestion(Question* question, QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabularies) {
 	int questionType;
 	do {
 		questionType = rand() % ARRAYSIZE(QuestionTypes);
