@@ -14,6 +14,10 @@
 
 온라인 멀티 플레이 버튼을 누르면 버튼이 5초간 서버 만들기와 서버 접속하기 버튼으로 나뉘는데, 각각의 버튼을 눌러 멀티 플레이 서버를 직접 열거나 친구가 만든 멀티 플레이 서버에 접속할 수 있습니다.
 
+![MainWindow_HasUpdate](https://github.com/kmc7468/WordReminder/blob/master/img/MainWindow_HasUpdate.png)
+
+만약 새 버전이 있을 경우 화면 아래에 업데이트 버튼이 나타납니다. 이 버튼을 누르면 새 버전으로 업데이트할 수 있는 웹사이트가 기본 브라우저로 열립니다.
+
 ### 단어장 만들기/수정하기
 ![VocabularyWindow](https://github.com/kmc7468/WordReminder/blob/master/img/VocabularyWindow.png)
 
@@ -24,9 +28,14 @@
 
 메인 화면에서 단어 암기하기 버튼을 누르면 볼 수 있는 화면입니다. 암기할 단어장을 선택하고, 문제 유형을 선택할 수 있습니다.
 
-![QuestionWindow](https://github.com/kmc7468/WordReminder/blob/master/img/QuestionWindow.png)
+<p float="left">
+	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/QuestionWindow.png" width="49%" />
+	<img src="https://github.com/kmc7468/WordReminder/blob/master/img/QuestionWindow_ExcludeDuplicatedQuestion.png" width="49%" />
+</p>
 
 시작하기 버튼을 누르면 단어를 암기할 수 있습니다. 선택된 단어장에서 선택한 문제 유형에 따라 5지선다형 문제가 자동으로 생성됩니다.
+
+기타 옵션에서 중복된 문제 제외하기 옵션을 선택하면 왼쪽 위에 남은 문제의 개수가 표시됩니다. 한 번에 문제의 답을 맞힐 경우 개수가 줄어듭니다.
 
 ![StatisticWindow](https://github.com/kmc7468/WordReminder/blob/master/img/StatisticWindow.png)
 
