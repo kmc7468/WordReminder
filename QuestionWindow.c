@@ -156,7 +156,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			if (g_IsWrong) {
 				SetTextAlign(dc, TA_LEFT);
 				SetTextColor(dc, RGB(255, 0, 0));
-				DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("오답!"));
+				DrawTextUsingFont(dc, GlobalBoldFont, 10, 10 + (g_QuestionOption->ExcludeDuplicatedAnswer ? 40 : 0), STRING("오답!"));
 				SetTextColor(dc, RGB(0, 0, 0));
 			}
 		}
