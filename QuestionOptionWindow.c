@@ -118,10 +118,9 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			QuestionOption* option = calloc(1, sizeof(QuestionOption));
 			if (g_Vocabularary) {
 				option->Vocabulary = *g_Vocabularary;
-				free(g_Vocabularary);
-				g_Vocabularary = NULL;
 			} else if (!LoadVocabulary(&option->Vocabulary, g_VocabularyPath)) {
 				MessageBox(handle, _T("단어장을 읽는 중 오류가 발생했습니다. 올바른 단어장인지 확인해 보세요."), _T("오류"), MB_OK | MB_ICONERROR);
+				free(option);
 				break;
 			}
 			option->QuestionType |= guessMeaning ? GuessMeaning : 0;
@@ -130,6 +129,37 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			option->GivePronunciation = (bool)IsDlgButtonChecked(handle, 4);
 			if (!g_MultiplayOption && !g_IsLocalMultiplay) {
 				option->ExcludeDuplicatedAnswer = (bool)IsDlgButtonChecked(handle, 5);
+			}
+
+			if (guessPronunciation) {
+				int unique = option->Vocabulary.Count;
+				for (int i = 0; i < option->Vocabulary.Count; ++i) {
+					if (option->Vocabulary.Array[i].Pronunciation[0] == 0 ||
+						_tcscmp(option->Vocabulary.Array[i].Word, option->Vocabulary.Array[i].Pronunciation) == 0) {
+						MessageBox(handle, _T("단어장에 있는 모든 단어가 발음 데이터를 갖고 있지 않아 단어와 뜻 보고 단어 맞추기 유형은 사용할 수 없습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+						if (!g_Vocabularary) {
+							DestroyVocabulary(&option->Vocabulary);
+						}
+						free(option);
+						return 0;
+					}
+
+					for (int j = 0; j < i; ++j) {
+						if (_tcscmp(option->Vocabulary.Array[i].Pronunciation, option->Vocabulary.Array[j].Pronunciation) == 0) {
+							--unique;
+							break;
+						}
+					}
+				}
+
+				if (unique < 5) {
+					MessageBox(handle, _T("단어장에 있는 단어의 서로 다른 발음 데이터의 개수가 5개 미만이기 때문에 단어와 뜻 보고 단어 맞추기 유형은 사용할 수 없습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+					if (!g_Vocabularary) {
+						DestroyVocabulary(&option->Vocabulary);
+					}
+					free(option);
+					break;
+				}
 			}
 
 			if (g_IsLocalMultiplay) {
@@ -146,6 +176,11 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 				const HWND examinerWindow = CreateAndShowWindow(_T("ExaminerWindow"), _T("온라인 멀티 플레이"), SW_SHOW);
 				SendMessage(examinerWindow, WM_USER, 0, (LPARAM)option);
 				SendMessage(examinerWindow, WM_USER + 1, 0, (LPARAM)g_MultiplayOption);
+			}
+
+			if (g_Vocabularary) {
+				free(g_Vocabularary);
+				g_Vocabularary = NULL;
 			}
 			g_MultiplayOption = NULL;
 
