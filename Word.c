@@ -152,6 +152,7 @@ void GenerateQuestion(Question* question, const QuestionOption* option, Word* an
 		do {
 			answer = unusedVocabularies[questionType].Array + rand() % unusedVocabularies[questionType].Count;
 		} while (oldAnswer && CompareWord(oldAnswer, answer));
+		answer = FindEqualWord(&option->Vocabulary, answer);
 	}
 	if (answer) {
 		question->Words[0] = answer;
