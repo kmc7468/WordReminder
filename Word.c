@@ -138,7 +138,7 @@ void DestroyVocabulary(Vocabulary* vocabulary) {
 	memset(vocabulary, 0, sizeof(*vocabulary));
 }
 
-const QuestionType QuestionTypes[2] = { GuessMeaning, GuessWord };
+const QuestionType QuestionTypes[3] = { GuessMeaning, GuessWord, GuessPronunciation };
 
 void GenerateQuestion(Question* question, const QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabularies) {
 	int questionType;
@@ -195,8 +195,10 @@ void SetSelectorText(const Question* question, const QuestionOption* option, HWN
 			} else {
 				SetWindowText(buttons[i], question->Words[i]->Word);
 			}
-		} else {
+		} else if (question->Type == GuessMeaning) {
 			SetWindowText(buttons[i], question->Words[i]->Meaning);
+		} else {
+			SetWindowText(buttons[i], question->Words[i]->Pronunciation);
 		}
 
 		EnableWindow(buttons[i], TRUE);

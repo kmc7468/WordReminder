@@ -14,6 +14,7 @@ typedef struct {
 	// QuestionOptionWindow
 	bool GuessMeaning;
 	bool GuessWord;
+	bool GuessPronunciation;
 	bool GivePronunciation;
 	bool ExcludeDuplicatedAnswer;
 

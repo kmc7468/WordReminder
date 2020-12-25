@@ -82,6 +82,17 @@ HFONT CreateGlobalFont(int height, bool isBold) {
 	g_GlobalFont.lfWeight = isBold ? FW_BOLD : FW_NORMAL;
 	return CreateFontIndirect(&g_GlobalFont);
 }
+int GetAppropriateFontSize(int width, int height, int original) {
+	int fitHeight;
+	if (width * 3 == height * 4) {
+		fitHeight = height;
+	} else if (width * 3 > height * 4) {
+		fitHeight = height;
+	} else {
+		fitHeight = width * 3 / 4;
+	}
+	return original * fitHeight / 480;
+}
 
 HDC StartDraw(HWND handle, DoubleBufferingContext* context) {
 	context->OriginalDC = BeginPaint(handle, &context->PaintStruct);

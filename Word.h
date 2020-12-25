@@ -34,10 +34,10 @@ void DestroyVocabulary(Vocabulary* vocabulary);
 typedef enum {
 	GuessMeaning = 1,
 	GuessWord = 2,
-	GuessBoth = GuessMeaning | GuessWord,
+	GuessPronunciation = 4,
 } QuestionType;
 
-extern const QuestionType QuestionTypes[2];
+extern const QuestionType QuestionTypes[3];
 
 typedef struct {
 	QuestionType Type;

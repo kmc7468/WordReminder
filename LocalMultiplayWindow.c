@@ -8,7 +8,7 @@
 
 static void ShowNextQuestion(HWND handle);
 
-static HFONT g_QuestionFont, g_WordOrMeaningFont, g_PronunciationFont, g_ButtonFont;
+static HFONT g_QuestionFont, g_WordOrMeaningFont, g_MeaningOrPronunciationFont, g_ButtonFont;
 static HWND g_Buttons[4];
 static HWND g_StopButton;
 
@@ -22,7 +22,7 @@ LRESULT CALLBACK LocalMultiplayWindowProc(HWND handle, UINT message, WPARAM wPar
 	case WM_CREATE:
 		g_QuestionFont = CreateGlobalFont(23, true);
 		g_WordOrMeaningFont = CreateGlobalFont(40, true);
-		g_PronunciationFont = CreateGlobalFont(28, false);
+		g_MeaningOrPronunciationFont = CreateGlobalFont(28, false);
 		g_ButtonFont = CreateGlobalFont(18, false);
 
 		g_Buttons[0] = CreateAndShowChild(_T("button"), NULL, g_ButtonFont, BS_PUSHBUTTON | BS_MULTILINE,
@@ -43,7 +43,7 @@ LRESULT CALLBACK LocalMultiplayWindowProc(HWND handle, UINT message, WPARAM wPar
 	case WM_DESTROY:
 		DeleteObject(g_QuestionFont);
 		DeleteObject(g_WordOrMeaningFont);
-		DeleteObject(g_PronunciationFont);
+		DeleteObject(g_MeaningOrPronunciationFont);
 		DeleteObject(g_ButtonFont);
 
 		DestroyVocabulary(&g_QuestionOption->Vocabulary);
@@ -55,17 +55,21 @@ LRESULT CALLBACK LocalMultiplayWindowProc(HWND handle, UINT message, WPARAM wPar
 		return 0;
 
 	case WM_SIZE:
+		DeleteObject(g_WordOrMeaningFont);
+		DeleteObject(g_MeaningOrPronunciationFont);
 		DeleteObject(g_ButtonFont);
-		g_ButtonFont = CreateGlobalFont(18 * HEIGHT / 480, false);
+		g_WordOrMeaningFont = CreateGlobalFont(GetAppropriateFontSize(WIDTH, HEIGHT, 40), true);
+		g_MeaningOrPronunciationFont = CreateGlobalFont(GetAppropriateFontSize(WIDTH, HEIGHT, 28), false);
+		g_ButtonFont = CreateGlobalFont(GetAppropriateFontSize(WIDTH, HEIGHT, 18), false);
 
-		SetWindowPos(g_Buttons[0], HWND_TOP, WIDTH / 2 - WIDTH / 8, 140, WIDTH / 4, HEIGHT / 5, 0);
+		SetWindowPos(g_Buttons[0], HWND_TOP, WIDTH / 2 - WIDTH / 8, 75 + GetAppropriateFontSize(WIDTH, HEIGHT, 35) + GetAppropriateFontSize(WIDTH, HEIGHT, 30), WIDTH / 4, HEIGHT / 5, 0);
 		SendMessage(g_Buttons[0], WM_SETFONT, (WPARAM)g_ButtonFont, true);
 		for (int i = 0; i < 3; ++i) {
-			SetWindowPos(g_Buttons[i + 1], HWND_TOP, WIDTH / 2 - WIDTH / 8 + (i - 1) * (WIDTH / 4 + HEIGHT / 50), 140 + HEIGHT / 5 + HEIGHT / 50, WIDTH / 4, HEIGHT / 5, 0);
+			SetWindowPos(g_Buttons[i + 1], HWND_TOP, WIDTH / 2 - WIDTH / 8 + (i - 1) * (WIDTH / 4 + HEIGHT / 50), 75 + GetAppropriateFontSize(WIDTH, HEIGHT, 35) + GetAppropriateFontSize(WIDTH, HEIGHT, 30) + HEIGHT / 5 + HEIGHT / 50, WIDTH / 4, HEIGHT / 5, 0);
 			SendMessage(g_Buttons[i + 1], WM_SETFONT, (WPARAM)g_ButtonFont, true);
 		}
 
-		SetWindowPos(g_StopButton, HWND_TOP, WIDTH / 2 - WIDTH / 8, 140 + (HEIGHT / 5 + HEIGHT / 50) * 2, WIDTH / 4, HEIGHT / 10, 0);
+		SetWindowPos(g_StopButton, HWND_TOP, WIDTH / 2 - WIDTH / 8, 75 + GetAppropriateFontSize(WIDTH, HEIGHT, 35) + GetAppropriateFontSize(WIDTH, HEIGHT, 30) + (HEIGHT / 5 + HEIGHT / 50) * 2, WIDTH / 4, HEIGHT / 10, 0);
 		SendMessage(g_StopButton, WM_SETFONT, (WPARAM)g_ButtonFont, true);
 		return 0;
 
@@ -74,16 +78,27 @@ LRESULT CALLBACK LocalMultiplayWindowProc(HWND handle, UINT message, WPARAM wPar
 		SetTextAlign(dc, TA_CENTER);
 
 		const Word* const answer = g_Question.Words[g_Question.Answer];
-		if (g_Question.Type == GuessMeaning) {
+		switch (g_Question.Type) {
+		case GuessMeaning:
 			DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 단어의 뜻은?"));
 			DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Word, (int)_tcslen(answer->Word));
-			if (g_QuestionOption->GivePronunciation &&
-				(answer->Pronunciation[0] == 0 || _tcscmp(answer->Word, answer->Pronunciation))) {
-				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 90, answer->Pronunciation, (int)_tcslen(answer->Pronunciation));
+			if (g_QuestionOption->GivePronunciation && answer->Pronunciation[0] != 0 && _tcscmp(answer->Word, answer->Pronunciation)) {
+				DrawTextUsingFont(dc, g_MeaningOrPronunciationFont, WIDTH / 2, 55 + GetAppropriateFontSize(WIDTH, HEIGHT, 35),
+					answer->Pronunciation, (int)_tcslen(answer->Pronunciation));
 			}
-		} else {
+			break;
+
+		case GuessWord:
 			DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 뜻을 가진 단어는?"));
 			DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Meaning, (int)_tcslen(answer->Meaning));
+			break;
+
+		case GuessPronunciation:
+			DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 단어의 발음은?"));
+			DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Word, (int)_tcslen(answer->Word));
+			DrawTextUsingFont(dc, g_MeaningOrPronunciationFont, WIDTH / 2, 55 + GetAppropriateFontSize(WIDTH, HEIGHT, 35),
+				answer->Meaning, (int)_tcslen(answer->Meaning));
+			break;
 		}
 
 		SetTextAlign(dc, TA_LEFT);

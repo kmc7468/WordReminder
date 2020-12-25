@@ -6,11 +6,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-static int GetAppropriateFontSize(int width, int height, int original);
 static void CreateChangeRoleButton(HWND handle, RECT windowSize);
 static void ShowNextQuestion(HWND handle, bool generateQuestion);
 
-static HFONT g_QuestionFont, g_WordOrMeaningFont, g_PronunciationFont, g_ButtonFont;
+static HFONT g_QuestionFont, g_WordOrMeaningFont, g_MeaningOrPronunciationFont, g_ButtonFont;
 static HWND g_Buttons[5];
 static HWND g_ChangeRoleButton, g_StopButton;
 
@@ -27,7 +26,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	case WM_CREATE:
 		g_QuestionFont = CreateGlobalFont(23, true);
 		g_WordOrMeaningFont = CreateGlobalFont(40, true);
-		g_PronunciationFont = CreateGlobalFont(28, false);
+		g_MeaningOrPronunciationFont = CreateGlobalFont(28, false);
 		g_ButtonFont = CreateGlobalFont(18, false);
 
 		for (int i = 0; i < 5; ++i) {
@@ -44,7 +43,7 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	case WM_DESTROY:
 		DeleteObject(g_QuestionFont);
 		DeleteObject(g_WordOrMeaningFont);
-		DeleteObject(g_PronunciationFont);
+		DeleteObject(g_MeaningOrPronunciationFont);
 		DeleteObject(g_ButtonFont);
 
 		g_ChangeRoleButton = NULL;
@@ -73,10 +72,10 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 
 	case WM_SIZE:
 		DeleteObject(g_WordOrMeaningFont);
-		DeleteObject(g_PronunciationFont);
+		DeleteObject(g_MeaningOrPronunciationFont);
 		DeleteObject(g_ButtonFont);
 		g_WordOrMeaningFont = CreateGlobalFont(GetAppropriateFontSize(WIDTH, HEIGHT, 40), true);
-		g_PronunciationFont = CreateGlobalFont(GetAppropriateFontSize(WIDTH, HEIGHT, 28), false);
+		g_MeaningOrPronunciationFont = CreateGlobalFont(GetAppropriateFontSize(WIDTH, HEIGHT, 28), false);
 		g_ButtonFont = CreateGlobalFont(GetAppropriateFontSize(WIDTH, HEIGHT, 18), false);
 
 		for (int i = 0; i < 5; ++i) {
@@ -131,16 +130,27 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			const Word* answer;
 		Default:
 			answer = g_Question.Words[g_Question.Answer];
-			if (g_Question.Type == GuessMeaning) {
+			switch (g_Question.Type) {
+			case GuessMeaning:
 				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 단어의 뜻은?"));
 				DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Word, (int)_tcslen(answer->Word));
 				if (g_QuestionOption->GivePronunciation && answer->Pronunciation[0] != 0 && _tcscmp(answer->Word, answer->Pronunciation)) {
-					DrawTextUsingFont(dc, g_PronunciationFont, WIDTH / 2, 55 + GetAppropriateFontSize(WIDTH, HEIGHT, 35),
+					DrawTextUsingFont(dc, g_MeaningOrPronunciationFont, WIDTH / 2, 55 + GetAppropriateFontSize(WIDTH, HEIGHT, 35),
 						answer->Pronunciation, (int)_tcslen(answer->Pronunciation));
 				}
-			} else {
+				break;
+
+			case GuessWord:
 				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 뜻을 가진 단어는?"));
 				DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Meaning, (int)_tcslen(answer->Meaning));
+				break;
+
+			case GuessPronunciation:
+				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 단어의 발음은?"));
+				DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Word, (int)_tcslen(answer->Word));
+				DrawTextUsingFont(dc, g_MeaningOrPronunciationFont, WIDTH / 2, 55 + GetAppropriateFontSize(WIDTH, HEIGHT, 35),
+					answer->Meaning, (int)_tcslen(answer->Meaning));
+				break;
 			}
 
 			if (g_IsWrong) {
@@ -347,17 +357,6 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 	return DefWindowProc(handle, message, wParam, lParam);
 }
 
-int GetAppropriateFontSize(int width, int height, int original) {
-	int fitHeight;
-	if (width * 3 == height * 4) {
-		fitHeight = height;
-	} else if (width * 3 > height * 4) {
-		fitHeight = height;
-	} else {
-		fitHeight = width * 3 / 4;
-	}
-	return original * fitHeight / 480;
-}
 void CreateChangeRoleButton(HWND handle, RECT windowSize) {
 	g_ChangeRoleButton = CreateAndShowChild(_T("button"), _T("역할 변경\n요청하기"), g_ButtonFont, BS_PUSHBUTTON | BS_MULTILINE,
 		WIDTH - WIDTH / 4 + 10, 140 + ((HEIGHT / 10 + HEIGHT / 50) * 3), WIDTH / 4 - 37, HEIGHT / 10, handle, 5);

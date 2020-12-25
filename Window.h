@@ -13,6 +13,7 @@ void RegisterWindow(LPCTSTR name, WNDPROC wndProc);
 HWND CreateAndShowWindow(LPCTSTR name, LPCTSTR title, int cmdShow);
 HWND CreateAndShowChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu);
 HFONT CreateGlobalFont(int height, bool isBold);
+int GetAppropriateFontSize(int width, int height, int original);
 
 typedef struct {
 	HDC OriginalDC;

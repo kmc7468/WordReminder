@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 static HWND g_SelectVocabularyButton;
-static HWND g_GuessMeaningButton, g_GuessWordButton;
+static HWND g_GuessMeaningButton, g_GuessWordButton, g_GuessPronunciationButton;
 static HWND g_GivePronunciationButton, g_ExcludeDuplicatedAnswer;
 static HWND g_StartButton;
 
@@ -22,7 +22,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 	EVENT {
 	case WM_CREATE:
 		SetWindowLong(handle, GWL_STYLE, GetWindowLong(handle, GWL_STYLE) & ~WS_SIZEBOX & ~WS_MAXIMIZEBOX);
-		SetWindowPos(handle, HWND_TOP, 0, 0, 500, 325, SWP_NOMOVE);
+		SetWindowPos(handle, HWND_TOP, 0, 0, 500, 350, SWP_NOMOVE);
 
 		g_SelectVocabularyButton = CreateAndShowChild(_T("button"), _T("단어장 선택하기"), GlobalBoldFont, BS_PUSHBUTTON,
 			10, 35, 465, 50, handle, 0);
@@ -30,19 +30,22 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 		g_GuessMeaningButton = CreateAndShowChild(_T("button"), _T("단어 보고 뜻 맞추기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
 			10, 130, 150, 15, handle, 1);
 		g_GuessWordButton = CreateAndShowChild(_T("button"), _T("뜻 보고 단어 맞추기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
-			180, 130, 150, 15, handle, 2);
+			230, 130, 150, 15, handle, 2);
+		g_GuessPronunciationButton = CreateAndShowChild(_T("button"), _T("단어와 뜻 보고 발음 맞추기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
+			10, 155, 200, 15, handle, 3);
 		SendMessage(g_GuessMeaningButton, BM_SETCHECK, !!Setting.GuessMeaning, 0);
 		SendMessage(g_GuessWordButton, BM_SETCHECK, !!Setting.GuessWord, 0);
+		SendMessage(g_GuessPronunciationButton, BM_SETCHECK, !!Setting.GuessPronunciation, 0);
 
 		g_GivePronunciationButton = CreateAndShowChild(_T("button"), _T("발음 표시하기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
-			10, 190, 115, 15, handle, 3);
+			10, 215, 115, 15, handle, 4);
 		g_ExcludeDuplicatedAnswer = CreateAndShowChild(_T("button"), _T("중복된 문제 제외하기"), GlobalDefaultFont, BS_AUTOCHECKBOX,
-			145, 190, 160, 15, handle, 4);
+			145, 215, 160, 15, handle, 5);
 		SendMessage(g_GivePronunciationButton, BM_SETCHECK, !!Setting.GivePronunciation, 0);
 		SendMessage(g_ExcludeDuplicatedAnswer, BM_SETCHECK, !!Setting.ExcludeDuplicatedAnswer, 0);
 
 		g_StartButton = CreateAndShowChild(_T("button"), _T("시작하기"), GlobalBoldFont, BS_PUSHBUTTON,
-			10, 225, 465, 50, handle, 5);
+			10, 250, 465, 50, handle, 6);
 		return 0;
 
 	case WM_DESTROY:
@@ -70,7 +73,7 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 
 		DrawTextUsingFont(dc, GlobalBoldFont, 10, 10, STRING("단어장"));
 		DrawTextUsingFont(dc, GlobalBoldFont, 10, 105, STRING("문제 유형"));
-		DrawTextUsingFont(dc, GlobalBoldFont, 10, 165, STRING("기타 옵션"));
+		DrawTextUsingFont(dc, GlobalBoldFont, 10, 190, STRING("기타 옵션"));
 
 		return ENDPAINT;
 	}
@@ -100,14 +103,15 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			break;
 		}
 
-		case 5: {
+		case 6: {
 			const bool guessMeaning = (bool)IsDlgButtonChecked(handle, 1);
 			const bool guessWord = (bool)IsDlgButtonChecked(handle, 2);
+			const bool guessPronunciation = (bool)IsDlgButtonChecked(handle, 3);
 			if (!g_VocabularyPath && !g_Vocabularary) {
 				MessageBox(handle, _T("단어장을 선택해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
-			} else if (!guessMeaning && !guessWord) {
-				MessageBox(handle, _T("문제 유형을 선택해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
+			} else if (!guessMeaning && !guessWord && !guessPronunciation) {
+				MessageBox(handle, _T("문제 유형을 적어도 하나 선택해 주세요."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}
 
@@ -122,9 +126,10 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 			}
 			option->QuestionType |= guessMeaning ? GuessMeaning : 0;
 			option->QuestionType |= guessWord ? GuessWord : 0;
-			option->GivePronunciation = (bool)IsDlgButtonChecked(handle, 3);
-			if (!g_MultiplayOption) {
-				option->ExcludeDuplicatedAnswer = (bool)IsDlgButtonChecked(handle, 4);
+			option->QuestionType |= guessPronunciation ? GuessPronunciation : 0;
+			option->GivePronunciation = (bool)IsDlgButtonChecked(handle, 4);
+			if (!g_MultiplayOption && !g_IsLocalMultiplay) {
+				option->ExcludeDuplicatedAnswer = (bool)IsDlgButtonChecked(handle, 5);
 			}
 
 			if (g_IsLocalMultiplay) {
@@ -146,9 +151,10 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 
 			Setting.GuessMeaning = (bool)IsDlgButtonChecked(handle, 1);
 			Setting.GuessWord = (bool)IsDlgButtonChecked(handle, 2);
-			Setting.GivePronunciation = (bool)IsDlgButtonChecked(handle, 3);
-			if (!g_MultiplayOption) {
-				Setting.ExcludeDuplicatedAnswer = (bool)IsDlgButtonChecked(handle, 4);
+			Setting.GuessPronunciation = (bool)IsDlgButtonChecked(handle, 3);
+			Setting.GivePronunciation = (bool)IsDlgButtonChecked(handle, 4);
+			if (!g_MultiplayOption && !g_IsLocalMultiplay) {
+				Setting.ExcludeDuplicatedAnswer = (bool)IsDlgButtonChecked(handle, 5);
 			}
 
 			g_ShouldEnableMainWindow = false;
@@ -175,6 +181,8 @@ LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wPar
 
 	case WM_USER + 2:
 		g_IsLocalMultiplay = true;
+
+		ShowWindow(g_ExcludeDuplicatedAnswer, SW_HIDE);
 		return 0;
 
 	case WM_CLOSE:
