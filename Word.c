@@ -7,48 +7,89 @@
 #include <string.h>
 #include <tchar.h>
 
-static LPTSTR ReadString(FILE* file);
-static void WriteString(FILE* file, LPCTSTR string);
+void CopyMeaning(Meaning* destination, const Meaning* source) {
+	destination->Pronunciation = malloc(sizeof(TCHAR) * (_tcslen(source->Pronunciation) + 1));
+	destination->Meaning = malloc(sizeof(TCHAR) * (_tcslen(source->Meaning) + 1));
 
-bool CopyWord(Word* dest, const Word* source) {
-	bool success = true;
-	success = success && (dest->Word = malloc(sizeof(TCHAR) * (_tcslen(source->Word) + 1)));
-	success = success && (dest->Pronunciation = malloc(sizeof(TCHAR) * (_tcslen(source->Pronunciation) + 1)));
-	success = success && (dest->Meaning = malloc(sizeof(TCHAR) * (_tcslen(source->Meaning) + 1)));
-	if (!success) {
-		DestroyWord(dest);
-		return false;
-	}
-
-	_tcscpy(dest->Word, source->Word);
-	_tcscpy(dest->Pronunciation, source->Pronunciation);
-	_tcscpy(dest->Meaning, source->Meaning);
-	dest->IsWrong = source->IsWrong;
-	return true;
+	_tcscpy(destination->Pronunciation, source->Pronunciation);
+	_tcscpy(destination->Meaning, source->Meaning);
+	destination->Wrong = source->Wrong;
 }
-bool CompareWord(const Word* a, const Word* b) {
-	return a == b || _tcscmp(a->Meaning, b->Meaning) == 0;
+void DestroyMeaning(Meaning* meaning) {
+	free(meaning->Pronunciation);
+	free(meaning->Meaning);
+}
+
+void CreateWord(Word* word) {
+	CreateArray(&word->Meanings, sizeof(Meaning));
+}
+void CopyWord(Word* destination, const Word* source) {
+	CreateWord(destination);
+
+	destination->Word = malloc(sizeof(TCHAR) * (_tcslen(source->Word) + 1));
+	_tcscpy(destination->Word, source->Word);
+
+	for (int i = 0; i < source->Meanings.Count; ++i) {
+		Meaning copied;
+		CopyMeaning(&copied, GetMeaning((Word*)source, i));
+		AddMeaning(destination, &copied);
+	}
+}
+void AddMeaning(Word* word, Meaning* meaning) {
+	meaning->Word = word;
+
+	AddElement(&word->Meanings, meaning);
+}
+void RemoveMeaning(Word* word, int index) {
+	DestroyMeaning(GetMeaning(word, index));
+	RemoveElement(&word->Meanings, index);
+}
+Meaning* GetMeaning(Word* word, int index) {
+	return GetElement(&word->Meanings, index);
 }
 void DestroyWord(Word* word) {
 	free(word->Word);
-	free(word->Pronunciation);
-	free(word->Meaning);
+	DestroyArray(&word->Meanings);
 }
 
+static LPTSTR ReadString(FILE* file);
+static void WriteString(FILE* file, LPCTSTR string);
+
+void CreateVocabulary(Vocabulary* vocabulary) {
+	CreateArray(&vocabulary->Words, sizeof(Word));
+}
+void CopyVocabulary(Vocabulary* destination, const Vocabulary* source) {
+	CreateVocabulary(destination);
+
+	for (int i = 0; i < source->Words.Count; ++i) {
+		Word copied;
+		CopyWord(&copied, GetWord((Vocabulary*)source, i));
+		AddWord(destination, &copied);
+	}
+}
 bool LoadVocabulary(Vocabulary* vocabulary, LPCTSTR path) {
 	FILE* const file = _tfopen(path, _T("rb"));
 	if (!file) return false;
+
+	CreateVocabulary(vocabulary);
 
 	int count;
 	fread(&count, sizeof(count), 1, file);
 	for (int i = 0; i < count; ++i) {
 		Word word;
+		CreateWord(&word);
+
 		word.Word = ReadString(file);
-		word.Pronunciation = ReadString(file);
-		word.Meaning = ReadString(file);
-		word.IsWrong = false;
+
+		Meaning	legacyMeaning = { 0 };
+		legacyMeaning.Pronunciation = ReadString(file);
+		legacyMeaning.Meaning = ReadString(file);
+		AddMeaning(&word, &legacyMeaning);
+
 		AddWord(vocabulary, &word);
 	}
+
+	// TODO
 
 	fclose(file);
 	return true;
@@ -57,169 +98,115 @@ bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path) {
 	FILE* const file = _tfopen(path, _T("wb"));
 	if (!file) return false;
 
-	fwrite(&vocabulary->Count, sizeof(vocabulary->Count), 1, file);
-	for (int i = 0; i < vocabulary->Count; ++i) {
-		WriteString(file, vocabulary->Array[i].Word);
-		WriteString(file, vocabulary->Array[i].Pronunciation);
-		WriteString(file, vocabulary->Array[i].Meaning);
+	fwrite(&vocabulary->Words.Count, sizeof(vocabulary->Words.Count), 1, file);
+	for (int i = 0; i < vocabulary->Words.Count; ++i) {
+		Word* const word = GetWord((Vocabulary*)vocabulary, i);
+
+		WriteString(file, word->Word);
+
+		int pronunciationLength = (word->Meanings.Count - 1) * 2;
+		int meaningLength = pronunciationLength;
+		for (int j = 0; j < word->Meanings.Count; ++j) {
+			pronunciationLength += (int)_tcslen(GetMeaning(word, j)->Pronunciation);
+			pronunciationLength += (int)_tcslen(GetMeaning(word, j)->Meaning);
+		}
+
+		const LPTSTR legacyPronunciation = calloc(pronunciationLength + 1, sizeof(TCHAR));
+		const LPTSTR legacyMeaning = calloc(meaningLength + 1, sizeof(TCHAR));
+		for (int j = 0; j < word->Meanings.Count; ++j) {
+			if (j) {
+				_tcscat(legacyPronunciation, _T(", "));
+				_tcscat(legacyMeaning, _T(", "));
+			}
+			_tcscat(legacyPronunciation, GetMeaning(word, j)->Pronunciation);
+			_tcscat(legacyMeaning, GetMeaning(word, j)->Meaning);
+		}
+
+		WriteString(file, legacyPronunciation);
+		WriteString(file, legacyMeaning);
+		free(legacyPronunciation);
+		free(legacyMeaning);
 	}
+
+	// TODO
 
 	fclose(file);
 	return true;
 }
-bool CopyVocabulary(Vocabulary* dest, const Vocabulary* source) {
-	Word* const array = malloc(sizeof(Word) * source->Count);
-	if (!array) return false;
-
-	for (int i = 0; i < source->Count; ++i) {
-		if (!CopyWord(array + i, source->Array + i)) {
-			for (int j = 0; j < i; ++j) {
-				DestroyWord(array + j);
-			}
-			free(array);
-			return false;
-		}
-	}
-
-	dest->Array = array;
-	dest->Count = source->Count;
-	dest->Capacity = source->Capacity;
-	return true;
-}
-bool AddWord(Vocabulary* vocabulary, const Word* word) {
-	if (vocabulary->Capacity == vocabulary->Count) {
-		const int newCapacity = max(1, vocabulary->Capacity * 2);
-		Word* const newArray = realloc(vocabulary->Array, sizeof(Word) * newCapacity);
-		if (!newArray) return false;
-
-		vocabulary->Array = newArray;
-		vocabulary->Capacity = newCapacity;
-	}
-
-	vocabulary->Array[vocabulary->Count++] = *word;
-	return true;
+void AddWord(Vocabulary* vocabulary, Word* word) {
+	AddElement(&vocabulary->Words, word);
 }
 void RemoveWord(Vocabulary* vocabulary, int index) {
-	DestroyWord(vocabulary->Array + index);
-	memmove(vocabulary->Array + index, vocabulary->Array + index + 1, sizeof(Word) * (--vocabulary->Count - index));
+	DestroyWord(GetWord(vocabulary, index));
+	RemoveElement(&vocabulary->Words, index);
 }
-void RemoveEqualWord(Vocabulary* vocabulary, const Word* word) {
-	for (int i = 0; i < vocabulary->Count; ++i) {
-		if (CompareWord(vocabulary->Array + i, word)) {
-			DestroyWord(vocabulary->Array + i);
-			memmove(vocabulary->Array + i, vocabulary->Array + i + 1, sizeof(Word) * (--vocabulary->Count - i));
-			return;
-		}
-	}
-}
-Word* FindEqualWord(Vocabulary* vocabulary, const Word* word) {
-	for (int i = 0; i < vocabulary->Count; ++i) {
-		if (CompareWord(vocabulary->Array + i, word)) return vocabulary->Array + i;
-	}
-	return NULL;
-}
-int GetUniqueWordCount(const Vocabulary* vocabulary) {
-	int result = vocabulary->Count;
-	for (int i = 0; i < vocabulary->Count; ++i) {
-		for (int j = 0; j < i; ++j) {
-			if (CompareWord(vocabulary->Array + i, vocabulary->Array + j)) {
-				--result;
-				break;
-			}
-		}
-	}
-	return result;
+Word* GetWord(Vocabulary* vocabulary, int index) {
+	return GetElement(&vocabulary->Words, index);
 }
 void DestroyVocabulary(Vocabulary* vocabulary) {
-	for (int i = 0; i < vocabulary->Count; ++i) {
-		DestroyWord(vocabulary->Array + i);
-	}
-	free(vocabulary->Array);
-	memset(vocabulary, 0, sizeof(*vocabulary));
-}
-
-const QuestionType QuestionTypes[3] = { GuessMeaning, GuessWord, GuessPronunciation };
-
-void GenerateQuestion(Question* question, QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabularies) {
-	int questionType;
-	do {
-		questionType = rand() % ARRAYSIZE(QuestionTypes);
-		question->Type = QuestionTypes[questionType];
-	} while ((question->Type & option->QuestionType) == 0 || unusedVocabularies && unusedVocabularies[questionType].Count == 0);
-
-	const Word* const oldAnswer = question->Answer >= 0 ? question->Words[question->Answer] : NULL;
-	if (unusedVocabularies) {
-		do {
-			answer = unusedVocabularies[questionType].Array + rand() % unusedVocabularies[questionType].Count;
-		} while (oldAnswer && (CompareWord(oldAnswer, answer) ||
-			question->Type == GuessPronunciation && _tcscmp(oldAnswer->Pronunciation, answer->Pronunciation) == 0));
-		answer = FindEqualWord(&option->Vocabulary, answer);
-	}
-	if (answer) {
-		question->Words[0] = answer;
-	}
-
-	for (int i = answer != NULL; i < selector; ++i) {
-		bool unique = false;
-		do {
-			question->Words[i] = option->Vocabulary.Array + rand() % option->Vocabulary.Count;
-			for (int j = 0; j <= i; ++j) {
-				if (i == j) {
-					unique = true;
-				} else if (CompareWord(question->Words[i], question->Words[j]) ||
-					question->Type == GuessPronunciation && _tcscmp(question->Words[i]->Pronunciation, question->Words[j]->Pronunciation) == 0) break;
-			}
-		} while (!unique);
-	}
-
-	if (answer) {
-		question->Answer = rand() % selector;
-		question->Words[0] = question->Words[question->Answer];
-		question->Words[question->Answer] = answer;
-	} else {
-		do {
-			question->Answer = rand() % selector;
-		} while (oldAnswer && CompareWord(oldAnswer, question->Words[question->Answer]));
-	}
-}
-void SetSelectorText(const Question* question, const QuestionOption* option, HWND* buttons, int selector, bool mustSetWord) {
-	for (int i = 0; i < selector; ++i) {
-		if (mustSetWord || question->Type == GuessWord) {
-			if (option->GivePronunciation && question->Words[i]->Pronunciation[0] != 0 &&
-				_tcscmp(question->Words[i]->Word, question->Words[i]->Pronunciation)) {
-				LPTSTR text = malloc(sizeof(TCHAR) * (_tcslen(question->Words[i]->Word) + _tcslen(question->Words[i]->Pronunciation) + 4));
-				_tcscpy(text, question->Words[i]->Word);
-				_tcscat(text, _T("\n("));
-				_tcscat(text, question->Words[i]->Pronunciation);
-				_tcscat(text, _T(")"));
-
-				SetWindowText(buttons[i], text);
-				free(text);
-			} else {
-				SetWindowText(buttons[i], question->Words[i]->Word);
-			}
-		} else if (question->Type == GuessMeaning) {
-			SetWindowText(buttons[i], question->Words[i]->Meaning);
-		} else {
-			SetWindowText(buttons[i], question->Words[i]->Pronunciation);
-		}
-
-		EnableWindow(buttons[i], TRUE);
-	}
+	DestroyArray(&vocabulary->Words);
 }
 
 LPTSTR ReadString(FILE* file) {
 	int length;
 	fread(&length, sizeof(length), 1, file);
-	const LPWSTR rawStr = malloc(sizeof(WCHAR) * (length + 1));
-	fread(rawStr, sizeof(*rawStr), length, file);
-	rawStr[length] = 0;
-	return MakeUniString(rawStr);
+	const LPWSTR rawString = calloc(length + 1, sizeof(WCHAR));
+	fread(rawString, sizeof(WCHAR), length, file);
+	return MakeGenericString(rawString);
 }
 void WriteString(FILE* file, LPCTSTR string) {
-	const LPCWSTR raw = GetRawString(string);
-	const int rawLength = (int)wcslen(raw);
-	fwrite(&rawLength, sizeof(rawLength), 1, file);
-	fwrite(raw, sizeof(WCHAR), rawLength, file);
-	FreeRawString(raw);
+	const LPCWSTR rawString = GetRawString(string);
+	const int rawStringLength = (int)wcslen(rawString);
+	fwrite(&rawStringLength, sizeof(rawStringLength), 1, file);
+	fwrite(rawString, sizeof(WCHAR), rawStringLength, file);
+	FreeRawString(rawString);
+}
+
+const QuestionType QuestionTypes[3] = { GuessMeaning, GuessWord, GuessPronunciation };
+
+bool IsUniqueMeaning(QuestionType questionType, const Meaning* const oldMeanings[], int numberOfOldMeanings, const Meaning* meaning) {
+	for (int i = 0; i < numberOfOldMeanings; ++i) {
+		if (questionType == GuessMeaning && (oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Meaning, meaning->Meaning) == 0) ||
+			questionType == GuessWord && (oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Meaning, meaning->Meaning) == 0) ||
+			questionType == GuessPronunciation && (oldMeanings[i] == meaning || _tcscmp(oldMeanings[i]->Pronunciation, meaning->Pronunciation) == 0)) return false;
+	}
+	return true;
+}
+
+void GenerateQuestion(Question* question, const QuestionOption* questionOption, const Meaning* answer, const Vocabulary unusedVocabularies[]) {
+	const QuestionType prevQuestionType = question->Type;
+	int questionType;
+	do {
+		questionType = rand() % ARRAYSIZE(QuestionTypes);
+		question->Type = QuestionTypes[questionType];
+	} while ((question->Type & questionOption->QuestionType) == 0 ||
+		unusedVocabularies && unusedVocabularies[questionType].Words.Count == 0);
+
+	const Meaning* const oldAnswer = prevQuestionType > 0 ? question->Meanings[question->Answer] : NULL;
+	if (unusedVocabularies) {
+		do {
+			Word* const word = GetWord((Vocabulary*)unusedVocabularies + questionType, rand() % unusedVocabularies[questionType].Words.Count);
+			answer = GetMeaning(word, rand() % word->Meanings.Count);
+		} while (oldAnswer && !IsUniqueMeaning(prevQuestionType, &oldAnswer, 1, answer));
+	}
+	if (answer) {
+		question->Meanings[0] = answer;
+	}
+
+	for (int i = answer != NULL; i < questionOption->NumberOfMeanings; ++i) {
+		do {
+			Word* const word = GetWord((Vocabulary*)&questionOption->Vocabulary, rand() % questionOption->Vocabulary.Words.Count);
+			question->Meanings[i] = GetMeaning(word, rand() % word->Meanings.Count);
+		} while (!IsUniqueMeaning(question->Type, question->Meanings, i, question->Meanings[i]));
+	}
+
+	if (answer) {
+		question->Answer = rand() % questionOption->NumberOfMeanings;
+		question->Meanings[0] = question->Meanings[question->Answer];
+		question->Meanings[question->Answer] = answer;
+	} else {
+		do {
+			question->Answer = rand() % questionOption->NumberOfMeanings;
+		} while (oldAnswer && !IsUniqueMeaning(question->Type, &oldAnswer, 1, question->Meanings[question->Answer]));
+	}
 }

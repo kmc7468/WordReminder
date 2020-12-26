@@ -1,34 +1,42 @@
 #pragma once
 
-#include <stdbool.h>
-#include <WinSock2.h>
+#include "Array.h"
+
 #include <Windows.h>
 
 typedef struct {
 	LPTSTR Word;
-	LPTSTR Pronunciation;
-	LPTSTR Meaning;
-	bool IsWrong;
+	Array Meanings;
 } Word;
 
-bool CopyWord(Word* dest, const Word* source);
-bool CompareWord(const Word* a, const Word* b);
+typedef struct {
+	Word* Word;
+	LPTSTR Pronunciation;
+	LPTSTR Meaning;
+	int Wrong;
+} Meaning;
+
+void CopyMeaning(Meaning* destination, const Meaning* source);
+void DestroyMeaning(Meaning* meaning);
+
+void CreateWord(Word* word);
+void CopyWord(Word* destination, const Word* source);
+void AddMeaning(Word* word, Meaning* meaning);
+void RemoveMeaning(Word* word, int index);
+Meaning* GetMeaning(Word* word, int index);
 void DestroyWord(Word* word);
 
 typedef struct {
-	Word* Array;
-	int Count;
-	int Capacity;
+	Array Words;
 } Vocabulary;
 
+void CreateVocabulary(Vocabulary* vocabulary);
+void CopyVocabulary(Vocabulary* destination, const Vocabulary* source);
 bool LoadVocabulary(Vocabulary* vocabulary, LPCTSTR path);
 bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path);
-bool CopyVocabulary(Vocabulary* dest, const Vocabulary* source);
-bool AddWord(Vocabulary* vocabulary, const Word* word);
+void AddWord(Vocabulary* vocabulary, Word* word);
 void RemoveWord(Vocabulary* vocabulary, int index);
-void RemoveEqualWord(Vocabulary* vocabulary, const Word* word);
-Word* FindEqualWord(Vocabulary* vocabulary, const Word* word);
-int GetUniqueWordCount(const Vocabulary* vocabulary);
+Word* GetWord(Vocabulary* vocabulary, int index);
 void DestroyVocabulary(Vocabulary* vocabulary);
 
 typedef enum {
@@ -39,18 +47,21 @@ typedef enum {
 
 extern const QuestionType QuestionTypes[3];
 
+bool IsUniqueMeaning(QuestionType questionType, const Meaning* const oldMeanings[], int numberOfOldMeanings, const Meaning* meaning);
+
 typedef struct {
 	QuestionType Type;
-	Word* Words[5];
+	const Meaning* Meanings[5];
 	int Answer;
 } Question;
 
 typedef struct {
 	Vocabulary Vocabulary;
 	QuestionType QuestionType;
-	bool GivePronunciation;
+	int NumberOfMeanings;
+
+	bool ShowPronunciation;
 	bool ExcludeDuplicatedAnswer;
 } QuestionOption;
 
-void GenerateQuestion(Question* question, QuestionOption* option, Word* answer, int selector, Vocabulary* unusedVocabularies);
-void SetSelectorText(const Question* question, const QuestionOption* option, HWND* buttons, int selector, bool mustSetWord);
+void GenerateQuestion(Question* question, const QuestionOption* questionOption, const Meaning* answer, const Vocabulary unusedVocabularies[]);
