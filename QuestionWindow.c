@@ -148,8 +148,6 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 			case GuessPronunciation:
 				DrawTextUsingFont(dc, g_QuestionFont, WIDTH / 2, 10, STRING("다음 단어의 발음은?"));
 				DrawTextUsingFont(dc, g_WordOrMeaningFont, WIDTH / 2, 50, answer->Word, (int)_tcslen(answer->Word));
-				DrawTextUsingFont(dc, g_MeaningOrPronunciationFont, WIDTH / 2, 55 + GetAppropriateFontSize(WIDTH, HEIGHT, 35),
-					answer->Meaning, (int)_tcslen(answer->Meaning));
 				break;
 			}
 
