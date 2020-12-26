@@ -1,14 +1,87 @@
 #include "Application.h"
 
+#include <ShlObj.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+static LOGFONT g_GlobalFont;
+
+static OPENFILENAME g_FileDialog;
+static TCHAR g_FileDialogPath[MAX_PATH];
+
+HINSTANCE Instance;
+
+bool InitializeApplication(HINSTANCE instance) {
+	Instance = instance;
+	srand((unsigned)time(NULL));
+
+	g_GlobalFont.lfCharSet = HANGUL_CHARSET;
+	_tcscpy(g_GlobalFont.lfFaceName, _T("나눔고딕"));
+
+	g_FileDialog.lpstrDefExt = _T("kv");
+	g_FileDialog.lpstrFile = g_FileDialogPath;
+	g_FileDialog.lpstrFilter = _T("단어장 파일(*.kv, *.kwl)\0*.kv;*.kwl\0모든 파일(*.*)\0*.*\0");
+	g_FileDialog.lStructSize = sizeof(g_FileDialog);
+	g_FileDialog.nMaxFile = ARRAYSIZE(g_FileDialogPath);
+
+	TCHAR desktop[MAX_PATH];
+	SHGetSpecialFolderPath(HWND_DESKTOP, desktop, CSIDL_DESKTOP, FALSE);
+	g_FileDialog.lpstrInitialDir = desktop;
+
+	LoadSetting();
+
+	WSADATA data;
+	return WSAStartup(MAKEWORD(2, 2), &data) == ERROR_SUCCESS;
+}
+void DestroyApplication() {
+	SaveSetting();
+	free(Setting.ServerIp);
+
+	WSACleanup();
+}
+
+int GetAppropriateLengthForDpi(HWND window, int originalLength) {
+	return MulDiv(originalLength, GetDpiForWindow(window), USER_DEFAULT_SCREEN_DPI);
+}
+int GetAppropriateLengthForSize(HWND window, int originalLength) {
+	RECT clientRect;
+	GetClientRect(window, &clientRect);
+
+	int fitHeight;
+	if (clientRect.right * 3 >= clientRect.bottom * 4) {
+		fitHeight = clientRect.bottom;
+	} else {
+		fitHeight = MulDiv(clientRect.right, 3, 4);
+	}
+	return MulDiv(originalLength, fitHeight, GetAppropriateLengthForDpi(window, 480));
+}
+
+HFONT CreateGlobalFont(int height, bool isBold) {
+	g_GlobalFont.lfHeight = height;
+	g_GlobalFont.lfWeight = isBold ? FW_BOLD : FW_NORMAL;
+	return CreateFontIndirect(&g_GlobalFont);
+}
+
+LPCTSTR ShowOpenFileDialog(HWND window) {
+	g_FileDialog.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST;
+	g_FileDialog.hwndOwner = window;
+	if (GetOpenFileName(&g_FileDialog)) return g_FileDialogPath;
+	else return NULL;
+}
+LPCTSTR ShowSaveFileDialog(HWND window) {
+	g_FileDialog.Flags = OFN_EXPLORER | OFN_HIDEREADONLY;
+	g_FileDialog.hwndOwner = window;
+	if (GetSaveFileName(&g_FileDialog)) return g_FileDialogPath;
+	else return NULL;
+}
 
 RegistryData Setting;
 
 static DWORD ReadDWord(HKEY key, LPCTSTR name, DWORD defaultValue);
-static void WriteDWord(HKEY key, LPCTSTR name, DWORD value);
+static void WriteDWord(HKEY key, LPCTSTR name, DWORD data);
 static LPTSTR ReadString(HKEY key, LPCTSTR name);
-static void WriteString(HKEY key, LPCTSTR name, LPCTSTR value);
+static void WriteString(HKEY key, LPCTSTR name, LPCTSTR data);
 
 void LoadSetting() {
 	HKEY key;
@@ -63,8 +136,8 @@ DWORD ReadDWord(HKEY key, LPCTSTR name, DWORD defaultValue) {
 	if (RegQueryValueEx(key, name, NULL, &dataType, (LPBYTE)&buffer, &bufferSize) == ERROR_SUCCESS && dataType == REG_DWORD) return buffer;
 	else return defaultValue;
 }
-void WriteDWord(HKEY key, LPCTSTR name, DWORD value) {
-	RegSetValueEx(key, name, 0, REG_DWORD, (LPBYTE)&value, sizeof(value));
+void WriteDWord(HKEY key, LPCTSTR name, DWORD data) {
+	RegSetValueEx(key, name, 0, REG_DWORD, (LPBYTE)&data, sizeof(data));
 }
 LPTSTR ReadString(HKEY key, LPCTSTR name) {
 	DWORD bufferSize;
@@ -78,8 +151,8 @@ LPTSTR ReadString(HKEY key, LPCTSTR name) {
 		return NULL;
 	}
 }
-void WriteString(HKEY key, LPCTSTR name, LPCTSTR value) {
-	if (value) {
-		RegSetValueEx(key, name, 0, REG_SZ, (LPBYTE)value, (DWORD)(sizeof(TCHAR) * _tcslen(value)));
+void WriteString(HKEY key, LPCTSTR name, LPCTSTR data) {
+	if (data) {
+		RegSetValueEx(key, name, 0, REG_SZ, (LPBYTE)data, (DWORD)(sizeof(TCHAR) * _tcslen(data)));
 	}
 }

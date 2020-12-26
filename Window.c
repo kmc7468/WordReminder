@@ -6,53 +6,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-static HINSTANCE g_Instance;
-static LOGFONT g_GlobalFont;
-
-static OPENFILENAME g_FileDialog;
-static TCHAR g_FileDialogPath[MAX_PATH];
-
-HFONT GlobalDefaultFont, GlobalBoldFont;
-
-bool Initialize(HINSTANCE instance) {
-	g_Instance = instance;
-	srand((unsigned)time(NULL));
-
-	LoadSetting();
-
-	RegisterWindow(_T("MainWindow"), MainWindowProc);
-	RegisterWindow(_T("VocabularyWindow"), VocabularyWindowProc);
-	RegisterWindow(_T("QuestionOptionWindow"), QuestionOptionWindowProc);
-	RegisterWindow(_T("QuestionWindow"), QuestionWindowProc);
-	RegisterWindow(_T("StatisticWindow"), StatisticWindowProc);
-	RegisterWindow(_T("OnlineMultiplayWindow"), OnlineMultiplayWindowProc);
-	RegisterWindow(_T("ExaminerWindow"), ExaminerWindowProc);
-	RegisterWindow(_T("LocalMultiplayWindow"), LocalMultiplayWindowProc);
-
-	g_GlobalFont.lfCharSet = HANGUL_CHARSET;
-	_tcscpy(g_GlobalFont.lfFaceName, _T("나눔고딕"));
-	GlobalDefaultFont = CreateGlobalFont(18, false);
-	GlobalBoldFont = CreateGlobalFont(18, true);
-
-	g_FileDialog.lpstrDefExt = _T("kv");
-	g_FileDialog.lpstrFile = g_FileDialogPath;
-	g_FileDialog.lpstrFilter = _T("단어장 파일(*.kv, *.kwl)\0*.kv;*.kwl\0모든 파일(*.*)\0*.*\0");
-	g_FileDialog.lStructSize = sizeof(g_FileDialog);
-	g_FileDialog.nMaxFile = ARRAYSIZE(g_FileDialogPath);
-
-	TCHAR desktop[MAX_PATH];
-	SHGetSpecialFolderPath(HWND_DESKTOP, desktop, CSIDL_DESKTOP, FALSE);
-	g_FileDialog.lpstrInitialDir = desktop;
-
-	WSADATA data;
-	return WSAStartup(MAKEWORD(2, 2), &data) == ERROR_SUCCESS;
-}
-void Destroy() {
-	SaveSetting();
-	free(Setting.ServerIp);
-
-	WSACleanup();
-}
 void RegisterWindow(LPCTSTR name, WNDPROC wndProc) {
 	WNDCLASS wc = { 0 };
 	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
@@ -76,22 +29,6 @@ HWND CreateAndShowChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x
 		SendMessage(handle, WM_SETFONT, (WPARAM)font, true);
 	}
 	return handle;
-}
-HFONT CreateGlobalFont(int height, bool isBold) {
-	g_GlobalFont.lfHeight = height;
-	g_GlobalFont.lfWeight = isBold ? FW_BOLD : FW_NORMAL;
-	return CreateFontIndirect(&g_GlobalFont);
-}
-int GetAppropriateFontSize(int width, int height, int original) {
-	int fitHeight;
-	if (width * 3 == height * 4) {
-		fitHeight = height;
-	} else if (width * 3 > height * 4) {
-		fitHeight = height;
-	} else {
-		fitHeight = width * 3 / 4;
-	}
-	return original * fitHeight / 480;
 }
 
 HDC StartDraw(HWND handle, DoubleBufferingContext* context) {
@@ -118,19 +55,6 @@ void DrawTextUsingFont(HDC dc, HFONT font, int x, int y, LPCTSTR string, int len
 	const HGDIOBJ oldFont = SelectObject(dc, font);
 	TextOut(dc, x, y, string, length);
 	SelectObject(dc, oldFont);
-}
-
-LPCTSTR ShowOpenFileDialog(HWND handle) {
-	g_FileDialog.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST;
-	g_FileDialog.hwndOwner = handle;
-	if (GetOpenFileName(&g_FileDialog)) return g_FileDialogPath;
-	return NULL;
-}
-LPCTSTR ShowSaveFileDialog(HWND handle) {
-	g_FileDialog.Flags = OFN_EXPLORER | OFN_HIDEREADONLY;
-	g_FileDialog.hwndOwner = handle;
-	if (GetSaveFileName(&g_FileDialog)) return g_FileDialogPath;
-	return NULL;
 }
 
 HWND MainWindow, VocabularyWindow, OnlineMultiplayWindow;

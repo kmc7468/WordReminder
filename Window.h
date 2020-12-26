@@ -5,15 +5,9 @@
 #include <WinSock2.h>
 #include <Windows.h>
 
-extern HFONT GlobalDefaultFont, GlobalBoldFont;
-
-bool Initialize(HINSTANCE instance);
-void Destroy();
 void RegisterWindow(LPCTSTR name, WNDPROC wndProc);
 HWND CreateAndShowWindow(LPCTSTR name, LPCTSTR title, int cmdShow);
 HWND CreateAndShowChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu);
-HFONT CreateGlobalFont(int height, bool isBold);
-int GetAppropriateFontSize(int width, int height, int original);
 
 typedef struct {
 	HDC OriginalDC;
@@ -29,9 +23,6 @@ void DrawTextUsingFont(HDC dc, HFONT font, int x, int y, LPCTSTR string, int len
 
 #define BEGINPAINT DoubleBufferingContext context; const HDC dc = StartDraw(handle, &context)
 #define ENDPAINT EndDraw(handle, &context), 0
-
-LPCTSTR ShowOpenFileDialog(HWND handle);
-LPCTSTR ShowSaveFileDialog(HWND handle);
 
 extern HWND MainWindow, VocabularyWindow, OnlineMultiplayWindow;
 

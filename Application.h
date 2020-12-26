@@ -7,6 +7,19 @@
 
 #define WR_APPLICATION_VERSION _T("1.4.0")
 
+extern HINSTANCE Instance;
+
+bool InitializeApplication(HINSTANCE instance);
+void DestroyApplication();
+
+int GetAppropriateLengthForDpi(HWND window, int originalLength);
+int GetAppropriateLengthForSize(HWND window, int originalLength);
+
+HFONT CreateGlobalFont(int height, bool isBold);
+
+LPCTSTR ShowOpenFileDialog(HWND window);
+LPCTSTR ShowSaveFileDialog(HWND window);
+
 typedef struct {
 	// QuestionOptionScene
 	bool GuessMeaning;
