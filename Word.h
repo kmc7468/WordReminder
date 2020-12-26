@@ -39,29 +39,35 @@ Word* GetWord(Vocabulary* vocabulary, int index);
 void DestroyVocabulary(Vocabulary* vocabulary);
 
 typedef enum {
-	GuessMeaning = 1,
-	GuessWord = 2,
-	GuessPronunciation = 4,
+	GuessMeaning,
+	GuessWord,
+	GuessPronunciation,
+} QuestionTypeType;
+
+typedef struct {
+	QuestionTypeType Type;
+	Vocabulary UnusedVocabulary;
+
+	bool ShowSubProperty;
 } QuestionType;
 
-extern const QuestionType QuestionTypes[3];
-
-bool IsUniqueMeaning(QuestionType questionType, const Meaning* const oldMeanings[], int numberOfOldMeanings, const Meaning* meaning);
+bool IsUniqueMeaning(const QuestionType* questionType, const Meaning* const oldMeanings[], int numberOfOldMeanings, const Meaning* meaning);
 
 typedef struct {
 	Vocabulary Vocabulary;
-	QuestionType QuestionType;
+	Array Types;
 	int NumberOfMeanings;
 
-	bool ShowPronunciation;
 	bool ExcludeDuplicatedAnswer;
 } QuestionOption;
 
+void CreateQuestionOption(QuestionOption* questionOption);
+
 typedef struct {
 	QuestionOption* Option;
-	QuestionType Type;
+	QuestionType* Type;
 	const Meaning* Meanings[5];
 	int Answer;
 } Question;
 
-void GenerateQuestion(Question* question, const Meaning* answer, const Vocabulary unusedVocabularies[]);
+void GenerateQuestion(Question* question, const Meaning* answer);

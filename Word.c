@@ -162,30 +162,29 @@ void WriteString(FILE* file, LPCTSTR string) {
 	FreeRawString(rawString);
 }
 
-const QuestionType QuestionTypes[3] = { GuessMeaning, GuessWord, GuessPronunciation };
-
-bool IsUniqueMeaning(QuestionType questionType, const Meaning* const oldMeanings[], int numberOfOldMeanings, const Meaning* meaning) {
+bool IsUniqueMeaning(const QuestionType* questionType, const Meaning* const oldMeanings[], int numberOfOldMeanings, const Meaning* meaning) {
 	for (int i = 0; i < numberOfOldMeanings; ++i) {
-		if (questionType == GuessMeaning && (oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Meaning, meaning->Meaning) == 0) ||
-			questionType == GuessWord && (oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Meaning, meaning->Meaning) == 0) ||
-			questionType == GuessPronunciation && (oldMeanings[i] == meaning || _tcscmp(oldMeanings[i]->Pronunciation, meaning->Pronunciation) == 0)) return false;
+		if (questionType->Type == GuessMeaning && (oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Meaning, meaning->Meaning) == 0) ||
+			questionType->Type == GuessWord && (oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Meaning, meaning->Meaning) == 0) ||
+			questionType->Type == GuessPronunciation && (oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Pronunciation, meaning->Pronunciation) == 0)) return false;
 	}
 	return true;
 }
 
-void GenerateQuestion(Question* question, const Meaning* answer, const Vocabulary unusedVocabularies[]) {
-	const QuestionType prevQuestionType = question->Type;
-	int questionType;
+void CreateQuestionOption(QuestionOption* questionOption) {
+	CreateArray(&questionOption->Types, sizeof(QuestionType));
+}
+
+void GenerateQuestion(Question* question, const Meaning* answer) {
+	const QuestionType* const prevQuestionType = question->Type;
 	do {
-		questionType = rand() % ARRAYSIZE(QuestionTypes);
-		question->Type = QuestionTypes[questionType];
-	} while ((question->Type & question->Option->QuestionType) == 0 ||
-		unusedVocabularies && unusedVocabularies[questionType].Words.Count == 0);
+		question->Type = (QuestionType*)GetElement(&question->Option->Types, rand() % question->Option->Types.Count);
+	} while (question->Option->ExcludeDuplicatedAnswer && question->Type->UnusedVocabulary.Words.Count == 0);
 
 	const Meaning* const oldAnswer = prevQuestionType > 0 ? question->Meanings[question->Answer] : NULL;
-	if (unusedVocabularies) {
+	if (question->Option->ExcludeDuplicatedAnswer) {
 		do {
-			Word* const word = GetWord((Vocabulary*)unusedVocabularies + questionType, rand() % unusedVocabularies[questionType].Words.Count);
+			Word* const word = GetWord(&question->Type->UnusedVocabulary, rand() % question->Type->UnusedVocabulary.Words.Count);
 			answer = GetMeaning(word, rand() % word->Meanings.Count);
 		} while (oldAnswer && !IsUniqueMeaning(prevQuestionType, &oldAnswer, 1, answer));
 	}
