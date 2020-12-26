@@ -1,8 +1,8 @@
 #pragma once
 
+#include "WinAPI.h"
+
 #include <stdbool.h>
-#include <Windows.h>
-#include <winhttp.h>
 
 typedef struct {
 	HINTERNET Session, Connect, Request;

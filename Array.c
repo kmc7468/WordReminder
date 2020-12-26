@@ -1,8 +1,9 @@
 #include "Array.h"
 
+#include "WinAPI.h"
+
 #include <stdlib.h>
 #include <string.h>
-#include <Windows.h>
 
 void CreateArray(Array* array, int elementSize) {
 	memset(array, 0, sizeof(*array));

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Windows.h>
+#include "WinAPI.h"
 
 LPTSTR MakeGenericString(LPWSTR rawString);
 LPCWSTR GetRawString(LPCTSTR genericString);

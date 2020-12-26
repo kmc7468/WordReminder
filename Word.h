@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Array.h"
-
-#include <Windows.h>
+#include "WinAPI.h"
 
 typedef struct {
 	LPTSTR Word;
