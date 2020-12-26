@@ -50,12 +50,6 @@ extern const QuestionType QuestionTypes[3];
 bool IsUniqueMeaning(QuestionType questionType, const Meaning* const oldMeanings[], int numberOfOldMeanings, const Meaning* meaning);
 
 typedef struct {
-	QuestionType Type;
-	const Meaning* Meanings[5];
-	int Answer;
-} Question;
-
-typedef struct {
 	Vocabulary Vocabulary;
 	QuestionType QuestionType;
 	int NumberOfMeanings;
@@ -64,4 +58,11 @@ typedef struct {
 	bool ExcludeDuplicatedAnswer;
 } QuestionOption;
 
-void GenerateQuestion(Question* question, const QuestionOption* questionOption, const Meaning* answer, const Vocabulary unusedVocabularies[]);
+typedef struct {
+	QuestionOption* Option;
+	QuestionType Type;
+	const Meaning* Meanings[5];
+	int Answer;
+} Question;
+
+void GenerateQuestion(Question* question, const Meaning* answer, const Vocabulary unusedVocabularies[]);

@@ -173,13 +173,13 @@ bool IsUniqueMeaning(QuestionType questionType, const Meaning* const oldMeanings
 	return true;
 }
 
-void GenerateQuestion(Question* question, const QuestionOption* questionOption, const Meaning* answer, const Vocabulary unusedVocabularies[]) {
+void GenerateQuestion(Question* question, const Meaning* answer, const Vocabulary unusedVocabularies[]) {
 	const QuestionType prevQuestionType = question->Type;
 	int questionType;
 	do {
 		questionType = rand() % ARRAYSIZE(QuestionTypes);
 		question->Type = QuestionTypes[questionType];
-	} while ((question->Type & questionOption->QuestionType) == 0 ||
+	} while ((question->Type & question->Option->QuestionType) == 0 ||
 		unusedVocabularies && unusedVocabularies[questionType].Words.Count == 0);
 
 	const Meaning* const oldAnswer = prevQuestionType > 0 ? question->Meanings[question->Answer] : NULL;
@@ -193,20 +193,20 @@ void GenerateQuestion(Question* question, const QuestionOption* questionOption, 
 		question->Meanings[0] = answer;
 	}
 
-	for (int i = answer != NULL; i < questionOption->NumberOfMeanings; ++i) {
+	for (int i = answer != NULL; i < question->Option->NumberOfMeanings; ++i) {
 		do {
-			Word* const word = GetWord((Vocabulary*)&questionOption->Vocabulary, rand() % questionOption->Vocabulary.Words.Count);
+			Word* const word = GetWord((Vocabulary*)&question->Option->Vocabulary, rand() % question->Option->Vocabulary.Words.Count);
 			question->Meanings[i] = GetMeaning(word, rand() % word->Meanings.Count);
 		} while (!IsUniqueMeaning(question->Type, question->Meanings, i, question->Meanings[i]));
 	}
 
 	if (answer) {
-		question->Answer = rand() % questionOption->NumberOfMeanings;
+		question->Answer = rand() % question->Option->NumberOfMeanings;
 		question->Meanings[0] = question->Meanings[question->Answer];
 		question->Meanings[question->Answer] = answer;
 	} else {
 		do {
-			question->Answer = rand() % questionOption->NumberOfMeanings;
+			question->Answer = rand() % question->Option->NumberOfMeanings;
 		} while (oldAnswer && !IsUniqueMeaning(question->Type, &oldAnswer, 1, question->Meanings[question->Answer]));
 	}
 }
