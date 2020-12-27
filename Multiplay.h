@@ -1,10 +1,11 @@
 #pragma once
 
+#include "WinAPI.h"
 #include "Word.h"
 
 #include <stdbool.h>
-#include <WinSock2.h>
-#include <Windows.h>
+
+#define WR_ONLINE_MULTIPLAY_PROTOCOL_VERSION 2
 
 typedef enum {
 	Server,
@@ -12,8 +13,8 @@ typedef enum {
 } SocketType;
 
 typedef enum {
-	TurnMode, // 턴제 모드
-	FixedMode, // 역할 고정 모드
+	TurnBasedMode, // 턴제 모드
+	FixedRoleMode, // 역할 고정 모드
 } OnlineMultiplayMode;
 
 typedef enum {
@@ -22,69 +23,61 @@ typedef enum {
 } OnlineMultiplayRole;
 
 typedef struct {
-	LPSTR ServerIp;
+	LPSTR ServerAddress;
 	int ServerPort;
-	SocketType SocketType;
+	int MaximumPlayers;
+
 	OnlineMultiplayMode Mode;
 	OnlineMultiplayRole Role;
+
+	SocketType SocketType;
 } OnlineMultiplayOption;
+
+typedef enum {
+	Opening = 1,
+	Joining,
+	Waiting,
+	Playing,
+} OnlineMultiplayStatus;
 
 typedef struct {
 	SOCKET Socket;
 	SOCKADDR_IN Address;
-	int Correct;
-	int Wrong;
+	int Id;
+	LPTSTR Username;
+	OnlineMultiplayStatus Status;
 } OnlineMultiplayPlayer;
-
-typedef enum {
-	Singleplay,
-	OpeningServer,
-	WaitingForPlayer,
-	PlayerJoining,
-	JoiningServer,
-	Connected,
-	SentAnswer,
-} OnlineMultiplayStatus;
 
 typedef struct {
 	OnlineMultiplayOption* Option;
-	OnlineMultiplayPlayer Players[2];
-	OnlineMultiplayStatus Status;
+	Array Players;
+	int UsableId;
+	OnlineMultiplayPlayer* Me;
+	OnlineMultiplayPlayer* Server;
 
-	HWND Window;
+	HWND WaitingScene;
 	Question* Question;
-	QuestionOption* QuestionOption;
 } OnlineMultiplay;
 
-bool OpenServer(OnlineMultiplay* multiplay, OnlineMultiplayOption* multiplayOption);
-bool WaitForPlayer(OnlineMultiplay* multiplay);
-bool JoinServer(OnlineMultiplay* multiplay, OnlineMultiplayOption* multiplayOption);
-void DestroyOnlineMultiplay(OnlineMultiplay* multiplay);
+bool OpenServer(OnlineMultiplay* onlineMultiplay, OnlineMultiplayOption* onlineMultiplayOption);
+bool JoinServer(OnlineMultiplay* onlineMultiplay, OnlineMultiplayOption* onlineMultiplayOption);
+void DestroyOnlineMultiplay(OnlineMultiplay* onlineMultiplay);
 
-bool Send(OnlineMultiplay* multiplay, const void* data, int length);
-bool Receive(OnlineMultiplay* multiplay, void* buffer, int length);
-bool SendVersion(OnlineMultiplay* multiplay);
-bool ReceiveVersion(OnlineMultiplay* multiplay, LPTSTR* serverVersion, int* protocolVersion);
-bool SendBool(OnlineMultiplay* multiplay, bool data);
-bool ReceiveBool(OnlineMultiplay* multiplay, bool* buffer);
-bool SendInt(OnlineMultiplay* multiplay, int data);
-bool ReceiveInt(OnlineMultiplay* multiplay, int* buffer);
-bool SendString(OnlineMultiplay* multiplay, LPCTSTR data);
-bool ReceiveString(OnlineMultiplay* multiplay, LPTSTR* buffer);
-bool SendVocabulary(OnlineMultiplay* multiplay);
-bool ReceiveVocabulary(OnlineMultiplay* multiplay);
-
-void StartOnlineMultiplay(OnlineMultiplay* multiplay, OnlineMultiplayOption* option, Question* question, QuestionOption* questionOption, HWND handle);
-void StopOnlineMultiplay(OnlineMultiplay* multiplay);
-void SendQuestion(OnlineMultiplay* multiplay, HWND* buttons, int answer);
-void SendAnswer(OnlineMultiplay* multiplay);
-void RequestChangeRole(OnlineMultiplay* multiplay);
+bool Send(OnlineMultiplayPlayer* onlineMultiplayPlayer, const void* data, int length);
+bool Receive(OnlineMultiplayPlayer* onlineMultiplayPlayer, void* buffer, int length);
+bool SendBool(OnlineMultiplayPlayer* onlineMultiplayPlayer, bool data);
+bool ReceiveBool(OnlineMultiplayPlayer* onlineMultiplayPlayer, bool* buffer);
+bool SendInt(OnlineMultiplayPlayer* onlineMultiplayPlayer, int data);
+bool ReceiveInt(OnlineMultiplayPlayer* onlineMultiplayPlayer, int* buffer);
+bool SendString(OnlineMultiplayPlayer* onlineMultiplayPlayer, LPCTSTR data);
+bool ReceiveString(OnlineMultiplayPlayer* onlineMultiplayPlayer, LPTSTR* buffer);
+bool SendVersion(OnlineMultiplayPlayer* onlineMultiplayPlayer);
+bool ReceiveVersion(OnlineMultiplayPlayer* onlineMultiplayPlayer, LPTSTR* serverVersionBuffer, int* protocolVersionBuffer);
+bool SendVocabulary(OnlineMultiplayPlayer* onlineMultiplayPlayer, const Vocabulary* data);
+bool ReceiveVocabulary(OnlineMultiplayPlayer* onlineMultiplayPlayer, Vocabulary* buffer);
 
 typedef struct {
 	int Score;
-	int FirstCorrect;
-	int SecondCorrect;
-	int Wrong;
 } LocalMultiplayPlayer;
 
 typedef struct {

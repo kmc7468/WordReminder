@@ -24,6 +24,10 @@ void CopyWord(Word* destination, const Word* source) {
 }
 void DestroyWord(Word* word) {
 	free(word->Word);
+
+	for (int i = 0; i < word->Meanings.Count; ++i) {
+		DestroyMeaning(GetMeaning(word, i));
+	}
 	DestroyArray(&word->Meanings);
 }
 
