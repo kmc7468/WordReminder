@@ -7,6 +7,26 @@
 #include <string.h>
 #include <tchar.h>
 
+void CreateWord(Word* word) {
+	CreateArray(&word->Meanings, sizeof(Meaning));
+}
+void CopyWord(Word* destination, const Word* source) {
+	CreateWord(destination);
+
+	destination->Word = malloc(sizeof(TCHAR) * (_tcslen(source->Word) + 1));
+	_tcscpy(destination->Word, source->Word);
+
+	for (int i = 0; i < source->Meanings.Count; ++i) {
+		Meaning copied = { 0 };
+		CopyMeaning(&copied, GetMeaning((Word*)source, i));
+		AddMeaning(destination, &copied);
+	}
+}
+void DestroyWord(Word* word) {
+	free(word->Word);
+	DestroyArray(&word->Meanings);
+}
+
 void CopyMeaning(Meaning* destination, const Meaning* source) {
 	destination->Pronunciation = malloc(sizeof(TCHAR) * (_tcslen(source->Pronunciation) + 1));
 	destination->Meaning = malloc(sizeof(TCHAR) * (_tcslen(source->Meaning) + 1));
@@ -20,21 +40,6 @@ void DestroyMeaning(Meaning* meaning) {
 	free(meaning->Meaning);
 }
 
-void CreateWord(Word* word) {
-	CreateArray(&word->Meanings, sizeof(Meaning));
-}
-void CopyWord(Word* destination, const Word* source) {
-	CreateWord(destination);
-
-	destination->Word = malloc(sizeof(TCHAR) * (_tcslen(source->Word) + 1));
-	_tcscpy(destination->Word, source->Word);
-
-	for (int i = 0; i < source->Meanings.Count; ++i) {
-		Meaning copied;
-		CopyMeaning(&copied, GetMeaning((Word*)source, i));
-		AddMeaning(destination, &copied);
-	}
-}
 void AddMeaning(Word* word, Meaning* meaning) {
 	meaning->Word = word;
 
@@ -47,10 +52,6 @@ void RemoveMeaning(Word* word, int index) {
 Meaning* GetMeaning(Word* word, int index) {
 	return GetElement(&word->Meanings, index);
 }
-void DestroyWord(Word* word) {
-	free(word->Word);
-	DestroyArray(&word->Meanings);
-}
 
 static LPTSTR ReadString(FILE* file);
 static void WriteString(FILE* file, LPCTSTR string);
@@ -62,7 +63,7 @@ void CopyVocabulary(Vocabulary* destination, const Vocabulary* source) {
 	CreateVocabulary(destination);
 
 	for (int i = 0; i < source->Words.Count; ++i) {
-		Word copied;
+		Word copied = { 0 };
 		CopyWord(&copied, GetWord((Vocabulary*)source, i));
 		AddWord(destination, &copied);
 	}
@@ -76,7 +77,7 @@ bool LoadVocabulary(Vocabulary* vocabulary, LPCTSTR path) {
 	int count;
 	fread(&count, sizeof(count), 1, file);
 	for (int i = 0; i < count; ++i) {
-		Word word;
+		Word word = { 0 };
 		CreateWord(&word);
 
 		word.Word = ReadString(file);
@@ -143,7 +144,13 @@ void RemoveWord(Vocabulary* vocabulary, int index) {
 Word* GetWord(Vocabulary* vocabulary, int index) {
 	return GetElement(&vocabulary->Words, index);
 }
-void DestroyVocabulary(Vocabulary* vocabulary) {
+void DestroyVocabulary(Vocabulary* vocabulary, bool destroyWords) {
+	if (destroyWords) {
+		for (int i = 0; i < vocabulary->Words.Count; ++i) {
+			DestroyWord(GetWord(vocabulary, i));
+		}
+	}
+
 	DestroyArray(&vocabulary->Words);
 }
 
@@ -162,6 +169,12 @@ void WriteString(FILE* file, LPCTSTR string) {
 	FreeRawString(rawString);
 }
 
+void CreateQuestionType(QuestionType* questionType) {
+	CreateVocabulary(&questionType->UnusedVocabulary);
+}
+void DestroyQuestionType(QuestionType* questionType) {
+	DestroyVocabulary(&questionType->UnusedVocabulary, false);
+}
 bool IsUniqueMeaning(const QuestionType* questionType, const Meaning* const oldMeanings[], int numberOfOldMeanings, const Meaning* meaning) {
 	for (int i = 0; i < numberOfOldMeanings; ++i) {
 		if (questionType->Type == GuessMeaning && (oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Meaning, meaning->Meaning) == 0) ||
@@ -174,11 +187,17 @@ bool IsUniqueMeaning(const QuestionType* questionType, const Meaning* const oldM
 void CreateQuestionOption(QuestionOption* questionOption) {
 	CreateArray(&questionOption->Types, sizeof(QuestionType));
 }
+void DestroyQuestionOption(QuestionOption* questionOption) {
+	for (int i = 0; i < questionOption->Types.Count; ++i) {
+		DestroyQuestionType(GetElement(&questionOption->Types, i));
+	}
+	DestroyArray(&questionOption->Types);
+}
 
 void GenerateQuestion(Question* question, const Meaning* answer) {
 	const QuestionType* const prevQuestionType = question->Type;
 	do {
-		question->Type = (QuestionType*)GetElement(&question->Option->Types, rand() % question->Option->Types.Count);
+		question->Type = GetElement(&question->Option->Types, rand() % question->Option->Types.Count);
 	} while (question->Option->ExcludeDuplicatedAnswer && question->Type->UnusedVocabulary.Words.Count == 0);
 
 	const Meaning* const oldAnswer = prevQuestionType > 0 ? question->Meanings[question->Answer] : NULL;

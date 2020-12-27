@@ -26,8 +26,9 @@ bool InitializeApplication(HINSTANCE instance) {
 	g_FileDialog.nMaxFile = ARRAYSIZE(g_FileDialogPath);
 
 	TCHAR desktop[MAX_PATH];
-	SHGetSpecialFolderPath(HWND_DESKTOP, desktop, CSIDL_DESKTOP, FALSE);
-	g_FileDialog.lpstrInitialDir = desktop;
+	if (SHGetSpecialFolderPath(NULL, desktop, CSIDL_DESKTOP, FALSE)) {
+		g_FileDialog.lpstrInitialDir = desktop;
+	}
 
 	LoadSetting();
 

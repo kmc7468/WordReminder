@@ -6,8 +6,6 @@
 #include <string.h>
 
 void CreateArray(Array* array, int elementSize) {
-	memset(array, 0, sizeof(*array));
-
 	array->ElementSize = elementSize;
 }
 void AddElement(Array* array, void* data) {
@@ -22,7 +20,7 @@ void RemoveElement(Array* array, int index) {
 	memmove(GetElement(array, index), GetElement(array, index + 1), array->ElementSize * (--array->Count - index));
 }
 void* GetElement(Array* array, int index) {
-	return (LPBYTE)array + array->ElementSize * index;
+	return (LPBYTE)array->Array + array->ElementSize * index;
 }
 int FindElement(Array* array, void* data, bool(compareFunction)(void*, void*)) {
 	for (int i = 0; i < array->Count; ++i) {

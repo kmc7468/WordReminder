@@ -2,6 +2,7 @@
 
 #include "String.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 bool CreateHttpRequest(HttpRequest* httpRequest, LPCTSTR url, LPCTSTR method, bool enableSsl) {
@@ -48,7 +49,7 @@ bool SendHttpRequest(HttpRequest* httpRequest, LPCTSTR headers) {
 
 	const bool success = WinHttpSendRequest(httpRequest->Request, rawHeaders, rawHeadersLength, NULL, 0, 0, 0);
 	FreeRawString(rawHeaders);
-	return success && (bool)WinHttpReceiveResponse(httpRequest->Request, NULL);
+	return success && WinHttpReceiveResponse(httpRequest->Request, NULL);
 }
 LPCTSTR GetHttpResponseHeader(HttpRequest* httpRequest, HttpResponseHeader header) {
 	DWORD length = 0;

@@ -8,6 +8,10 @@ typedef struct {
 	Array Meanings;
 } Word;
 
+void CreateWord(Word* word);
+void CopyWord(Word* destination, const Word* source);
+void DestroyWord(Word* word);
+
 typedef struct {
 	Word* Word;
 	LPTSTR Pronunciation;
@@ -18,12 +22,9 @@ typedef struct {
 void CopyMeaning(Meaning* destination, const Meaning* source);
 void DestroyMeaning(Meaning* meaning);
 
-void CreateWord(Word* word);
-void CopyWord(Word* destination, const Word* source);
 void AddMeaning(Word* word, Meaning* meaning);
 void RemoveMeaning(Word* word, int index);
 Meaning* GetMeaning(Word* word, int index);
-void DestroyWord(Word* word);
 
 typedef struct {
 	Array Words;
@@ -36,7 +37,7 @@ bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path);
 void AddWord(Vocabulary* vocabulary, Word* word);
 void RemoveWord(Vocabulary* vocabulary, int index);
 Word* GetWord(Vocabulary* vocabulary, int index);
-void DestroyVocabulary(Vocabulary* vocabulary);
+void DestroyVocabulary(Vocabulary* vocabulary, bool destroyWords);
 
 typedef enum {
 	GuessMeaning,
@@ -51,6 +52,8 @@ typedef struct {
 	bool ShowSubProperty;
 } QuestionType;
 
+void CreateQuestionType(QuestionType* questionType);
+void DestroyQuestionType(QuestionType* questionType);
 bool IsUniqueMeaning(const QuestionType* questionType, const Meaning* const oldMeanings[], int numberOfOldMeanings, const Meaning* meaning);
 
 typedef struct {
@@ -62,6 +65,7 @@ typedef struct {
 } QuestionOption;
 
 void CreateQuestionOption(QuestionOption* questionOption);
+void DestroyQuestionOption(QuestionOption* questionOption);
 
 typedef struct {
 	QuestionOption* Option;
