@@ -37,7 +37,7 @@ HWND CreateSceneWindow(SUBCLASSPROC windowProc, SUBCLASSPROC sceneProc) {
 		CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, Instance, NULL);
 	SetWindowSubclass(window, windowProc, 0, 0);
 	SendMessage(window, AM_CREATE, 0, 0);
-	SendMessage(window, WM_SIZE, 0, MAKEWORD(rect.right, rect.bottom));
+	SendMessage(window, WM_SIZE, 0, MAKELPARAM(640, 480));
 
 	ChangeScene(window, CreateScene(window, sceneProc));
 	return window;
@@ -51,14 +51,11 @@ HWND CreateScene(HWND window, SUBCLASSPROC sceneProc) {
 		0, 0, clientRect.right, clientRect.bottom, window, 0);
 	SetWindowSubclass(scene, sceneProc, 0, 0);
 	SendMessage(scene, AM_CREATE, 0, 0);
-	SendMessage(scene, WM_SIZE, 0, MAKEWORD(clientRect.right, clientRect.bottom));
+	SendMessage(scene, WM_SIZE, 0, MAKELPARAM(clientRect.right, clientRect.bottom));
 	return scene;
 }
 HWND ChangeScene(HWND window, HWND newScene) {
 	const HWND oldScene = (HWND)SendMessage(window, AM_CHANGESCENE, 0, (LPARAM)newScene);
-	if (oldScene) {
-		ShowWindow(oldScene, SW_HIDE);
-	}
 
 	RECT clientRect;
 	GetClientRect(window, &clientRect);
@@ -116,6 +113,55 @@ void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length) {
 	SelectObject(dc, oldFont);
 }
 
+#define PROP_CURRENT_DPI _T("CurrentDPI")
+#define PROP_CURRENT_SCENE _T("CurrentScene")
+
+LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
+	switch (message) {
+	case WM_CREATE:
+		SetProp(handle, PROP_CURRENT_DPI, (HANDLE)USER_DEFAULT_SCREEN_DPI);
+		return 0;
+
+	case WM_SIZE: {
+		const HWND scene = GetProp(handle, PROP_CURRENT_SCENE);
+		SetWindowPos(scene, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_NOMOVE);
+		return 0;
+	}
+
+	case WM_DPICHANGED: {
+		RECT rect;
+		GetClientRect(handle, &rect);
+
+		const int oldDpi = (int)GetProp(handle, PROP_CURRENT_DPI);
+		const int newDpi = LOWORD(wParam);
+
+		rect.right = MulDiv(rect.right, newDpi, oldDpi);
+		rect.bottom = MulDiv(rect.bottom, newDpi, oldDpi);
+		AdjustWindowRectExForDpi(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0, newDpi);
+
+		SetWindowPos(handle, NULL, 0, 0, rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER | SWP_NOMOVE);
+
+		SetProp(handle, PROP_CURRENT_DPI, (HANDLE)newDpi);
+		return 0;
+	}
+
+	case AM_CHANGESCENE: {
+		const HWND oldScene = GetProp(handle, PROP_CURRENT_SCENE);
+		ShowWindow(oldScene, SW_HIDE);
+
+		SetProp(handle, PROP_CURRENT_SCENE, (HWND)lParam);
+		ShowWindow((HWND)lParam, SW_SHOW);
+		return (LRESULT)oldScene;
+	}
+
+	case WM_CLOSE:
+		DestroyWindow(handle);
+		return 0;
+
+	default:
+		return DefWindowProc(handle, message, wParam, lParam);
+	}
+}
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1) {
 	EVENT {
 	case WM_DESTROY:
@@ -124,5 +170,12 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 
 	default:
 		return DefSubclassProc(handle, message, wParam, lParam);
+	}
+}
+
+LRESULT CALLBACK SceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
+	switch (message) {
+	default:
+		return DefWindowProc(handle, message, wParam, lParam);
 	}
 }

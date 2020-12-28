@@ -1,6 +1,5 @@
 #include "Application.h"
 
-#include "Scene.h"
 #include "Window.h"
 
 #include <ShlObj.h>
@@ -15,15 +14,14 @@ static TCHAR g_FileDialogPath[MAX_PATH];
 
 HINSTANCE Instance;
 
-static LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
-
 bool InitializeApplication(HINSTANCE instance) {
 	Instance = instance;
 	srand((unsigned)time(NULL));
 
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-
 	RegisterWindow(_T("SceneWindow"), SceneWindowProc);
+	RegisterWindow(_T("Scene"), SceneProc);
+
 	MainWindow = CreateSceneWindow(MainWindowProc, MainSceneProc);
 
 	g_GlobalFont.lfCharSet = HANGUL_CHARSET;
@@ -50,53 +48,6 @@ void DestroyApplication() {
 	free(Setting.ServerIp);
 
 	WSACleanup();
-}
-
-#define PROP_CURRENT_DPI _T("CurrentDPI")
-#define PROP_CURRENT_SCENE _T("CurrentScene")
-
-LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
-	switch (message) {
-	case WM_CREATE:
-		SetProp(handle, PROP_CURRENT_DPI, (HANDLE)USER_DEFAULT_SCREEN_DPI);
-		return 0;
-
-	case AM_CHANGESCENE: {
-		const HWND oldScene = GetProp(handle, PROP_CURRENT_SCENE);
-		SetProp(handle, PROP_CURRENT_SCENE, (HWND)lParam);
-		return (LRESULT)oldScene;
-	}
-
-	case WM_SIZE: {
-		const HWND scene = GetProp(handle, PROP_CURRENT_SCENE);
-		SetWindowPos(scene, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_NOMOVE);
-		return 0;
-	}
-
-	case WM_DPICHANGED: {
-		RECT rect;
-		GetClientRect(handle, &rect);
-
-		const int oldDpi = (int)GetProp(handle, PROP_CURRENT_DPI);
-		const int newDpi = LOWORD(wParam);
-
-		rect.right = MulDiv(rect.right, newDpi, oldDpi);
-		rect.bottom = MulDiv(rect.bottom, newDpi, oldDpi);
-		AdjustWindowRectExForDpi(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0, newDpi);
-
-		SetWindowPos(handle, NULL, 0, 0, rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER | SWP_NOMOVE);
-
-		SetProp(handle, PROP_CURRENT_DPI, (HANDLE)newDpi);
-		return 0;
-	}
-
-	case WM_CLOSE:
-		DestroyWindow(handle);
-		return 0;
-
-	default:
-		return DefWindowProc(handle, message, wParam, lParam);
-	}
 }
 
 HFONT CreateGlobalFont(int height, bool isBold) {
