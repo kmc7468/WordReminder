@@ -17,13 +17,6 @@ void RegisterWindow(LPCTSTR name, WNDPROC wndProc) {
 
 	RegisterClass(&wc);
 }
-HWND CreateAndShowWindow(LPCTSTR name, LPCTSTR title, int cmdShow) {
-	const HWND window = CreateWindow(name, title, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-		CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, NULL, NULL, Instance, NULL);
-
-	ShowWindow(window, cmdShow);
-	return window;
-}
 HWND CreateChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu) {
 	const HWND child = CreateWindow(name, text, WS_CHILD | flags,
 		x, y, w, h, parent, (HMENU)(UINT_PTR)menu, Instance, NULL);
@@ -37,10 +30,14 @@ HWND CreateChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x, int y
 HWND MainWindow, DialogWindow;
 
 HWND CreateSceneWindow(SUBCLASSPROC windowProc, SUBCLASSPROC sceneProc) {
-	const HWND window = CreateWindow(_T("SceneWindow"), NULL, WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-		CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, NULL, NULL, Instance, NULL);
+	RECT rect = { 0, 0, 640, 480 };
+	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+
+	const HWND window = CreateWindow(_T("SceneWindow"), _T(""), WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+		CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, Instance, NULL);
 	SetWindowSubclass(window, windowProc, 0, 0);
 	SendMessage(window, AM_CREATE, 0, 0);
+	SendMessage(window, WM_SIZE, 0, MAKEWORD(rect.right, rect.bottom));
 
 	ChangeScene(window, CreateScene(window, sceneProc));
 	return window;
@@ -54,6 +51,7 @@ HWND CreateScene(HWND window, SUBCLASSPROC sceneProc) {
 		0, 0, clientRect.right, clientRect.bottom, window, 0);
 	SetWindowSubclass(scene, sceneProc, 0, 0);
 	SendMessage(scene, AM_CREATE, 0, 0);
+	SendMessage(scene, WM_SIZE, 0, MAKEWORD(clientRect.right, clientRect.bottom));
 	return scene;
 }
 HWND ChangeScene(HWND window, HWND newScene) {
@@ -116,4 +114,15 @@ void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length) {
 	const HFONT oldFont = (HFONT)SelectObject(dc, font);
 	TextOut(dc, x, y, string, length);
 	SelectObject(dc, oldFont);
+}
+
+LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1) {
+	EVENT {
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+
+	default:
+		return DefSubclassProc(handle, message, wParam, lParam);
+	}
 }

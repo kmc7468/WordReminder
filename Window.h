@@ -34,10 +34,12 @@ void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length);
 #define STARTPAINT PaintContext paintContext; const HDC dc = StartPaint(handle, WIDTH, HEIGHT, &paintContext)
 #define STOPPAINT StopPaint(handle, &paintContext), 0
 
-#define EVENT RECT clientRect; GetClientRect(handle, &clientRect); switch (message)
+#define EVENT (void)(dummy0, dummy1); RECT clientRect; GetClientRect(handle, &clientRect); switch (message)
 #define WIDTH clientRect.right
 #define HEIGHT clientRect.bottom
 #define CSTR(string) _T(string), ARRAYSIZE(_T(string))
 
 #define AM_CREATE WM_APP + 0
 #define AM_CHANGESCENE WM_USER + 1
+
+LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1);
