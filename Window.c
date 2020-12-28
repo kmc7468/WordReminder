@@ -132,7 +132,7 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 		RECT rect;
 		GetClientRect(handle, &rect);
 
-		const int oldDpi = (int)GetProp(handle, PROP_CURRENT_DPI);
+		const int oldDpi = (int)(UINT_PTR)GetProp(handle, PROP_CURRENT_DPI);
 		const int newDpi = LOWORD(wParam);
 
 		rect.right = MulDiv(rect.right, newDpi, oldDpi);
@@ -141,7 +141,7 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 
 		SetWindowPos(handle, NULL, 0, 0, rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER | SWP_NOMOVE);
 
-		SetProp(handle, PROP_CURRENT_DPI, (HANDLE)newDpi);
+		SetProp(handle, PROP_CURRENT_DPI, (HANDLE)(UINT_PTR)newDpi);
 		return 0;
 	}
 

@@ -37,7 +37,7 @@ void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length);
 #define EVENT (void)(dummy0, dummy1); RECT clientRect; GetClientRect(handle, &clientRect); switch (message)
 #define WIDTH clientRect.right
 #define HEIGHT clientRect.bottom
-#define CSTR(string) _T(string), ARRAYSIZE(_T(string))
+#define CSTR(string) _T(string), ARRAYSIZE(_T(string)) - 1
 
 #define AM_CREATE WM_APP + 0
 #define AM_CHANGESCENE WM_USER + 1
