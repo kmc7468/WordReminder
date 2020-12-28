@@ -126,6 +126,7 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 
 	case WM_SIZE: {
 		const HWND scene = GetProp(handle, PROP_CURRENT_SCENE);
+		SendMessage(scene, AM_DESTROYGDIOBJ, 0, 0);
 		SetWindowPos(scene, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_NOMOVE);
 		return 0;
 	}
@@ -190,6 +191,11 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 
 LRESULT CALLBACK SceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
+	case WM_DESTROY:
+		SendMessage(handle, AM_DESTROYGDIOBJ, 0, 0);
+		SendMessage(handle, AM_DESTROY, 0, 0);
+		return 0;
+
 	default:
 		return DefWindowProc(handle, message, wParam, lParam);
 	}

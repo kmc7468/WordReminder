@@ -17,6 +17,9 @@ HWND ChangeScene(HWND window, HWND newScene);
 int GetAppropriateLengthForDpi(HWND window, int originalLength);
 int GetAppropriateLengthForSize(HWND window, int originalLength);
 
+#define D(x) GetAppropriateLengthForDpi(handle, x)
+#define R(x, r) MulDiv(x, r, 100)
+
 typedef struct {
 	HDC OriginalDC;
 	HBITMAP OriginalBitmap;
@@ -31,8 +34,8 @@ void StopPaint(HWND window, PaintContext* paintContext);
 
 void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length);
 
-#define STARTPAINT PaintContext paintContext; const HDC dc = StartPaint(handle, WIDTH, HEIGHT, &paintContext)
-#define STOPPAINT StopPaint(handle, &paintContext), 0
+#define START_PAINT PaintContext paintContext; const HDC dc = StartPaint(handle, WIDTH, HEIGHT, &paintContext)
+#define STOP_PAINT StopPaint(handle, &paintContext); return 0
 
 #define EVENT (void)(dummy0, dummy1); RECT clientRect; GetClientRect(handle, &clientRect); switch (message)
 #define WIDTH clientRect.right
@@ -40,7 +43,9 @@ void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length);
 #define CSTR(string) _T(string), ARRAYSIZE(_T(string)) - 1
 
 #define AM_CREATE WM_APP + 0
-#define AM_CHANGESCENE WM_USER + 1
+#define AM_CHANGESCENE WM_APP + 1
+#define AM_DESTROY WM_APP + 2
+#define AM_DESTROYGDIOBJ WM_APP + 3
 
 LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1);

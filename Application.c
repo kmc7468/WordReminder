@@ -25,8 +25,6 @@ bool InitializeApplication(HINSTANCE instance) {
 	RegisterWindow(_T("SceneWindow"), SceneWindowProc);
 	RegisterWindow(_T("Scene"), SceneProc);
 
-	MainWindow = CreateSceneWindow(MainWindowProc, MainSceneProc);
-
 	g_GlobalFont.lfCharSet = HANGUL_CHARSET;
 	_tcscpy(g_GlobalFont.lfFaceName, _T("³ª´®°íµñ"));
 
@@ -43,6 +41,8 @@ bool InitializeApplication(HINSTANCE instance) {
 
 	LoadSetting();
 
+	MainWindow = CreateSceneWindow(MainWindowProc, MainSceneProc);
+
 	WSADATA data;
 	return WSAStartup(MAKEWORD(2, 2), &data) == ERROR_SUCCESS;
 }
@@ -54,7 +54,7 @@ void DestroyApplication() {
 }
 
 HFONT CreateGlobalFont(int height, bool isBold) {
-	g_GlobalFont.lfHeight = -height;
+	g_GlobalFont.lfHeight = height;
 	g_GlobalFont.lfWeight = isBold ? FW_BOLD : FW_NORMAL;
 	return CreateFontIndirect(&g_GlobalFont);
 }
