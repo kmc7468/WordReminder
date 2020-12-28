@@ -8,3 +8,4 @@
 #include <tchar.h>
 
 UINT GetDpiForWindowSafely(HWND window);
+BOOL AdjustWindowRectExForDpiSafely(LPRECT rect, DWORD style, BOOL hasMenu, DWORD exStyle, UINT dpi);

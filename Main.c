@@ -21,5 +21,7 @@ int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdArgs, 
 		TranslateMessage(&message);
 		DispatchMessage(&message);
 	}
+
+	DestroyApplication();
 	return (int)message.wParam;
 }

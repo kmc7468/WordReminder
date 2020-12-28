@@ -140,7 +140,7 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 
 		rect.right = MulDiv(rect.right, newDpi, oldDpi);
 		rect.bottom = MulDiv(rect.bottom, newDpi, oldDpi);
-		AdjustWindowRectExForDpi(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0, newDpi);
+		AdjustWindowRectExForDpiSafely(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0, newDpi);
 
 		SetWindowPos(handle, NULL, 0, 0, rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER | SWP_NOMOVE);
 
@@ -168,6 +168,17 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 }
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1) {
 	EVENT {
+	case WM_GETMINMAXINFO: {
+		clientRect.right = GetAppropriateLengthForDpi(handle, 640);
+		clientRect.bottom = GetAppropriateLengthForDpi(handle, 480);
+		AdjustWindowRectExForDpiSafely(&clientRect, WS_OVERLAPPEDWINDOW, FALSE, 0, GetDpiForWindowSafely(handle));
+
+		LPMINMAXINFO size = (LPMINMAXINFO)lParam;
+		size->ptMinTrackSize.x = clientRect.right - clientRect.left;
+		size->ptMinTrackSize.y = clientRect.bottom - clientRect.top;
+		return 0;
+	}
+
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;

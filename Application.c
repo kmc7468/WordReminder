@@ -54,7 +54,7 @@ void DestroyApplication() {
 }
 
 HFONT CreateGlobalFont(int height, bool isBold) {
-	g_GlobalFont.lfHeight = height;
+	g_GlobalFont.lfHeight = -height;
 	g_GlobalFont.lfWeight = isBold ? FW_BOLD : FW_NORMAL;
 	return CreateFontIndirect(&g_GlobalFont);
 }
