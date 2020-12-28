@@ -16,13 +16,13 @@ typedef struct {
 	int Constant;
 	Array Terms;
 
-	int Evaluated;
+	float Evaluated;
 } UILength;
 
 void CreateUILength(UILength* uiLength);
 void DestroyUILength(UILength* uiLength);
 void AddTerm(UILength* uiLength, UILength* term);
-void EvaluateUILength(UILength* uiLength, HWND window, int width, int height);
+void EvaluateUILength(UILength* uiLength, HWND window, float width, float height);
 
 typedef enum {
 	Window,
@@ -42,10 +42,10 @@ typedef struct {
 	UILength* Length;
 	Array Children;
 
-	int EvaluatedX;
-	int EvaluatedY;
-	int EvaluatedWidth;
-	int EvaluatedHeight;
+	float EvaluatedX;
+	float EvaluatedY;
+	float EvaluatedWidth;
+	float EvaluatedHeight;
 } UIComponent;
 
 void CreateUIComponent(UIComponent* uiComponent, LPCTSTR name);
@@ -53,13 +53,15 @@ void DestroyUIComponent(UIComponent* uiComponent);
 void AddChild(UIComponent* uiComponent, UIComponent* child);
 UIComponent* FindUIComponent(UIComponent* uiComponent, LPCTSTR name);
 void ApplyUIComponent(UIComponent* uiComponent, HWND window);
-void EvaluateUIComponent(UIComponent* uiComponent, HWND window, int x, int y, int width, int height);
+void EvaluateUIComponent(UIComponent* uiComponent, HWND window, float x, float y, float width, float height);
 
 void CreateUIEngine(UIComponent* uiEngine);
 void EvaluateUIEngine(UIComponent* uiEngine, HWND window, int width, int height);
 void DestroyUIEngine(UIComponent* uiEngine);
 
 int GetCenterX(const UIComponent* uiComponent);
+int GetX(const UIComponent* uiComponent);
+int GetY(const UIComponent* uiComponent);
 
 #define UICOMP_BASE(tag, name, type, alignment, lengthType, constant, parent)		\
 UIComponent* tag = calloc(1, sizeof(UIComponent));									\
@@ -77,3 +79,9 @@ AddChild(parent, tag)
 #define UICOMP_DOC(tag, name, type, alignment, parent) UICOMP_BASE(tag, name, type, alignment, DependentOnChildren, 0, parent)
 
 #define UICOMP_FIND(tag, name) UIComponent* const tag = FindUIComponent(&g_UIEngine, name)
+#define UICOMP_APPLY(name, window, font)											\
+{																					\
+	UICOMP_FIND(temp, name);														\
+	ApplyUIComponent(temp, window);													\
+	SetFont(window, font);															\
+}

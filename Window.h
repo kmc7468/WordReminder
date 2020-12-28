@@ -6,6 +6,7 @@
 
 void RegisterWindow(LPCTSTR className, WNDPROC wndProc);
 HWND CreateChild(LPCTSTR className, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu);
+void SetFont(HWND window, HFONT font);
 
 extern HWND MainWindow, DialogWindow;
 

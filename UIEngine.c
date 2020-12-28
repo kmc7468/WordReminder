@@ -2,6 +2,7 @@
 
 #include "Window.h"
 
+#include <math.h>
 #include <string.h>
 
 void CreateUILength(UILength* uiLength) {
@@ -19,18 +20,18 @@ void DestroyUILength(UILength* uiLength) {
 void AddTerm(UILength* uiLength, UILength* term) {
 	AddElement(&uiLength->Terms, &term);
 }
-void EvaluateUILength(UILength* uiLength, HWND window, int width, int height) {
+void EvaluateUILength(UILength* uiLength, HWND window, float width, float height) {
 	switch (uiLength->Type) {
 	case Constant:
-		uiLength->Evaluated = GetAppropriateLengthForDpi(window, uiLength->Constant);
+		uiLength->Evaluated = (float)GetAppropriateLengthForDpi(window, uiLength->Constant);
 		break;
 
 	case DependentOnWidth:
-		uiLength->Evaluated = MulDiv(width, uiLength->Constant, 100);
+		uiLength->Evaluated = width * uiLength->Constant / 100.f;
 		break;
 
 	case DependentOnHeight:
-		uiLength->Evaluated = MulDiv(height, uiLength->Constant, 100);
+		uiLength->Evaluated = height * uiLength->Constant / 100.f;
 		break;
 
 	case Sum:
@@ -45,7 +46,7 @@ void EvaluateUILength(UILength* uiLength, HWND window, int width, int height) {
 	}
 }
 
-static void MoveChildrenUIComponent(UIComponent* uiComponent, int xDelta, int yDelta);
+static void MoveChildrenUIComponent(UIComponent* uiComponent, float xDelta, float yDelta);
 
 void CreateUIComponent(UIComponent* uiComponent, LPCTSTR name) {
 	if (name) {
@@ -86,16 +87,16 @@ UIComponent* FindUIComponent(UIComponent* uiComponent, LPCTSTR name) {
 	return NULL;
 }
 void ApplyUIComponent(UIComponent* uiComponent, HWND window) {
-	SetWindowPos(window, NULL, uiComponent->EvaluatedX, uiComponent->EvaluatedY,
-		uiComponent->EvaluatedWidth, uiComponent->EvaluatedHeight, SWP_NOZORDER);
+	SetWindowPos(window, NULL, (int)floorf(uiComponent->EvaluatedX + 0.5f), (int)floorf(uiComponent->EvaluatedY + 0.5f),
+		(int)floorf(uiComponent->EvaluatedWidth + 0.5f), (int)floorf(uiComponent->EvaluatedHeight + 0.5f), SWP_NOZORDER);
 }
-void EvaluateUIComponent(UIComponent* uiComponent, HWND window, int x, int y, int width, int height) {
+void EvaluateUIComponent(UIComponent* uiComponent, HWND window, float x, float y, float width, float height) {
 	uiComponent->EvaluatedX = x;
 	uiComponent->EvaluatedY = y;
 	uiComponent->EvaluatedWidth = width;
 	uiComponent->EvaluatedHeight = height;
 
-	int childrenLengthSum = 0;
+	float childrenLengthSum = 0;
 	for (int i = 0; i < uiComponent->Children.Count; ++i) {
 		UIComponent* const child = *(UIComponent**)GetElement(&uiComponent->Children, i);
 
@@ -127,17 +128,15 @@ void EvaluateUIComponent(UIComponent* uiComponent, HWND window, int x, int y, in
 	}
 
 	if (uiComponent->Alignment == Center) {
-		const int delta = MulDiv(height - childrenLengthSum, 1, 2);
-
 		if ((*(UIComponent**)GetElement(&uiComponent->Children, 0))->Type == Horizontal) {
-			MoveChildrenUIComponent(uiComponent, 0, delta);
+			MoveChildrenUIComponent(uiComponent, 0, (height - childrenLengthSum) / 2.f);
 		} else {
-			MoveChildrenUIComponent(uiComponent, delta, 0);
+			MoveChildrenUIComponent(uiComponent, (width - childrenLengthSum) / 2.f, 0);
 		}
 	}
 }
 
-void MoveChildrenUIComponent(UIComponent* uiComponent, int xDelta, int yDelta) {
+void MoveChildrenUIComponent(UIComponent* uiComponent, float xDelta, float yDelta) {
 	for (int i = 0; i < uiComponent->Children.Count; ++i) {
 		UIComponent* const child = *(UIComponent**)GetElement(&uiComponent->Children, i);
 
@@ -151,12 +150,18 @@ void CreateUIEngine(UIComponent* uiEngine) {
 	CreateUIComponent(uiEngine, NULL);
 }
 void EvaluateUIEngine(UIComponent* uiEngine, HWND window, int width, int height) {
-	EvaluateUIComponent(uiEngine, window, 0, 0, width, height);
+	EvaluateUIComponent(uiEngine, window, 0, 0, (float)width, (float)height);
 }
 void DestroyUIEngine(UIComponent* uiEngine) {
 	DestroyUIComponent(uiEngine);
 }
 
 int GetCenterX(const UIComponent* uiComponent) {
-	return uiComponent->EvaluatedX + MulDiv(uiComponent->EvaluatedWidth, 1, 2);
+	return (int)floorf(uiComponent->EvaluatedX + uiComponent->EvaluatedWidth / 2.f + 0.5f);
+}
+int GetX(const UIComponent* uiComponent) {
+	return (int)floorf(uiComponent->EvaluatedX + 0.5f);
+}
+int GetY(const UIComponent* uiComponent) {
+	return (int)floorf(uiComponent->EvaluatedY + 0.5f);
 }

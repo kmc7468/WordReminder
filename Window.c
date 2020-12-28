@@ -22,9 +22,12 @@ HWND CreateChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x, int y
 		x, y, w, h, parent, (HMENU)(UINT_PTR)menu, Instance, NULL);
 
 	if (font) {
-		SendMessage(child, WM_SETFONT, (WPARAM)font, true);
+		SetFont(child, font);
 	}
 	return child;
+}
+void SetFont(HWND window, HFONT font) {
+	SendMessage(window, WM_SETFONT, (WPARAM)font, true);
 }
 
 HWND MainWindow, DialogWindow;
