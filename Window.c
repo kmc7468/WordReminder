@@ -148,15 +148,15 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 
 		rect.right = MulDiv(rect.right, newDpi, oldDpi);
 		rect.bottom = MulDiv(rect.bottom, newDpi, oldDpi);
-		AdjustWindowRectExForDpiSafely(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0, newDpi);
-
-		SetWindowPos(handle, NULL, 0, 0, rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER | SWP_NOMOVE);
-		SetProp(handle, PROP_CURRENT_DPI, (HANDLE)(UINT_PTR)newDpi);
 
 		const HWND scene = GetProp(handle, PROP_CURRENT_SCENE);
 		SendMessage(scene, AM_DESTROYFONT, 0, TRUE);
 		SendMessage(scene, AM_CREATEFONT, 0, TRUE);
-		SetWindowPos(scene, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_NOMOVE);
+		SetWindowPos(scene, NULL, 0, 0, rect.right, rect.bottom, SWP_NOZORDER | SWP_NOMOVE);
+
+		AdjustWindowRectExForDpiSafely(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0, newDpi);
+		SetWindowPos(handle, NULL, 0, 0, rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER | SWP_NOMOVE);
+		SetProp(handle, PROP_CURRENT_DPI, (HANDLE)(UINT_PTR)newDpi);
 		return 0;
 	}
 #endif
