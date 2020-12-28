@@ -54,6 +54,7 @@ HWND CreateScene(HWND window, SUBCLASSPROC sceneProc) {
 		0, 0, clientRect.right, clientRect.bottom, window, 0);
 	SetWindowSubclass(scene, sceneProc, 0, 0);
 	SendMessage(scene, AM_CREATE, 0, 0);
+	SendMessage(scene, AM_CREATEFONT, 0, TRUE);
 	SendMessage(scene, WM_SIZE, 0, MAKELPARAM(clientRect.right, clientRect.bottom));
 	return scene;
 }
@@ -63,6 +64,8 @@ HWND ChangeScene(HWND window, HWND newScene) {
 	RECT clientRect;
 	GetClientRect(window, &clientRect);
 
+	SendMessage(newScene, AM_DESTROYFONT, 0, TRUE);
+	SendMessage(newScene, AM_CREATEFONT, 0, TRUE);
 	SetWindowPos(newScene, NULL, 0, 0, clientRect.right, clientRect.bottom, SWP_NOZORDER | SWP_NOMOVE);
 	return oldScene;
 }
@@ -129,7 +132,8 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 
 	case WM_SIZE: {
 		const HWND scene = GetProp(handle, PROP_CURRENT_SCENE);
-		SendMessage(scene, AM_DESTROYGDIOBJ, 0, 0);
+		SendMessage(scene, AM_DESTROYFONT, 0, FALSE);
+		SendMessage(scene, AM_CREATEFONT, 0, FALSE);
 		SetWindowPos(scene, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_NOMOVE);
 		return 0;
 	}
@@ -147,8 +151,12 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 		AdjustWindowRectExForDpiSafely(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0, newDpi);
 
 		SetWindowPos(handle, NULL, 0, 0, rect.right - rect.left, rect.bottom - rect.top, SWP_NOZORDER | SWP_NOMOVE);
-
 		SetProp(handle, PROP_CURRENT_DPI, (HANDLE)(UINT_PTR)newDpi);
+
+		const HWND scene = GetProp(handle, PROP_CURRENT_SCENE);
+		SendMessage(scene, AM_DESTROYFONT, 0, TRUE);
+		SendMessage(scene, AM_CREATEFONT, 0, TRUE);
+		SetWindowPos(scene, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_NOMOVE);
 		return 0;
 	}
 #endif
@@ -195,7 +203,7 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 LRESULT CALLBACK SceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_DESTROY:
-		SendMessage(handle, AM_DESTROYGDIOBJ, 0, 0);
+		SendMessage(handle, AM_DESTROYFONT, 0, TRUE);
 		SendMessage(handle, AM_DESTROY, 0, 0);
 		return 0;
 

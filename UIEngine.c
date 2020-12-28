@@ -127,12 +127,31 @@ void EvaluateUIComponent(UIComponent* uiComponent, HWND window, float x, float y
 		childrenLengthSum += child->Length->Evaluated;
 	}
 
-	if (uiComponent->Alignment == Center) {
+	switch (uiComponent->Alignment) {
+	case Center:
 		if ((*(UIComponent**)GetElement(&uiComponent->Children, 0))->Type == Horizontal) {
 			MoveChildrenUIComponent(uiComponent, 0, (height - childrenLengthSum) / 2.f);
 		} else {
 			MoveChildrenUIComponent(uiComponent, (width - childrenLengthSum) / 2.f, 0);
 		}
+		break;
+
+	case Bottom:
+		if ((*(UIComponent**)GetElement(&uiComponent->Children, 0))->Type == Horizontal) {
+			MoveChildrenUIComponent(uiComponent, 0, height - childrenLengthSum);
+		} else {
+			MoveChildrenUIComponent(uiComponent, width - childrenLengthSum, 0);
+		}
+		break;
+	}
+}
+void UpdateUIComponent(UIComponent* uiComponent) {
+	if (uiComponent->Window && *uiComponent->Window) {
+		ApplyUIComponent(uiComponent, *uiComponent->Window);
+	}
+
+	for (int i = 0; i < uiComponent->Children.Count; ++i) {
+		UpdateUIComponent(*(UIComponent**)GetElement(&uiComponent->Children, i));
 	}
 }
 
@@ -151,6 +170,9 @@ void CreateUIEngine(UIComponent* uiEngine) {
 }
 void EvaluateUIEngine(UIComponent* uiEngine, HWND window, int width, int height) {
 	EvaluateUIComponent(uiEngine, window, 0, 0, (float)width, (float)height);
+}
+void UpdateUIEngine(UIComponent* uiEngine) {
+	UpdateUIComponent(uiEngine);
 }
 void DestroyUIEngine(UIComponent* uiEngine) {
 	DestroyUIComponent(uiEngine);

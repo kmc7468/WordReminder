@@ -45,8 +45,9 @@ void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length);
 
 #define AM_CREATE WM_APP + 0
 #define AM_CHANGESCENE WM_APP + 1
-#define AM_DESTROY WM_APP + 2
-#define AM_DESTROYGDIOBJ WM_APP + 3
+#define AM_CREATEFONT WM_APP + 2
+#define AM_DESTROYFONT WM_APP + 3
+#define AM_DESTROY WM_APP + 4
 
 LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1);
