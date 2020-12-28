@@ -12,9 +12,6 @@ extern HINSTANCE Instance;
 bool InitializeApplication(HINSTANCE instance);
 void DestroyApplication();
 
-int GetAppropriateLengthForDpi(HWND window, int originalLength);
-int GetAppropriateLengthForSize(HWND window, int originalLength);
-
 HFONT CreateGlobalFont(int height, bool isBold);
 
 LPCTSTR ShowOpenFileDialog(HWND window);
@@ -42,3 +39,11 @@ extern RegistryData Setting;
 
 void LoadSetting();
 void SaveSetting();
+
+typedef struct {
+	HANDLE Handle;
+	DWORD Id;
+} Thread;
+
+void StartThread(Thread* thread, LPTHREAD_START_ROUTINE function, LPVOID param);
+void DestroyThread(Thread* thread);

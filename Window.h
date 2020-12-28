@@ -1,49 +1,43 @@
 #pragma once
 
-#include <stdbool.h>
-#include <tchar.h>
-#include <WinSock2.h>
-#include <Windows.h>
+#include "WinAPI.h"
 
-void RegisterWindow(LPCTSTR name, WNDPROC wndProc);
-HWND CreateAndShowWindow(LPCTSTR name, LPCTSTR title, int cmdShow);
-HWND CreateAndShowChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu);
+#include <stdbool.h>
+
+void RegisterWindow(LPCTSTR className, WNDPROC wndProc);
+HWND CreateChild(LPCTSTR className, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu);
+
+extern HWND MainWindow, DialogWindow;
+
+HWND CreateSceneWindow(SUBCLASSPROC windowProc, SUBCLASSPROC sceneProc);
+
+HWND CreateScene(HWND window, SUBCLASSPROC sceneProc);
+HWND ChangeScene(HWND window, HWND newScene);
+
+int GetAppropriateLengthForDpi(HWND window, int originalLength);
+int GetAppropriateLengthForSize(HWND window, int originalLength);
 
 typedef struct {
 	HDC OriginalDC;
-	HDC BufferDC;
 	HBITMAP OriginalBitmap;
-	PAINTSTRUCT PaintStruct;
-	RECT ClientRect;
-} DoubleBufferingContext;
+	PAINTSTRUCT OriginalPaintStruct;
 
-HDC StartDraw(HWND handle, DoubleBufferingContext* context);
-void EndDraw(HWND handle, DoubleBufferingContext* context);
-void DrawTextUsingFont(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length);
+	HDC BufferDC;
+	int Width, Height;
+} PaintContext;
 
-#define BEGINPAINT DoubleBufferingContext context; const HDC dc = StartDraw(handle, &context)
-#define ENDPAINT EndDraw(handle, &context), 0
+HDC StartPaint(HWND window, int width, int height, PaintContext* paintContext);
+void StopPaint(HWND window, PaintContext* paintContext);
 
-extern HWND MainWindow, VocabularyWindow, OnlineMultiplayWindow;
+void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length);
 
-LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK VocabularyWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK QuestionOptionWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK StatisticWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK OnlineMultiplayWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK ExaminerWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK LocalMultiplayWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
+#define STARTPAINT PaintContext paintContext; const HDC dc = StartPaint(handle, WIDTH, HEIGHT, &paintContext)
+#define STOPPAINT StopPaint(handle, &paintContext), 0
 
-#define EVENT RECT windowSize; GetWindowRect(handle, &windowSize); switch (message)
-#define WIDTH (windowSize.right - windowSize.left)
-#define HEIGHT (windowSize.bottom - windowSize.top)
-#define STRING(text) _T(text), sizeof(_T(text)) / sizeof((_T(text))[0]) - 1
+#define EVENT RECT clientRect; GetClientRect(handle, &clientRect); switch (message)
+#define WIDTH clientRect.right
+#define HEIGHT clientRect.bottom
+#define CSTR(string) _T(string), ARRAYSIZE(_T(string))
 
-typedef struct {
-	HANDLE Handle;
-	DWORD Id;
-} Thread;
-
-void StartThread(Thread* thread, LPTHREAD_START_ROUTINE function, LPVOID param);
-void StopThread(Thread* thread);
+#define AM_CREATE WM_APP + 0
+#define AM_CHANGESCENE WM_USER + 1

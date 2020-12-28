@@ -42,22 +42,6 @@ void DestroyApplication() {
 	WSACleanup();
 }
 
-int GetAppropriateLengthForDpi(HWND window, int originalLength) {
-	return MulDiv(originalLength, GetDpiForWindow(window), USER_DEFAULT_SCREEN_DPI);
-}
-int GetAppropriateLengthForSize(HWND window, int originalLength) {
-	RECT clientRect;
-	GetClientRect(window, &clientRect);
-
-	int fitHeight;
-	if (clientRect.right * 3 >= clientRect.bottom * 4) {
-		fitHeight = clientRect.bottom;
-	} else {
-		fitHeight = MulDiv(clientRect.right, 3, 4);
-	}
-	return MulDiv(originalLength, fitHeight, GetAppropriateLengthForDpi(window, 480));
-}
-
 HFONT CreateGlobalFont(int height, bool isBold) {
 	g_GlobalFont.lfHeight = height;
 	g_GlobalFont.lfWeight = isBold ? FW_BOLD : FW_NORMAL;
@@ -156,4 +140,16 @@ void WriteString(HKEY key, LPCTSTR name, LPCTSTR data) {
 	if (data) {
 		RegSetValueEx(key, name, 0, REG_SZ, (LPBYTE)data, (DWORD)(sizeof(TCHAR) * _tcslen(data)));
 	}
+}
+
+void StartThread(Thread* thread, LPTHREAD_START_ROUTINE function, LPVOID param) {
+	if (thread->Handle) {
+		DestroyThread(thread);
+	}
+
+	thread->Handle = CreateThread(NULL, 0, function, param, 0, &thread->Id);
+}
+void DestroyThread(Thread* thread) {
+	CloseHandle(thread->Handle);
+	thread->Handle = NULL;
 }
