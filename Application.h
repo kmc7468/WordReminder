@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #define WR_APPLICATION_VERSION _T("1.4.0")
+#define WR_APPLICATION_ENABLE_DPI_AWARENESS true
 
 extern HINSTANCE Instance;
 

@@ -6,3 +6,5 @@
 
 #include <CommCtrl.h>
 #include <tchar.h>
+
+UINT GetDpiForWindowSafely(HWND window);

@@ -18,7 +18,10 @@ bool InitializeApplication(HINSTANCE instance) {
 	Instance = instance;
 	srand((unsigned)time(NULL));
 
+#if WR_APPLICATION_ENABLE_DPI_AWARENESS
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+#endif
+
 	RegisterWindow(_T("SceneWindow"), SceneWindowProc);
 	RegisterWindow(_T("Scene"), SceneProc);
 
