@@ -2,6 +2,7 @@
 
 #include "Application.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 void RegisterWindow(LPCTSTR name, WNDPROC wndProc) {
@@ -60,6 +61,8 @@ HWND CreateScene(HWND window, SUBCLASSPROC sceneProc) {
 }
 HWND ChangeScene(HWND window, HWND newScene) {
 	const HWND oldScene = (HWND)SendMessage(window, AM_CHANGESCENE, 0, (LPARAM)newScene);
+	ShowWindow(oldScene, SW_HIDE);
+	SendMessage(oldScene, AM_DEACTIVATE, 0, 0);
 
 	RECT clientRect;
 	GetClientRect(window, &clientRect);
@@ -67,7 +70,29 @@ HWND ChangeScene(HWND window, HWND newScene) {
 	SendMessage(newScene, AM_DESTROYFONT, 0, TRUE);
 	SendMessage(newScene, AM_CREATEFONT, 0, TRUE);
 	SetWindowPos(newScene, NULL, 0, 0, clientRect.right, clientRect.bottom, SWP_NOZORDER | SWP_NOMOVE);
+
+	SendMessage(newScene, AM_ACTIVATE, 0, 0);
+	ShowWindow(newScene, SW_SHOW);
 	return oldScene;
+}
+void SetSceneTitle(HWND scene, LPCTSTR newTitle) {
+	static const TCHAR defaultTitle[] = _T("단어 암기 프로그램 ") WR_APPLICATION_VERSION;
+	static const TCHAR slash[] = _T(" - ");
+
+	int bufferLength = ARRAYSIZE(defaultTitle);
+	if (newTitle) {
+		bufferLength += ARRAYSIZE(slash) + (int)_tcslen(newTitle) - 1;
+	}
+
+	LPTSTR buffer = malloc(sizeof(TCHAR) * bufferLength);
+	_tcscpy(buffer, defaultTitle);
+	if (newTitle) {
+		_tcscat(buffer, slash);
+		_tcscat(buffer, newTitle);
+	}
+
+	SetWindowText(GetParent(scene), buffer);
+	free(buffer);
 }
 
 int GetAppropriateLengthForDpi(HWND window, int originalLength) {
