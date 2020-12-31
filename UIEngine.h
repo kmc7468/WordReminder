@@ -8,7 +8,6 @@ typedef enum {
 	DependentOnWidth,
 	DependentOnHeight,
 	DependentOnChildren,
-	Sum,
 } UILengthType;
 
 typedef struct {
@@ -33,6 +32,7 @@ typedef enum {
 typedef enum {
 	None,
 	Center,
+	CenterWithMargin,
 	Bottom,
 	Right = Bottom,
 } UIComponentAlignment;
@@ -79,13 +79,17 @@ tag->Length->Type = lengthType;																\
 tag->Length->Constant = constant;															\
 tag->Window = window;																		\
 AddChild(parent, tag)
-#define UICOMP_CON_W(tag, window, type, alignment, constant, parent) UICOMP_BASE(tag, NULL, window, type, alignment, Constant, constant, parent)
-#define UICOMP_CON(tag, name, type, alignment, constant, parent) UICOMP_BASE(tag, name, NULL, type, alignment, Constant, constant, parent)
-#define UICOMP_DOW_W(tag, window, type, alignment, constant, parent) UICOMP_BASE(tag, NULL, window, type, alignment, DependentOnWidth, constant, parent)
-#define UICOMP_DOW(tag, name, type, alignment, constant, parent) UICOMP_BASE(tag, name, NULL, type, alignment, DependentOnWidth, constant, parent)
-#define UICOMP_DOH_W(tag, window, type, alignment, constant, parent) UICOMP_BASE(tag, NULL, window, type, alignment, DependentOnHeight, constant, parent)
-#define UICOMP_DOH(tag, name, type, alignment, constant, parent) UICOMP_BASE(tag, name, NULL, type, alignment, DependentOnHeight, constant, parent)
-#define UICOMP_DOC_W(tag, window, type, alignment, parent) UICOMP_BASE(tag, NULL, window, type, alignment, DependentOnChildren, 0, parent)
-#define UICOMP_DOC(tag, name, type, alignment, parent) UICOMP_BASE(tag, name, NULL, type, alignment, DependentOnChildren, 0, parent)
+#define UICOMP_CON(tag, type, alignment, constant, parent)				UICOMP_BASE(tag, NULL, NULL, type, alignment, Constant, constant, parent)
+#define UICOMP_CON_N(tag, name, type, alignment, constant, parent)		UICOMP_BASE(tag, name, NULL, type, alignment, Constant, constant, parent)
+#define UICOMP_CON_W(tag, window, type, alignment, constant, parent)	UICOMP_BASE(tag, NULL, window, type, alignment, Constant, constant, parent)
+#define UICOMP_DOW(tag, type, alignment, constant, parent)				UICOMP_BASE(tag, NULL, NULL, type, alignment, DependentOnWidth, constant, parent)
+#define UICOMP_DOW_N(tag, name, type, alignment, constant, parent)		UICOMP_BASE(tag, name, NULL, type, alignment, DependentOnWidth, constant, parent)
+#define UICOMP_DOW_W(tag, window, type, alignment, constant, parent)	UICOMP_BASE(tag, NULL, window, type, alignment, DependentOnWidth, constant, parent)
+#define UICOMP_DOH(tag, type, alignment, constant, parent)				UICOMP_BASE(tag, NULL, NULL, type, alignment, DependentOnHeight, constant, parent)
+#define UICOMP_DOH_N(tag, name, type, alignment, constant, parent)		UICOMP_BASE(tag, name, NULL, type, alignment, DependentOnHeight, constant, parent)
+#define UICOMP_DOH_W(tag, window, type, alignment, constant, parent)	UICOMP_BASE(tag, NULL, window, type, alignment, DependentOnHeight, constant, parent)
+#define UICOMP_DOC(tag, type, alignment, parent)						UICOMP_BASE(tag, NULL, NULL, type, alignment, DependentOnChildren, 0, parent)
+#define UICOMP_DOC_N(tag, name, type, alignment, parent)				UICOMP_BASE(tag, name, NULL, type, alignment, DependentOnChildren, 0, parent)
+#define UICOMP_DOC_W(tag, window, type, alignment, parent)				UICOMP_BASE(tag, NULL, window, type, alignment, DependentOnChildren, 0, parent)
 
 #define UICOMP_FIND(tag, name) UIComponent* const tag = FindUIComponent(&g_UIEngine, name)

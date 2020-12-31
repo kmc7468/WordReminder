@@ -3,6 +3,7 @@
 #include "Window.h"
 
 #include <math.h>
+#include <stdbool.h>
 #include <string.h>
 
 void CreateUILength(UILength* uiLength) {
@@ -33,19 +34,10 @@ void EvaluateUILength(UILength* uiLength, HWND window, float width, float height
 	case DependentOnHeight:
 		uiLength->Evaluated = height * uiLength->Constant / 100.f;
 		break;
-
-	case Sum:
-		uiLength->Evaluated = 0;
-		for (int i = 0; i < uiLength->Terms.Count; ++i) {
-			UILength* const term = *(UILength**)GetElement(&uiLength->Terms, i);
-
-			EvaluateUILength(term, window, width, height);
-			uiLength->Evaluated += term->Evaluated;
-		}
-		break;
 	}
 }
 
+static void MoveUIComponent(UIComponent* uiComponent, float xDelta, float yDelta);
 static void MoveChildrenUIComponent(UIComponent* uiComponent, float xDelta, float yDelta);
 
 void CreateUIComponent(UIComponent* uiComponent, LPCTSTR name) {
@@ -96,53 +88,68 @@ void EvaluateUIComponent(UIComponent* uiComponent, HWND window, float x, float y
 	uiComponent->EvaluatedWidth = width;
 	uiComponent->EvaluatedHeight = height;
 
-	float childrenLengthSum = 0;
+	bool hasHorizontal = false, hasVertical = false;
 	for (int i = 0; i < uiComponent->Children.Count; ++i) {
 		UIComponent* const child = *(UIComponent**)GetElement(&uiComponent->Children, i);
-
-		if (child->Type != Window) {
-			EvaluateUILength(child->Length, window, width, height);
-		}
-
 		switch (child->Type) {
 		case Window:
 			EvaluateUIComponent(child, window, x, y, width, height);
+
+			hasHorizontal = true;
+			hasVertical = true;
 			break;
 
 		case Horizontal:
-			EvaluateUIComponent(child, window, x, y + childrenLengthSum, width, child->Length->Evaluated);
+			EvaluateUILength(child->Length, window, uiComponent->EvaluatedWidth, uiComponent->EvaluatedHeight);
+			EvaluateUIComponent(child, window, x, y, width, child->Length->Evaluated);
+
+			y += child->EvaluatedHeight;
+			height -= child->EvaluatedHeight;
+			hasHorizontal = true;
 			break;
 
 		case Vertical:
-			EvaluateUIComponent(child, window, x + childrenLengthSum, y, child->Length->Evaluated, height);
+			EvaluateUILength(child->Length, window, uiComponent->EvaluatedWidth, uiComponent->EvaluatedHeight);
+			EvaluateUIComponent(child, window, x, y, child->Length->Evaluated, height);
+
+			x += child->EvaluatedWidth;
+			width -= child->EvaluatedWidth;
+			hasVertical = true;
 			break;
 		}
+	}
 
-		if (child->Type != Window && child->Length->Type == DependentOnChildren) {
-			child->Length->Evaluated = 0;
-			for (int j = 0; j < child->Children.Count; ++j) {
-				child->Length->Evaluated += (*(UIComponent**)GetElement(&child->Children, j))->Length->Evaluated;
-			}
-		}
-		childrenLengthSum += child->Length->Evaluated;
+	if (hasHorizontal) {
+		x = uiComponent->EvaluatedX + uiComponent->EvaluatedWidth;
+		width = 0;
+	}
+	if (hasVertical) {
+		y = uiComponent->EvaluatedY + uiComponent->EvaluatedHeight;
+		height = 0;
 	}
 
 	switch (uiComponent->Alignment) {
 	case Center:
-		if ((*(UIComponent**)GetElement(&uiComponent->Children, 0))->Type == Horizontal) {
-			MoveChildrenUIComponent(uiComponent, 0, (height - childrenLengthSum) / 2.f);
-		} else {
-			MoveChildrenUIComponent(uiComponent, (width - childrenLengthSum) / 2.f, 0);
-		}
+		MoveChildrenUIComponent(uiComponent, width / 2, height / 2);
 		break;
 
-	case Bottom:
-		if ((*(UIComponent**)GetElement(&uiComponent->Children, 0))->Type == Horizontal) {
-			MoveChildrenUIComponent(uiComponent, 0, height - childrenLengthSum);
-		} else {
-			MoveChildrenUIComponent(uiComponent, width - childrenLengthSum, 0);
+	case CenterWithMargin: {
+		const float widthMargin = width / (uiComponent->Children.Count - 1);
+		const float heightMargin = height / (uiComponent->Children.Count - 1);
+		for (int i = 0; i < uiComponent->Children.Count; ++i) {
+			MoveUIComponent(*(UIComponent**)GetElement(&uiComponent->Children, i), widthMargin * i, heightMargin * i);
 		}
 		break;
+	}
+
+	case Bottom:
+		MoveChildrenUIComponent(uiComponent, width, height);
+		break;
+	}
+
+	if (uiComponent->Type != Window && uiComponent->Length->Type == DependentOnChildren) {
+		uiComponent->EvaluatedWidth = fabsf(width);
+		uiComponent->EvaluatedHeight = fabsf(height);
 	}
 }
 void UpdateUIComponent(UIComponent* uiComponent) {
@@ -155,6 +162,12 @@ void UpdateUIComponent(UIComponent* uiComponent) {
 	}
 }
 
+void MoveUIComponent(UIComponent* uiComponent, float xDelta, float yDelta) {
+	uiComponent->EvaluatedX += xDelta;
+	uiComponent->EvaluatedY += yDelta;
+
+	MoveChildrenUIComponent(uiComponent, xDelta, yDelta);
+}
 void MoveChildrenUIComponent(UIComponent* uiComponent, float xDelta, float yDelta) {
 	for (int i = 0; i < uiComponent->Children.Count; ++i) {
 		UIComponent* const child = *(UIComponent**)GetElement(&uiComponent->Children, i);
