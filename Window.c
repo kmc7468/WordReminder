@@ -1,6 +1,7 @@
 #include "Window.h"
 
 #include "Application.h"
+#include "UIEngine.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -47,6 +48,8 @@ HWND CreateSceneWindow(SUBCLASSPROC windowProc, SUBCLASSPROC sceneProc) {
 	return window;
 }
 
+#define PROP_UIENGINE		_T("UIEngine")
+
 HWND CreateScene(HWND window, SUBCLASSPROC sceneProc) {
 	RECT clientRect;
 	GetClientRect(window, &clientRect);
@@ -55,6 +58,7 @@ HWND CreateScene(HWND window, SUBCLASSPROC sceneProc) {
 		0, 0, clientRect.right, clientRect.bottom, window, 0);
 	SetWindowSubclass(scene, sceneProc, 0, 0);
 	SendMessage(scene, AM_CREATE, 0, 0);
+	SendMessage(scene, AM_CREATEUI, 0, (LPARAM)GetProp(scene, PROP_UIENGINE));
 	SendMessage(scene, AM_CREATEFONT, 0, TRUE);
 	SendMessage(scene, WM_SIZE, 0, MAKELPARAM(clientRect.right, clientRect.bottom));
 	return scene;
@@ -144,8 +148,8 @@ void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length) {
 	SelectObject(dc, oldFont);
 }
 
-#define PROP_CURRENT_DPI _T("CurrentDPI")
-#define PROP_CURRENT_SCENE _T("CurrentScene")
+#define PROP_CURRENT_DPI	_T("CurrentDPI")
+#define PROP_CURRENT_SCENE	_T("CurrentScene")
 
 LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
@@ -227,9 +231,33 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 
 LRESULT CALLBACK SceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
-	case WM_DESTROY:
+	case WM_CREATE: {
+		UIComponent* const uiEngine = calloc(1, sizeof(UIComponent));
+		CreateUIEngine(uiEngine);
+		SetProp(handle, PROP_UIENGINE, (HANDLE)uiEngine);
+		return 0;
+	}
+
+	case WM_DESTROY: {
+		UIComponent* const uiEngine = (UIComponent*)GetProp(handle, PROP_UIENGINE);
+		free(uiEngine);
+
 		SendMessage(handle, AM_DESTROYFONT, 0, TRUE);
 		SendMessage(handle, AM_DESTROY, 0, 0);
+		return 0;
+	}
+
+	case WM_SIZE: {
+		UIComponent* const uiEngine = (UIComponent*)GetProp(handle, PROP_UIENGINE);
+		EvaluateUIEngine(uiEngine, handle, LOWORD(lParam), HIWORD(lParam));
+		UpdateUIEngine(uiEngine);
+
+		SendMessage(handle, AM_SIZE, wParam, lParam);
+		return 0;
+	}
+
+	case WM_PAINT:
+		SendMessage(handle, AM_PAINT, 0, (LPARAM)GetProp(handle, PROP_UIENGINE));
 		return 0;
 
 	default:

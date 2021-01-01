@@ -92,4 +92,4 @@ AddChild(parent, tag)
 #define UICOMP_DOC_N(tag, name, type, alignment, parent)				UICOMP_BASE(tag, name, NULL, type, alignment, DependentOnChildren, 0, parent)
 #define UICOMP_DOC_W(tag, window, type, alignment, parent)				UICOMP_BASE(tag, NULL, window, type, alignment, DependentOnChildren, 0, parent)
 
-#define UICOMP_FIND(tag, name) UIComponent* const tag = FindUIComponent(&g_UIEngine, name)
+#define UICOMP_FIND(tag, name) UIComponent* const tag = FindUIComponent(uiEngine, name)

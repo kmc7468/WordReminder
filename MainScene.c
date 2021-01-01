@@ -1,23 +1,49 @@
 #include "Window.h"
 
+#define AM_HASUPDATE	AM_USER + 0
+
 #include "Application.h"
+#include "Http.h"
 #include "UIEngine.h"
 
-static UIComponent g_UIEngine;
+#include <stdlib.h>
+#include <string.h>
 
 static HFONT g_TitleFont, g_CopyrightFont;
 static const TCHAR g_Version[] = _T("v") WR_APPLICATION_VERSION;
 
-static HWND g_SingleplayButton, g_VocabularyButton, g_LocalMultiplayButton, g_OnlineMultiplayButton;
 static HFONT g_ButtonFont;
+static HWND g_SingleplayButton, g_VocabularyButton, g_LocalMultiplayButton, g_OnlineMultiplayButton;
+static HWND g_CreateServerButton, g_JoinServerButton;
+
+static HFONT g_UpdateButtonFont;
+static HWND g_UpdateButton;
+
+static Thread g_UpdateCheckThread;
+static DWORD WINAPI UpdateCheckThread(LPVOID param);
 
 LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1) {
 	EVENT {
 	case AM_CREATE: {
-		CreateUIEngine(&g_UIEngine);
-		g_UIEngine.Alignment = Center;
+		g_SingleplayButton = CreateChild(_T("button"), _T("단어 암기하기"), NULL, WS_VISIBLE | BS_PUSHBUTTON, 0, 0, 0, 0, handle, 0);
+		g_VocabularyButton = CreateChild(_T("button"), _T("단어장 편집하기"), NULL, WS_VISIBLE | BS_PUSHBUTTON, 0, 0, 0, 0, handle, 1);
+		g_LocalMultiplayButton = CreateChild(_T("button"), _T("로컬 멀티 플레이"), NULL, WS_VISIBLE | BS_PUSHBUTTON, 0, 0, 0, 0, handle, 2);
+		g_OnlineMultiplayButton = CreateChild(_T("button"), _T("온라인 멀티 플레이"), NULL, WS_VISIBLE | BS_PUSHBUTTON, 0, 0, 0, 0, handle, 3);
 
-		UICOMP_DOH(area, Horizontal, CenterWithMargin, 85, &g_UIEngine);
+		g_CreateServerButton = CreateChild(_T("button"), _T("서버 만들기"), NULL,  BS_PUSHBUTTON, 0, 0, 0, 0, handle, 4);
+		g_JoinServerButton = CreateChild(_T("button"), _T("서버 접속하기"), NULL, BS_PUSHBUTTON, 0, 0, 0, 0, handle, 5);
+
+		g_UpdateButton = CreateChild(_T("button"), _T("새 버전이 있습니다"), NULL, BS_PUSHBUTTON, 0, 0, 0, 0, handle, 6);
+
+		StartThread(&g_UpdateCheckThread, UpdateCheckThread, handle);
+		return 0;
+	}
+
+	case AM_CREATEUI: {
+		UIComponent* const uiEngine = (UIComponent*)lParam;
+		uiEngine->Alignment = Center;
+
+		UICOMP_DOH(area, Horizontal, CenterWithMargin, 85, uiEngine);
 
 		UICOMP_DOC(titleSection, Horizontal, None, area);
 		UICOMP_CON_N(titleBar, _T("TitleBar"), Horizontal, None, 50, titleSection);
@@ -32,26 +58,16 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 		UICOMP_CON(buttonMargin2, Horizontal, None, 10, buttonSection2);
 		UICOMP_CON_W(localMultiplayButton, &g_LocalMultiplayButton, Horizontal, None, 50, buttonSection2);
 		UICOMP_CON(buttonMargin3, Horizontal, None, 10, buttonSection2);
-		UICOMP_CON_W(onlineMultiplayButton, &g_OnlineMultiplayButton, Horizontal, None, 50, buttonSection2);
+		UICOMP_CON_W(onlineMultiplayButton, &g_OnlineMultiplayButton, Horizontal, CenterWithMargin, 50, buttonSection2);
 
-		UICOMP_CON_N(versionBar, _T("VersionBar"), Horizontal, None, 18, area);
+		UICOMP_CON_W(createServerButton, &g_CreateServerButton, Vertical, None, 145, onlineMultiplayButton);
+		UICOMP_CON_W(joinServerButton, &g_JoinServerButton, Vertical, None, 145, onlineMultiplayButton);
 
-		EvaluateUIEngine(&g_UIEngine, handle, WIDTH, HEIGHT);
-
-		g_SingleplayButton = CreateChild(_T("button"), _T("단어 암기하기"), NULL, WS_VISIBLE | BS_PUSHBUTTON, 0, 0, 0, 0, handle, 0);
-		g_VocabularyButton = CreateChild(_T("button"), _T("단어장 편집하기"), NULL, WS_VISIBLE | BS_PUSHBUTTON, 0, 0, 0, 0, handle, 1);
-		g_LocalMultiplayButton = CreateChild(_T("button"), _T("로컬 멀티 플레이"), NULL, WS_VISIBLE | BS_PUSHBUTTON, 0, 0, 0, 0, handle, 2);
-		g_OnlineMultiplayButton = CreateChild(_T("button"), _T("온라인 멀티 플레이"), NULL, WS_VISIBLE | BS_PUSHBUTTON, 0, 0, 0, 0, handle, 3);
+		UICOMP_CON(versionSection, Horizontal, Center, 18, area);
+		UICOMP_CON_N(versionBar, _T("VersionBar"), Vertical, None, 150, versionSection);
+		versionBar->Window = &g_UpdateButton;
 		return 0;
 	}
-
-	case AM_DESTROY:
-		DestroyUIEngine(&g_UIEngine);
-		return 0;
-
-	case AM_ACTIVATE:
-		SetSceneTitle(handle, NULL);
-		return 0;
 
 	case AM_CREATEFONT:
 		if (lParam) {
@@ -63,7 +79,17 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 			SetFont(g_VocabularyButton, g_ButtonFont);
 			SetFont(g_LocalMultiplayButton, g_ButtonFont);
 			SetFont(g_OnlineMultiplayButton, g_ButtonFont);
+
+			SetFont(g_CreateServerButton, g_ButtonFont);
+			SetFont(g_JoinServerButton, g_ButtonFont);
+
+			g_UpdateButtonFont = CreateGlobalFont(D(14), true);
+			SetFont(g_UpdateButton, g_UpdateButtonFont);
 		}
+		return 0;
+
+	case AM_DESTROY:
+		DestroyThread(&g_UpdateCheckThread);
 		return 0;
 
 	case AM_DESTROYFONT:
@@ -72,15 +98,16 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 			DeleteObject(g_CopyrightFont);
 
 			DeleteObject(g_ButtonFont);
+
+			DeleteObject(g_UpdateButtonFont);
 		}
 		return 0;
 
-	case WM_SIZE:
-		EvaluateUIEngine(&g_UIEngine, handle, WIDTH, HEIGHT);
-		UpdateUIEngine(&g_UIEngine);
+	case AM_ACTIVATE:
+		SetSceneTitle(handle, NULL);
 		return 0;
 
-	case WM_PAINT: {
+	case AM_PAINT: {
 		START_PAINT;
 		SetTextAlign(dc, TA_CENTER);
 
@@ -96,7 +123,36 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 		STOP_PAINT;
 	}
 
+	case AM_HASUPDATE:
+		ShowWindow(g_UpdateButton, SW_SHOW);
+		return 0;
+
 	default:
 		return DefSubclassProc(handle, message, wParam, lParam);
 	}
+}
+
+DWORD WINAPI UpdateCheckThread(LPVOID param) {
+	HttpRequest request;
+	if (!CreateHttpRequest(&request, _T("https://github.com/kmc7468/WordReminder/releases/latest"), _T("GET"), true)) return 0;
+
+	if (SendHttpRequest(&request, NULL)) {
+		const LPTSTR result = GetHttpResponseHeader(&request, Location);
+		if (result) {
+			const LPTSTR end = result + _tcslen(result);
+			LPTSTR begin = result, temp;
+			while (begin < end && (temp = _tcschr(begin, '/'))) {
+				begin = temp + 1;
+			}
+
+			if (_tcsncmp(begin, WR_APPLICATION_VERSION, ARRAYSIZE(WR_APPLICATION_VERSION) - 1)) {
+				SendMessage((HWND)param, AM_HASUPDATE, 0, 0);
+			}
+
+			free(result);
+		}
+	}
+
+	DestroyHttpRequest(&request);
+	return 0;
 }

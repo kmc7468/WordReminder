@@ -36,8 +36,13 @@ void StopPaint(HWND window, PaintContext* paintContext);
 
 void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length);
 
-#define START_PAINT PaintContext paintContext; const HDC dc = StartPaint(handle, WIDTH, HEIGHT, &paintContext)
-#define STOP_PAINT StopPaint(handle, &paintContext); return 0
+#define START_PAINT																			\
+UIComponent* const uiEngine = (UIComponent*)lParam;											\
+PaintContext paintContext;																	\
+const HDC dc = StartPaint(handle, WIDTH, HEIGHT, &paintContext)
+#define STOP_PAINT																			\
+StopPaint(handle, &paintContext);															\
+return 0
 
 #define EVENT (void)(dummy0, dummy1); RECT clientRect; GetClientRect(handle, &clientRect); switch (message)
 #define WIDTH clientRect.right
@@ -45,12 +50,17 @@ void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length);
 #define CSTR(string) _T(string), ARRAYSIZE(_T(string)) - 1
 
 #define AM_CREATE		WM_APP + 0
-#define AM_CHANGESCENE	WM_APP + 1
+#define AM_CREATEUI		WM_APP + 1
 #define AM_CREATEFONT	WM_APP + 2
-#define AM_DESTROYFONT	WM_APP + 3
+#define AM_CHANGESCENE	WM_APP + 3
 #define AM_DESTROY		WM_APP + 4
-#define AM_ACTIVATE		WM_APP + 5
-#define AM_DEACTIVATE	WM_APP + 6
+#define AM_DESTROYFONT	WM_APP + 5
+#define AM_ACTIVATE		WM_APP + 6
+#define AM_DEACTIVATE	WM_APP + 7
+#define AM_SIZE			WM_APP + 8
+#define AM_PAINT		WM_APP + 9
+
+#define AM_USER			WM_USER + 2
 
 LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1);

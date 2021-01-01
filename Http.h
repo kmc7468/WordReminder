@@ -19,6 +19,6 @@ typedef struct {
 
 bool CreateHttpRequest(HttpRequest* httpRequest, LPCTSTR url, LPCTSTR method, bool enableSsl);
 bool SendHttpRequest(HttpRequest* httpRequest, LPCTSTR headers);
-LPCTSTR GetHttpResponseHeader(HttpRequest* httpRequest, HttpResponseHeader header);
+LPTSTR GetHttpResponseHeader(HttpRequest* httpRequest, HttpResponseHeader header);
 HttpResponseBody GetHttpResponseBody(HttpRequest* httpRequest);
 void DestroyHttpRequest(HttpRequest* httpRequest);

@@ -51,7 +51,7 @@ bool SendHttpRequest(HttpRequest* httpRequest, LPCTSTR headers) {
 	FreeRawString(rawHeaders);
 	return success && WinHttpReceiveResponse(httpRequest->Request, NULL);
 }
-LPCTSTR GetHttpResponseHeader(HttpRequest* httpRequest, HttpResponseHeader header) {
+LPTSTR GetHttpResponseHeader(HttpRequest* httpRequest, HttpResponseHeader header) {
 	DWORD length = 0;
 	WinHttpQueryHeaders(httpRequest->Request, (DWORD)header, NULL, WINHTTP_NO_OUTPUT_BUFFER, &length, NULL);
 	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
