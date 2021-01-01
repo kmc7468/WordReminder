@@ -1,26 +1,11 @@
 #include "UIEngine.h"
 
+#include "Application.h"
 #include "Window.h"
 
 #include <math.h>
-#include <stdbool.h>
 #include <string.h>
 
-void CreateUILength(UILength* uiLength) {
-	CreateArray(&uiLength->Terms, sizeof(UILength*));
-}
-void DestroyUILength(UILength* uiLength) {
-	for (int i = 0; i < uiLength->Terms.Count; ++i) {
-		UILength* const length = *(UILength**)GetElement(&uiLength->Terms, i);
-
-		DestroyUILength(length);
-		free(length);
-	}
-	DestroyArray(&uiLength->Terms);
-}
-void AddTerm(UILength* uiLength, UILength* term) {
-	AddElement(&uiLength->Terms, &term);
-}
 void EvaluateUILength(UILength* uiLength, HWND window, float width, float height) {
 	switch (uiLength->Type) {
 	case Constant:
@@ -37,6 +22,27 @@ void EvaluateUILength(UILength* uiLength, HWND window, float width, float height
 	}
 }
 
+void EvaluateUIComponentFont(UIComponentFont* uiComponentFont, HWND window, int width, int height) {
+	EvaluateUILength(uiComponentFont->Height, window, (float)width, (float)height);
+	const int evaluated = (int)floorf(uiComponentFont->Height->Evaluated + 0.5f);
+	if (evaluated != uiComponentFont->EvaluatedHeight) {
+		uiComponentFont->EvaluatedHeight = evaluated;
+		uiComponentFont->ShouldCreate = true;
+	} else {
+		uiComponentFont->ShouldCreate = false;
+	}
+}
+void UpdateUIComponentFont(UIComponentFont* uiComponentFont) {
+	if (uiComponentFont->ShouldCreate) {
+		DeleteObject(uiComponentFont->Font);
+		uiComponentFont->Font = CreateGlobalFont(uiComponentFont->EvaluatedHeight, uiComponentFont->IsBold);
+	}
+}
+void DestroyUIComponentFont(UIComponentFont* uiComponentFont) {
+	free(uiComponentFont->Height);
+	DeleteObject(uiComponentFont->Font);
+}
+
 static void MoveUIComponent(UIComponent* uiComponent, float xDelta, float yDelta);
 static void MoveChildrenUIComponent(UIComponent* uiComponent, float xDelta, float yDelta);
 
@@ -51,10 +57,7 @@ void CreateUIComponent(UIComponent* uiComponent, LPCTSTR name) {
 void DestroyUIComponent(UIComponent* uiComponent) {
 	free(uiComponent->Name);
 
-	if (uiComponent->Length) {
-		DestroyUILength(uiComponent->Length);
-		free(uiComponent->Length);
-	}
+	free(uiComponent->Length);
 
 	for (int i = 0; i < uiComponent->Children.Count; ++i) {
 		UIComponent* const component = *(UIComponent**)GetElement(&uiComponent->Children, i);
@@ -81,6 +84,7 @@ UIComponent* FindUIComponent(UIComponent* uiComponent, LPCTSTR name) {
 void ApplyUIComponent(UIComponent* uiComponent, HWND window) {
 	SetWindowPos(window, NULL, (int)floorf(uiComponent->EvaluatedX + 0.5f), (int)floorf(uiComponent->EvaluatedY + 0.5f),
 		(int)floorf(uiComponent->EvaluatedWidth + 0.5f), (int)floorf(uiComponent->EvaluatedHeight + 0.5f), SWP_NOZORDER);
+	SetFont(window, uiComponent->Font->Font);
 }
 void EvaluateUIComponent(UIComponent* uiComponent, HWND window, float x, float y, float width, float height) {
 	uiComponent->EvaluatedX = x;
@@ -178,19 +182,6 @@ void MoveChildrenUIComponent(UIComponent* uiComponent, float xDelta, float yDelt
 	}
 }
 
-void CreateUIEngine(UIComponent* uiEngine) {
-	CreateUIComponent(uiEngine, NULL);
-}
-void EvaluateUIEngine(UIComponent* uiEngine, HWND window, int width, int height) {
-	EvaluateUIComponent(uiEngine, window, 0, 0, (float)width, (float)height);
-}
-void UpdateUIEngine(UIComponent* uiEngine) {
-	UpdateUIComponent(uiEngine);
-}
-void DestroyUIEngine(UIComponent* uiEngine) {
-	DestroyUIComponent(uiEngine);
-}
-
 int GetCenterX(const UIComponent* uiComponent) {
 	return (int)floorf(uiComponent->EvaluatedX + uiComponent->EvaluatedWidth / 2.f + 0.5f);
 }
@@ -199,4 +190,40 @@ int GetX(const UIComponent* uiComponent) {
 }
 int GetY(const UIComponent* uiComponent) {
 	return (int)floorf(uiComponent->EvaluatedY + 0.5f);
+}
+HFONT GetFont(const UIComponent* uiComponent) {
+	return uiComponent->Font->Font;
+}
+
+void CreateUIEngine(UIEngine* uiEngine) {
+	CreateArray(&uiEngine->Fonts, sizeof(UIComponentFont*));
+	CreateUIComponent(&uiEngine->RootComponent, NULL);
+}
+void DestroyUIEngine(UIEngine* uiEngine) {
+	for (int i = 0; i < uiEngine->Fonts.Count; ++i) {
+		UIComponentFont* const uiComponentFont = *(UIComponentFont**)GetElement(&uiEngine->Fonts, i);
+
+		DestroyUIComponentFont(uiComponentFont);
+		free(uiComponentFont);
+	}
+	DestroyArray(&uiEngine->Fonts);
+
+	DestroyUIComponent(&uiEngine->RootComponent);
+}
+void AddFont(UIEngine* uiEngine, UIComponentFont* uiComponentFont) {
+	AddElement(&uiEngine->Fonts, &uiComponentFont);
+}
+void EvaluateUIEngine(UIEngine* uiEngine, HWND window, int width, int height) {
+	for (int i = 0; i < uiEngine->Fonts.Count; ++i) {
+		EvaluateUIComponentFont(*(UIComponentFont**)GetElement(&uiEngine->Fonts, i), window, width, height);
+	}
+
+	EvaluateUIComponent(&uiEngine->RootComponent, window, 0, 0, (float)width, (float)height);
+}
+void UpdateUIEngine(UIEngine* uiEngine) {
+	for (int i = 0; i < uiEngine->Fonts.Count; ++i) {
+		UpdateUIComponentFont(*(UIComponentFont**)GetElement(&uiEngine->Fonts, i));
+	}
+
+	UpdateUIComponent(&uiEngine->RootComponent);
 }

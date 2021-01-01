@@ -9,16 +9,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-static HFONT g_TitleFont, g_CopyrightFont;
-static const TCHAR g_Version[] = _T("v") WR_APPLICATION_VERSION;
-
-static HFONT g_ButtonFont;
 static HWND g_SingleplayButton, g_VocabularyButton, g_LocalMultiplayButton, g_OnlineMultiplayButton;
 static HWND g_CreateServerButton, g_JoinServerButton;
 
-static HFONT g_UpdateButtonFont;
-static HWND g_UpdateButton;
+static const TCHAR g_Version[] = _T("v") WR_APPLICATION_VERSION;
 
+static HWND g_UpdateButton;
 static Thread g_UpdateCheckThread;
 static DWORD WINAPI UpdateCheckThread(LPVOID param);
 
@@ -34,73 +30,48 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 		g_JoinServerButton = CreateChild(_T("button"), _T("서버 접속하기"), NULL, BS_PUSHBUTTON, 0, 0, 0, 0, handle, 5);
 
 		g_UpdateButton = CreateChild(_T("button"), _T("새 버전이 있습니다"), NULL, BS_PUSHBUTTON, 0, 0, 0, 0, handle, 6);
-
 		StartThread(&g_UpdateCheckThread, UpdateCheckThread, handle);
 		return 0;
 	}
 
 	case AM_CREATEUI: {
-		UIComponent* const uiEngine = (UIComponent*)lParam;
-		uiEngine->Alignment = Center;
+		UIEngine* const uiEngine = (UIEngine*)lParam;
 
-		UICOMP_DOH(area, Horizontal, CenterWithMargin, 85, uiEngine);
+		UIFONT_CON(titleFont, 50, true);
+		UIFONT_CON(copyrightFont, 18, false);
+		UIFONT_CON(buttonFont, 18, true);
+		UIFONT_CON(updateButtonFont, 14, true);
+
+		uiEngine->RootComponent.Alignment = Center;
+
+		UICOMP_DOH(area, Horizontal, CenterWithMargin, 85, &uiEngine->RootComponent);
 
 		UICOMP_DOC(titleSection, Horizontal, None, area);
-		UICOMP_CON_N(titleBar, _T("TitleBar"), Horizontal, None, 50, titleSection);
+		UICOMP_CON_N(titleBar, _T("TitleBar"), Horizontal, None, 50, titleFont, titleSection);
 		UICOMP_CON(margin1, Horizontal, None, 5, titleSection);
-		UICOMP_CON_N(copyrightBar, _T("CopyrightBar"), Horizontal, None, 18, titleSection);
+		UICOMP_CON_N(copyrightBar, _T("CopyrightBar"), Horizontal, None, 18, copyrightFont, titleSection);
 
 		UICOMP_CON(buttonSection1, Horizontal, Center, 230, area);
 		UICOMP_CON(buttonSection2, Vertical, None, 300, buttonSection1);
-		UICOMP_CON_W(singleplayButton, &g_SingleplayButton, Horizontal, None, 50, buttonSection2);
+		UICOMP_CON_W(singleplayButton, &g_SingleplayButton, Horizontal, None, 50, buttonFont, buttonSection2);
 		UICOMP_CON(buttonMargin1, Horizontal, None, 10, buttonSection2);
-		UICOMP_CON_W(vocabularyButton, &g_VocabularyButton, Horizontal, None, 50, buttonSection2);
+		UICOMP_CON_W(vocabularyButton, &g_VocabularyButton, Horizontal, None, 50, buttonFont, buttonSection2);
 		UICOMP_CON(buttonMargin2, Horizontal, None, 10, buttonSection2);
-		UICOMP_CON_W(localMultiplayButton, &g_LocalMultiplayButton, Horizontal, None, 50, buttonSection2);
+		UICOMP_CON_W(localMultiplayButton, &g_LocalMultiplayButton, Horizontal, None, 50, buttonFont, buttonSection2);
 		UICOMP_CON(buttonMargin3, Horizontal, None, 10, buttonSection2);
-		UICOMP_CON_W(onlineMultiplayButton, &g_OnlineMultiplayButton, Horizontal, CenterWithMargin, 50, buttonSection2);
+		UICOMP_CON_W(onlineMultiplayButton, &g_OnlineMultiplayButton, Horizontal, CenterWithMargin, 50, buttonFont, buttonSection2);
 
-		UICOMP_CON_W(createServerButton, &g_CreateServerButton, Vertical, None, 145, onlineMultiplayButton);
-		UICOMP_CON_W(joinServerButton, &g_JoinServerButton, Vertical, None, 145, onlineMultiplayButton);
+		UICOMP_CON_W(createServerButton, &g_CreateServerButton, Vertical, None, 145, buttonFont, onlineMultiplayButton);
+		UICOMP_CON_W(joinServerButton, &g_JoinServerButton, Vertical, None, 145, buttonFont, onlineMultiplayButton);
 
 		UICOMP_CON(versionSection, Horizontal, Center, 18, area);
-		UICOMP_CON_N(versionBar, _T("VersionBar"), Vertical, None, 150, versionSection);
-		versionBar->Window = &g_UpdateButton;
+		UICOMP_CON_N(versionBar, _T("VersionBar"), Vertical, None, 150, copyrightFont, versionSection);
+		UICOMP_DOH_W(updateButton, &g_UpdateButton, Horizontal, None, 100, updateButtonFont, versionBar);
 		return 0;
 	}
 
-	case AM_CREATEFONT:
-		if (lParam) {
-			g_TitleFont = CreateGlobalFont(D(50), true);
-			g_CopyrightFont = CreateGlobalFont(D(18), false);
-
-			g_ButtonFont = CreateGlobalFont(D(18), true);
-			SetFont(g_SingleplayButton, g_ButtonFont);
-			SetFont(g_VocabularyButton, g_ButtonFont);
-			SetFont(g_LocalMultiplayButton, g_ButtonFont);
-			SetFont(g_OnlineMultiplayButton, g_ButtonFont);
-
-			SetFont(g_CreateServerButton, g_ButtonFont);
-			SetFont(g_JoinServerButton, g_ButtonFont);
-
-			g_UpdateButtonFont = CreateGlobalFont(D(14), true);
-			SetFont(g_UpdateButton, g_UpdateButtonFont);
-		}
-		return 0;
-
 	case AM_DESTROY:
 		DestroyThread(&g_UpdateCheckThread);
-		return 0;
-
-	case AM_DESTROYFONT:
-		if (lParam) {
-			DeleteObject(g_TitleFont);
-			DeleteObject(g_CopyrightFont);
-
-			DeleteObject(g_ButtonFont);
-
-			DeleteObject(g_UpdateButtonFont);
-		}
 		return 0;
 
 	case AM_ACTIVATE:
@@ -112,13 +83,13 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 		SetTextAlign(dc, TA_CENTER);
 
 		UICOMP_FIND(titleBar, _T("TitleBar"));
-		DrawString(dc, g_TitleFont, GetCenterX(titleBar), GetY(titleBar), CSTR("단어 암기 프로그램"));
+		DrawString(dc, GetFont(titleBar), GetCenterX(titleBar), GetY(titleBar), CSTR("단어 암기 프로그램"));
 
 		UICOMP_FIND(copyrightBar, _T("CopyrightBar"));
-		DrawString(dc, g_CopyrightFont, GetCenterX(copyrightBar), GetY(copyrightBar), CSTR("(C) 2020. kmc7468 All rights reserved."));
+		DrawString(dc, GetFont(copyrightBar), GetCenterX(copyrightBar), GetY(copyrightBar), CSTR("(C) 2020. kmc7468 All rights reserved."));
 
 		UICOMP_FIND(versionBar, _T("VersionBar"));
-		DrawString(dc, g_CopyrightFont, GetCenterX(versionBar), GetY(versionBar), g_Version, ARRAYSIZE(g_Version) - 1);
+		DrawString(dc, GetFont(versionBar), GetCenterX(versionBar), GetY(versionBar), g_Version, ARRAYSIZE(g_Version) - 1);
 
 		STOP_PAINT;
 	}

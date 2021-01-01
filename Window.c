@@ -59,7 +59,6 @@ HWND CreateScene(HWND window, SUBCLASSPROC sceneProc) {
 	SetWindowSubclass(scene, sceneProc, 0, 0);
 	SendMessage(scene, AM_CREATE, 0, 0);
 	SendMessage(scene, AM_CREATEUI, 0, (LPARAM)GetProp(scene, PROP_UIENGINE));
-	SendMessage(scene, AM_CREATEFONT, 0, TRUE);
 	SendMessage(scene, WM_SIZE, 0, MAKELPARAM(clientRect.right, clientRect.bottom));
 	return scene;
 }
@@ -70,9 +69,6 @@ HWND ChangeScene(HWND window, HWND newScene) {
 
 	RECT clientRect;
 	GetClientRect(window, &clientRect);
-
-	SendMessage(newScene, AM_DESTROYFONT, 0, TRUE);
-	SendMessage(newScene, AM_CREATEFONT, 0, TRUE);
 	SetWindowPos(newScene, NULL, 0, 0, clientRect.right, clientRect.bottom, SWP_NOZORDER | SWP_NOMOVE);
 
 	SendMessage(newScene, AM_ACTIVATE, 0, 0);
@@ -161,8 +157,6 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 
 	case WM_SIZE: {
 		const HWND scene = GetProp(handle, PROP_CURRENT_SCENE);
-		SendMessage(scene, AM_DESTROYFONT, 0, FALSE);
-		SendMessage(scene, AM_CREATEFONT, 0, FALSE);
 		SetWindowPos(scene, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER | SWP_NOMOVE);
 		return 0;
 	}
@@ -179,8 +173,6 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 		rect.bottom = MulDiv(rect.bottom, newDpi, oldDpi);
 
 		const HWND scene = GetProp(handle, PROP_CURRENT_SCENE);
-		SendMessage(scene, AM_DESTROYFONT, 0, TRUE);
-		SendMessage(scene, AM_CREATEFONT, 0, TRUE);
 		SetWindowPos(scene, NULL, 0, 0, rect.right, rect.bottom, SWP_NOZORDER | SWP_NOMOVE);
 
 		AdjustWindowRectExForDpiSafely(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0, newDpi);
@@ -232,23 +224,22 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 LRESULT CALLBACK SceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_CREATE: {
-		UIComponent* const uiEngine = calloc(1, sizeof(UIComponent));
+		UIEngine* const uiEngine = calloc(1, sizeof(UIEngine));
 		CreateUIEngine(uiEngine);
 		SetProp(handle, PROP_UIENGINE, (HANDLE)uiEngine);
 		return 0;
 	}
 
 	case WM_DESTROY: {
-		UIComponent* const uiEngine = (UIComponent*)GetProp(handle, PROP_UIENGINE);
+		UIEngine* const uiEngine = (UIEngine*)GetProp(handle, PROP_UIENGINE);
 		free(uiEngine);
 
-		SendMessage(handle, AM_DESTROYFONT, 0, TRUE);
 		SendMessage(handle, AM_DESTROY, 0, 0);
 		return 0;
 	}
 
 	case WM_SIZE: {
-		UIComponent* const uiEngine = (UIComponent*)GetProp(handle, PROP_UIENGINE);
+		UIEngine* const uiEngine = (UIEngine*)GetProp(handle, PROP_UIENGINE);
 		EvaluateUIEngine(uiEngine, handle, LOWORD(lParam), HIWORD(lParam));
 		UpdateUIEngine(uiEngine);
 
