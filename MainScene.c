@@ -3,8 +3,6 @@
 #define AM_HASUPDATE	AM_USER + 0
 #define AM_MERGEBUTTON	AM_USER + 1
 
-#define AM_STOPTHREAD	AM_USER + 0
-
 #include "Application.h"
 #include "Http.h"
 #include "UIEngine.h"
@@ -15,7 +13,10 @@
 static HWND g_TitleStatic, g_CopyrightStatic, g_VersionStatic;
 
 static HWND g_SingleplayButton, g_VocabularyButton, g_LocalMultiplayButton, g_OnlineMultiplayButton;
+
 static HWND g_CreateServerButton, g_JoinServerButton;
+static Thread g_MergeButtonThread;
+static DWORD WINAPI MergeButtonThread(LPVOID param);
 
 static HWND g_UpdateButton;
 static Thread g_UpdateCheckThread;
@@ -81,13 +82,8 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 		SetSceneTitle(handle, NULL);
 		return 0;
 
-	case AM_HASUPDATE:
-		ShowWindow(g_VersionStatic, SW_HIDE);
-
-		ShowWindow(g_UpdateButton, SW_SHOW);
-		return 0;
-
 	case WM_DESTROY:
+		DestroyThread(&g_MergeButtonThread);
 		DestroyThread(&g_UpdateCheckThread);
 		return 0;
 
@@ -97,9 +93,38 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 		return 0;
 	}
 
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case 3:
+			ShowWindow(g_CreateServerButton, SW_SHOW);
+			ShowWindow(g_JoinServerButton, SW_SHOW);
+			ShowWindow(g_OnlineMultiplayButton, SW_HIDE);
+
+			StartThread(&g_MergeButtonThread, MergeButtonThread, handle);
+			break;
+		}
+		return 0;
+
+	case AM_HASUPDATE:
+		ShowWindow(g_VersionStatic, SW_HIDE);
+		ShowWindow(g_UpdateButton, SW_SHOW);
+		return 0;
+
+	case AM_MERGEBUTTON:
+		ShowWindow(g_OnlineMultiplayButton, SW_SHOW);
+		ShowWindow(g_CreateServerButton, SW_HIDE);
+		ShowWindow(g_JoinServerButton, SW_HIDE);
+		return 0;
+
 	default:
 		return DefSubclassProc(handle, message, wParam, lParam);
 	}
+}
+
+DWORD WINAPI MergeButtonThread(LPVOID param) {
+	Sleep(5000);
+	SendMessage((HWND)param, AM_MERGEBUTTON, 0, 0);
+	return 0;
 }
 
 DWORD WINAPI UpdateCheckThread(LPVOID param) {
@@ -116,6 +141,7 @@ DWORD WINAPI UpdateCheckThread(LPVOID param) {
 			}
 
 			if (_tcsncmp(begin, WR_APPLICATION_VERSION, ARRAYSIZE(WR_APPLICATION_VERSION) - 1)) {
+				Sleep(600);
 				SendMessage((HWND)param, AM_HASUPDATE, 0, 0);
 			}
 
