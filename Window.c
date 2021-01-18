@@ -28,6 +28,12 @@ HWND CreateChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x, int y
 	}
 	return child;
 }
+HWND CreateButton(LPCTSTR text, int flags, HWND parent, int menu) {
+	return CreateChild(_T("button"), text, NULL, BS_PUSHBUTTON | flags, 0, 0, 0, 0, parent, menu);
+}
+HWND CreateStatic(LPCTSTR text, int flags, HWND parent, int menu) {
+	return CreateChild(_T("static"), text, NULL, flags, 0, 0, 0, 0, parent, menu);
+}
 void SetFont(HWND window, HFONT font) {
 	SendMessage(window, WM_SETFONT, (WPARAM)font, true);
 }
@@ -233,23 +239,19 @@ LRESULT CALLBACK SceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lPar
 	case WM_DESTROY: {
 		UIEngine* const uiEngine = (UIEngine*)GetProp(handle, PROP_UIENGINE);
 		free(uiEngine);
-
-		SendMessage(handle, AM_DESTROY, 0, 0);
-		return 0;
+		return DefWindowProc(handle, message, wParam, lParam);
 	}
 
 	case WM_SIZE: {
 		UIEngine* const uiEngine = (UIEngine*)GetProp(handle, PROP_UIENGINE);
 		EvaluateUIEngine(uiEngine, handle, LOWORD(lParam), HIWORD(lParam));
 		UpdateUIEngine(uiEngine);
-
-		SendMessage(handle, AM_SIZE, wParam, lParam);
-		return 0;
+		return DefWindowProc(handle, message, wParam, lParam);
 	}
 
 	case WM_PAINT:
 		SendMessage(handle, AM_PAINT, 0, (LPARAM)GetProp(handle, PROP_UIENGINE));
-		return 0;
+		return DefWindowProc(handle, message, wParam, lParam);
 
 	default:
 		return DefWindowProc(handle, message, wParam, lParam);

@@ -6,6 +6,8 @@
 
 void RegisterWindow(LPCTSTR className, WNDPROC wndProc);
 HWND CreateChild(LPCTSTR className, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu);
+HWND CreateButton(LPCTSTR text, int flags, HWND parent, int menu);
+HWND CreateStatic(LPCTSTR text, int flags, HWND parent, int menu);
 void SetFont(HWND window, HFONT font);
 
 extern HWND MainWindow, DialogWindow;
@@ -18,9 +20,6 @@ void SetSceneTitle(HWND scene, LPCTSTR newTitle);
 
 int GetAppropriateLengthForDpi(HWND window, int originalLength);
 int GetAppropriateLengthForSize(HWND window, int originalLength);
-
-#define D(x) GetAppropriateLengthForDpi(handle, x)
-#define R(x, r) MulDiv(x, r, 100)
 
 typedef struct {
 	HDC OriginalDC;
@@ -56,11 +55,9 @@ switch (message)
 #define AM_CREATE		WM_APP + 0
 #define AM_CREATEUI		WM_APP + 1
 #define AM_CHANGESCENE	WM_APP + 2
-#define AM_DESTROY		WM_APP + 3
-#define AM_ACTIVATE		WM_APP + 4
-#define AM_DEACTIVATE	WM_APP + 5
-#define AM_SIZE			WM_APP + 6
-#define AM_PAINT		WM_APP + 7
+#define AM_ACTIVATE		WM_APP + 3
+#define AM_DEACTIVATE	WM_APP + 4
+#define AM_PAINT		WM_APP + 5
 
 #define AM_USER			WM_USER + 2
 
