@@ -66,6 +66,11 @@ typedef struct {
 	UILength* Length;
 	Array Children;
 
+	UILength* LeftMargin;
+	UILength* RightMargin;
+	UILength* TopMargin;
+	UILength* BottomMargin;
+
 	UIComponentFont* Font;
 
 	HWND* Window;
@@ -73,6 +78,8 @@ typedef struct {
 	float EvaluatedY;
 	float EvaluatedWidth;
 	float EvaluatedHeight;
+	float EvaluatedVirtualWidth;
+	float EvaluatedVirtualHeight;
 } UIComponent;
 
 void CreateUIComponent(UIComponent* uiComponent, LPCTSTR name);
@@ -111,6 +118,16 @@ AddChild(parent, tag)
 #define UICOMP_DOC(tag, type, alignment, parent)							UICOMP_BASE(tag, NULL, NULL, type, alignment, DependentOnChildren, 0, NULL, parent)
 #define UICOMP_DOC_N(tag, name, type, alignment, font, parent)				UICOMP_BASE(tag, name, NULL, type, alignment, DependentOnChildren, 0, font, parent)
 #define UICOMP_DOC_W(tag, window, type, alignment, font, parent)			UICOMP_BASE(tag, NULL, window, type, alignment, DependentOnChildren, 0, font, parent)
+
+#define UIMARG_MEMB(location, margin) location##margin
+#define UIMARG_BASE(tag, location, type, constant)												\
+tag-> UIMARG_MEMB(location, Margin) = calloc(1, sizeof(UILength));								\
+tag-> UIMARG_MEMB(location, Margin) ->Type = type;												\
+tag-> UIMARG_MEMB(location, Margin) ->Constant = constant
+#define UIMARG_CON(tag, location, constant) UIMARG_BASE(tag, location, Constant, constant)
+#define UIMARG_CON_LR(tag, constant) UIMARG_CON(tag, Left, constant); UIMARG_CON(tag, Right, constant)
+#define UIMARG_CON_TB(tag, constant) UIMARG_CON(tag, Top, constant); UIMARG_CON(tag, Bottom, constant)
+#define UIMARG_CON_AS(tag, constant) UIMARG_CON_LR(tag, constant); UIMARG_CON_TB(tag, constant)
 
 #define UICOMP_FIND(tag, name) UIComponent* const tag = FindUIComponent(&uiEngine->RootComponent, name)
 

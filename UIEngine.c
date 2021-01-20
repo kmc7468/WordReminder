@@ -66,6 +66,11 @@ void DestroyUIComponent(UIComponent* uiComponent) {
 		free(component);
 	}
 	DestroyArray(&uiComponent->Children);
+
+	free(uiComponent->LeftMargin);
+	free(uiComponent->RightMargin);
+	free(uiComponent->TopMargin);
+	free(uiComponent->BottomMargin);
 }
 void AddChild(UIComponent* uiComponent, UIComponent* child) {
 	AddElement(&uiComponent->Children, &child);
@@ -87,10 +92,32 @@ void ApplyUIComponent(UIComponent* uiComponent, HWND window) {
 	SetFont(window, uiComponent->Font->Font);
 }
 void EvaluateUIComponent(UIComponent* uiComponent, HWND window, float x, float y, float width, float height) {
-	uiComponent->EvaluatedX = x;
-	uiComponent->EvaluatedY = y;
-	uiComponent->EvaluatedWidth = width;
-	uiComponent->EvaluatedHeight = height;
+	float xDelta = 0, yDelta = 0, widthDelta = 0, heightDelta = 0;
+	if (uiComponent->LeftMargin) {
+		EvaluateUILength(uiComponent->LeftMargin, window, width, height);
+		xDelta = uiComponent->LeftMargin->Evaluated;
+		widthDelta += uiComponent->LeftMargin->Evaluated;
+	}
+	if (uiComponent->RightMargin) {
+		EvaluateUILength(uiComponent->RightMargin, window, width, height);
+		widthDelta += uiComponent->RightMargin->Evaluated;
+	}
+	if (uiComponent->TopMargin) {
+		EvaluateUILength(uiComponent->TopMargin, window, width, height);
+		yDelta = uiComponent->TopMargin->Evaluated;
+		heightDelta += uiComponent->TopMargin->Evaluated;
+	}
+	if (uiComponent->BottomMargin) {
+		EvaluateUILength(uiComponent->BottomMargin, window, width, height);
+		heightDelta += uiComponent->BottomMargin->Evaluated;
+	}
+
+	uiComponent->EvaluatedX = (x += xDelta);
+	uiComponent->EvaluatedY = (y += yDelta);
+	uiComponent->EvaluatedWidth = (width -= widthDelta);
+	uiComponent->EvaluatedHeight = (height -= heightDelta);
+	uiComponent->EvaluatedVirtualWidth = uiComponent->EvaluatedWidth + xDelta;
+	uiComponent->EvaluatedVirtualHeight = uiComponent->EvaluatedHeight + yDelta;
 
 	bool hasHorizontal = false, hasVertical = false;
 	for (int i = 0; i < uiComponent->Children.Count; ++i) {
@@ -107,8 +134,8 @@ void EvaluateUIComponent(UIComponent* uiComponent, HWND window, float x, float y
 			EvaluateUILength(child->Length, window, uiComponent->EvaluatedWidth, uiComponent->EvaluatedHeight);
 			EvaluateUIComponent(child, window, x, y, width, child->Length->Evaluated);
 
-			y += child->EvaluatedHeight;
-			height -= child->EvaluatedHeight;
+			y += child->EvaluatedVirtualHeight;
+			height -= child->EvaluatedVirtualHeight;
 			hasHorizontal = true;
 			break;
 
@@ -116,19 +143,17 @@ void EvaluateUIComponent(UIComponent* uiComponent, HWND window, float x, float y
 			EvaluateUILength(child->Length, window, uiComponent->EvaluatedWidth, uiComponent->EvaluatedHeight);
 			EvaluateUIComponent(child, window, x, y, child->Length->Evaluated, height);
 
-			x += child->EvaluatedWidth;
-			width -= child->EvaluatedWidth;
+			x += child->EvaluatedVirtualWidth;
+			width -= child->EvaluatedVirtualWidth;
 			hasVertical = true;
 			break;
 		}
 	}
 
 	if (hasHorizontal) {
-		x = uiComponent->EvaluatedX + uiComponent->EvaluatedWidth;
 		width = 0;
 	}
 	if (hasVertical) {
-		y = uiComponent->EvaluatedY + uiComponent->EvaluatedHeight;
 		height = 0;
 	}
 
@@ -152,8 +177,8 @@ void EvaluateUIComponent(UIComponent* uiComponent, HWND window, float x, float y
 	}
 
 	if (uiComponent->Type != Window && uiComponent->Length->Type == DependentOnChildren) {
-		uiComponent->EvaluatedWidth = fabsf(width);
-		uiComponent->EvaluatedHeight = fabsf(height);
+		uiComponent->EvaluatedVirtualWidth = (uiComponent->EvaluatedWidth = fabsf(width)) + xDelta;
+		uiComponent->EvaluatedVirtualHeight = (uiComponent->EvaluatedHeight = fabsf(height)) + yDelta;
 	}
 }
 void UpdateUIComponent(UIComponent* uiComponent) {
