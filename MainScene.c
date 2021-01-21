@@ -51,27 +51,27 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 
 		uiEngine->RootComponent.Alignment = Center;
 
-		UICOMP_DOH(area, Horizontal, CenterWithMargin, 85, &uiEngine->RootComponent);
+		UICOMP_DOH(section, Horizontal, CenterWithMargin, 85, &uiEngine->RootComponent);
 
-		UICOMP_DOC(titleSection, Horizontal, None, area);
-		UICOMP_CON_W(titleBar, &g_TitleStatic, Horizontal, None, 50, titleFont, titleSection);
-		UICOMP_CON(margin1, Horizontal, None, 5, titleSection);
+		UICOMP_DOC(titleSection, Horizontal, None, section);
+		UICOMP_CON_W(titleBar, &g_TitleStatic, Horizontal, None, 55, titleFont, titleSection);
+		UIMARG_CON(titleBar, Bottom, 5);
 		UICOMP_CON_W(copyrightBar, &g_CopyrightStatic, Horizontal, None, 18, copyrightFont, titleSection);
 
-		UICOMP_CON(buttonSection1, Horizontal, Center, 230, area);
+		UICOMP_CON(buttonSection1, Horizontal, Center, 230, section);
 		UICOMP_CON(buttonSection2, Vertical, None, 300, buttonSection1);
-		UICOMP_CON_W(singleplayButton, &g_SingleplayButton, Horizontal, None, 50, buttonFont, buttonSection2);
-		UICOMP_CON(buttonMargin1, Horizontal, None, 10, buttonSection2);
-		UICOMP_CON_W(vocabularyButton, &g_VocabularyButton, Horizontal, None, 50, buttonFont, buttonSection2);
-		UICOMP_CON(buttonMargin2, Horizontal, None, 10, buttonSection2);
-		UICOMP_CON_W(localMultiplayButton, &g_LocalMultiplayButton, Horizontal, None, 50, buttonFont, buttonSection2);
-		UICOMP_CON(buttonMargin3, Horizontal, None, 10, buttonSection2);
+		UICOMP_CON_W(singleplayButton, &g_SingleplayButton, Horizontal, None, 60, buttonFont, buttonSection2);
+		UIMARG_CON(singleplayButton, Bottom, 10);
+		UICOMP_CON_W(vocabularyButton, &g_VocabularyButton, Horizontal, None, 60, buttonFont, buttonSection2);
+		UIMARG_CON(vocabularyButton, Bottom, 10);
+		UICOMP_CON_W(localMultiplayButton, &g_LocalMultiplayButton, Horizontal, None, 60, buttonFont, buttonSection2);
+		UIMARG_CON(localMultiplayButton, Bottom, 10);
 		UICOMP_CON_W(onlineMultiplayButton, &g_OnlineMultiplayButton, Horizontal, CenterWithMargin, 50, buttonFont, buttonSection2);
 
 		UICOMP_CON_W(createServerButton, &g_CreateServerButton, Vertical, None, 145, buttonFont, onlineMultiplayButton);
 		UICOMP_CON_W(joinServerButton, &g_JoinServerButton, Vertical, None, 145, buttonFont, onlineMultiplayButton);
 
-		UICOMP_CON(versionSection, Horizontal, Center, 18, area);
+		UICOMP_CON(versionSection, Horizontal, Center, 18, section);
 		UICOMP_CON_W(versionBar, &g_VersionStatic, Vertical, None, 150, copyrightFont, versionSection);
 		UICOMP_DOH_W(updateButton, &g_UpdateButton, Horizontal, None, 100, updateButtonFont, versionBar);
 		return 0;
