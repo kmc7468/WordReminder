@@ -106,6 +106,11 @@ tag->Length->Constant = constant;																\
 tag->Font = font;																				\
 tag->Window = window;																			\
 AddChild(parent, tag)
+#define UICOMP_WIN(tag, alignment, parent)														\
+UIComponent* tag = calloc(1, sizeof(UIComponent));												\
+CreateUIComponent(tag, NULL);																	\
+tag->Type = Window;																				\
+AddChild(parent, tag)
 #define UICOMP_CON(tag, type, alignment, constant, parent)					UICOMP_BASE(tag, NULL, NULL, type, alignment, Constant, constant, NULL, parent)
 #define UICOMP_CON_N(tag, name, type, alignment, constant, font, parent)	UICOMP_BASE(tag, name, NULL, type, alignment, Constant, constant, font, parent)
 #define UICOMP_CON_W(tag, window, type, alignment, constant, font, parent)	UICOMP_BASE(tag, NULL, window, type, alignment, Constant, constant, font, parent)
