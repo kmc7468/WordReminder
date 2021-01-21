@@ -34,6 +34,12 @@ HWND CreateButton(LPCTSTR text, int flags, HWND parent, int menu) {
 HWND CreateStatic(LPCTSTR text, int flags, HWND parent, int menu) {
 	return CreateChild(_T("static"), text, NULL, flags, 0, 0, 0, 0, parent, menu);
 }
+HWND CreateList(int flags, HWND parent, int menu) {
+	return CreateChild(_T("listbox"), NULL, NULL, WS_BORDER | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | flags, 0, 0, 0, 0, parent, menu);
+}
+HWND CreateEdit(int flags, HWND parent, int menu) {
+	return CreateChild(_T("edit"), NULL, NULL, WS_BORDER | flags, 0, 0, 0, 0, parent, menu);
+}
 void SetFont(HWND window, HFONT font) {
 	SendMessage(window, WM_SETFONT, (WPARAM)font, true);
 }
@@ -252,6 +258,12 @@ LRESULT CALLBACK SceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lPar
 	case WM_PAINT:
 		SendMessage(handle, AM_PAINT, 0, (LPARAM)GetProp(handle, PROP_UIENGINE));
 		return DefWindowProc(handle, message, wParam, lParam);
+
+	case WM_CTLCOLORSTATIC: {
+		const HDC dc = (HDC)wParam;
+		SetBkMode(dc, TRANSPARENT);
+		return 0;
+	}
 
 	default:
 		return DefWindowProc(handle, message, wParam, lParam);

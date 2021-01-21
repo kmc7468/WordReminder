@@ -24,23 +24,22 @@ static DWORD WINAPI UpdateCheckThread(LPVOID param);
 
 LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1) {
 	EVENT {
-	case AM_CREATE: {
-		g_TitleStatic = CreateStatic(_T("ï¿½Ü¾ï¿½ ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½Î±×·ï¿½"), WS_VISIBLE | SS_CENTER, handle, -1);
+	case AM_CREATE:
+		g_TitleStatic = CreateStatic(_T("´Ü¾î ¾Ï±â ÇÁ·Î±×·¥"), WS_VISIBLE | SS_CENTER, handle, -1);
 		g_CopyrightStatic = CreateStatic(_T("(C) 2020-2021. kmc7468 All rights reserved."), WS_VISIBLE | SS_CENTER, handle, -1);
 		g_VersionStatic = CreateStatic(_T("v") WR_APPLICATION_VERSION, WS_VISIBLE | SS_CENTER, handle, -1);
 
-		g_SingleplayButton = CreateButton(_T("ï¿½Ü¾ï¿½ ï¿½Ï±ï¿½ï¿½Ï±ï¿½"), WS_VISIBLE, handle, 0);
-		g_VocabularyButton = CreateButton(_T("ï¿½Ü¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½"), WS_VISIBLE, handle, 1);
-		g_LocalMultiplayButton = CreateButton(_T("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼ ï¿½Ã·ï¿½ï¿½ï¿½"), WS_VISIBLE, handle, 2);
-		g_OnlineMultiplayButton = CreateButton(_T("ï¿½Â¶ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼ ï¿½Ã·ï¿½ï¿½ï¿½"), WS_VISIBLE, handle, 3);
+		g_SingleplayButton = CreateButton(_T("´Ü¾î ¾Ï±âÇÏ±â"), WS_VISIBLE, handle, 0);
+		g_VocabularyButton = CreateButton(_T("´Ü¾îÀå ÆíÁýÇÏ±â"), WS_VISIBLE, handle, 1);
+		g_LocalMultiplayButton = CreateButton(_T("·ÎÄÃ ¸ÖÆ¼ ÇÃ·¹ÀÌ"), WS_VISIBLE, handle, 2);
+		g_OnlineMultiplayButton = CreateButton(_T("¿Â¶óÀÎ ¸ÖÆ¼ ÇÃ·¹ÀÌ"), WS_VISIBLE, handle, 3);
 
-		g_CreateServerButton = CreateButton(_T("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½"), 0, handle, 4);
-		g_JoinServerButton = CreateButton(_T("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½"), 0, handle, 5);
+		g_CreateServerButton = CreateButton(_T("¼­¹ö ¸¸µé±â"), 0, handle, 4);
+		g_JoinServerButton = CreateButton(_T("¼­¹ö Á¢¼ÓÇÏ±â"), 0, handle, 5);
 
-		g_UpdateButton = CreateButton(_T("ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö½ï¿½ï¿½Ï´ï¿½"), 0, handle, 6);
+		g_UpdateButton = CreateButton(_T("»õ ¹öÀüÀÌ ÀÖ½À´Ï´Ù"), 0, handle, 6);
 		StartThread(&g_UpdateCheckThread, UpdateCheckThread, handle);
 		return 0;
-	}
 
 	case AM_CREATEUI: {
 		UIEngine* const uiEngine = (UIEngine*)lParam;
@@ -87,20 +86,22 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 		DestroyThread(&g_UpdateCheckThread);
 		return 0;
 
-	case WM_CTLCOLORSTATIC: {
-		const HDC dc = (HDC)wParam;
-		SetBkMode(dc, TRANSPARENT);
-		return 0;
-	}
-
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
+		case 1:
+			ChangeScene(MainWindow, CreateScene(MainWindow, VocabularySceneProc));
+			break;
+
 		case 3:
 			ShowWindow(g_CreateServerButton, SW_SHOW);
 			ShowWindow(g_JoinServerButton, SW_SHOW);
 			ShowWindow(g_OnlineMultiplayButton, SW_HIDE);
 
 			StartThread(&g_MergeButtonThread, MergeButtonThread, handle);
+			break;
+
+		case 6:
+			ShellExecute(NULL, _T("open"), WR_APPLICATION_GITHUB_RELEASE, NULL, NULL, SW_SHOWNORMAL);
 			break;
 		}
 		return 0;
