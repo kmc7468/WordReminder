@@ -54,14 +54,14 @@ switch (message)
 #define HEIGHT clientRect.bottom
 #define CSTR(string) _T(string), ARRAYSIZE(_T(string)) - 1
 
-#define AM_CREATE		WM_APP + 0
-#define AM_CREATEUI		WM_APP + 1
-#define AM_CHANGESCENE	WM_APP + 2
-#define AM_ACTIVATE		WM_APP + 3
-#define AM_DEACTIVATE	WM_APP + 4
-#define AM_PAINT		WM_APP + 5
+#define AM_CREATE			WM_APP + 0
+#define AM_CREATEUI			WM_APP + 1
+#define AM_CHANGESCENE		WM_APP + 2
+#define AM_ACTIVATE			WM_APP + 3
+#define AM_DEACTIVATE		WM_APP + 4
+#define AM_PAINT			WM_APP + 5
 
-#define AM_USER			WM_USER + 2
+#define AM_USER				WM_USER + 2
 
 LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1);

@@ -1,7 +1,7 @@
 #include "Window.h"
 
-#define AM_HASUPDATE	AM_USER + 0
-#define AM_MERGEBUTTON	AM_USER + 1
+#define AM_HASUPDATE		AM_USER + 0
+#define AM_MERGEBUTTON		AM_USER + 1
 
 #include "Application.h"
 #include "Http.h"

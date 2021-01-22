@@ -10,6 +10,7 @@ typedef struct {
 
 void CreateWord(Word* word);
 void CopyWord(Word* destination, const Word* source);
+int FindMeaning(const Word* word, LPCTSTR meaning);
 void DestroyWord(Word* word);
 
 typedef struct {
@@ -37,6 +38,7 @@ bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path);
 void AddWord(Vocabulary* vocabulary, Word* word);
 void RemoveWord(Vocabulary* vocabulary, int index);
 Word* GetWord(Vocabulary* vocabulary, int index);
+int FindWord(const Vocabulary* vocabulary, LPCTSTR word);
 void DestroyVocabulary(Vocabulary* vocabulary, bool destroyWords);
 
 typedef enum {

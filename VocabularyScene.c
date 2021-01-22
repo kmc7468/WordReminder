@@ -1,7 +1,25 @@
 #include "Window.h"
 
+#define AM_WORDSELCHANGE	AM_USER + 0
+#define AM_MEANINGSELCHANGE	AM_USER + 1
+#define AM_WORDSUPDATE		AM_USER + 2
+#define AM_MEANINGSUPDATE	AM_USER + 3
+
+#include "Application.h"
 #include "UIEngine.h"
 #include "Word.h"
+
+#include <string.h>
+
+typedef struct {
+	Vocabulary Vocabulary;
+	Word* SelectedWord;
+	Meaning* SelectedMeaning;
+	bool IsSaved;
+} VocabularyStatus;
+
+static void CreateVocabularyStatus(VocabularyStatus* vocabularyStatus);
+static void DestroyVocabularyStatus(VocabularyStatus* vocabularyStatus);
 
 static HWND g_WordListStatic;
 static HWND g_WordList;
@@ -18,8 +36,7 @@ static HWND g_AddMeaningButton, g_RemoveMeaningButton;
 static HWND g_RemoveWordButton;
 
 static HWND g_LoadVocabularyButton, g_SaveVocabularyButton;
-static Vocabulary g_Vocabulary;
-static bool g_IsSaved = true;
+static VocabularyStatus g_VocabularyStatus;
 
 LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1) {
 	EVENT {
@@ -45,7 +62,7 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 
 		g_LoadVocabularyButton = CreateButton(_T("단어장 열기"), WS_VISIBLE, handle, 8);
 		g_SaveVocabularyButton = CreateButton(_T("단어장 저장하기"), WS_VISIBLE, handle, 9);
-		CreateVocabulary(&g_Vocabulary);
+		CreateVocabularyStatus(&g_VocabularyStatus);
 		return 0;
 
 	case AM_CREATEUI: {
@@ -113,11 +130,239 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 		return 0;
 
 	case WM_DESTROY:
-		DestroyVocabulary(&g_Vocabulary, true);
-		g_IsSaved = true;
+		DestroyVocabularyStatus(&g_VocabularyStatus);
 		return 0;
+
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case 0: {
+			const int index = (int)SendMessage(g_WordList, LB_GETCURSEL, 0, 0);
+			if (index == -1 || HIWORD(wParam) != LBN_SELCHANGE) break;
+
+			g_VocabularyStatus.SelectedWord = GetWord(&g_VocabularyStatus.Vocabulary, index);
+			SendMessage(handle, AM_WORDSELCHANGE, 0, 0);
+			break;
+		}
+
+		case 2: {
+			const int index = (int)SendMessage(g_MeaningList, LB_GETCURSEL, 0, 0);
+			if (index == -1 || HIWORD(wParam) != LBN_SELCHANGE) break;
+
+			g_VocabularyStatus.SelectedMeaning = GetMeaning(g_VocabularyStatus.SelectedWord, index);
+			SendMessage(handle, AM_MEANINGSELCHANGE, 0, 0);
+			break;
+		}
+
+		case 5: {
+			const int wordLength = GetWindowTextLength(g_WordEdit);
+			const int meaningLength = GetWindowTextLength(g_MeaningEdit);
+			const int pronunciationLength = GetWindowTextLength(g_PronunciationEdit);
+			if (g_VocabularyStatus.SelectedWord == NULL && wordLength == 0) {
+				MessageBox(handle, _T("단어를 입력하거나, 뜻을 추가할 단어를 선택해야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			} else if (meaningLength == 0) {
+				MessageBox(handle, _T("뜻을 입력해야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			}
+
+			const LPTSTR word = malloc(sizeof(TCHAR) * (wordLength + 1));
+			const LPTSTR meaning = malloc(sizeof(TCHAR) * (meaningLength + 1));
+			const LPTSTR pronunciation = malloc(sizeof(TCHAR) * (pronunciationLength + 1));
+			GetWindowText(g_WordEdit, word, wordLength + 1);
+			GetWindowText(g_MeaningEdit, meaning, meaningLength + 1);
+			GetWindowText(g_PronunciationEdit, pronunciation, pronunciationLength + 1);
+
+			if (g_VocabularyStatus.SelectedWord != NULL && (wordLength == 0 || _tcscmp(word, g_VocabularyStatus.SelectedWord->Word) == 0)) {
+				free(word);
+			} else {
+				const int index = FindWord(&g_VocabularyStatus.Vocabulary, word);
+				if (index == -1) {
+					Word newWord = { 0 };
+					CreateWord(&newWord);
+
+					newWord.Word = word;
+
+					AddWord(&g_VocabularyStatus.Vocabulary, &newWord);
+					g_VocabularyStatus.SelectedWord = GetWord(&g_VocabularyStatus.Vocabulary, g_VocabularyStatus.Vocabulary.Words.Count - 1);
+
+					SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)word);
+					SendMessage(g_WordList, LB_SETCURSEL, g_VocabularyStatus.Vocabulary.Words.Count - 1, 0);
+					SendMessage(handle, AM_WORDSELCHANGE, 0, 0);
+					SendMessage(handle, AM_WORDSUPDATE, 0, 0);
+				} else {
+					g_VocabularyStatus.SelectedWord = GetWord(&g_VocabularyStatus.Vocabulary, index);
+					free(word);
+
+					SendMessage(g_WordList, LB_SETCURSEL, index, 0);
+					SendMessage(handle, AM_WORDSELCHANGE, 0, 0);
+				}
+			}
+
+			if (FindMeaning(g_VocabularyStatus.SelectedWord, meaning) != -1) {
+				free(meaning);
+				free(pronunciation);
+
+				MessageBox(handle, _T("이미 단어장에 등록되어 있는 뜻입니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			}
+
+			Meaning	newMeaning = { 0 };
+			newMeaning.Meaning = meaning;
+			newMeaning.Pronunciation = pronunciation;
+			AddMeaning(g_VocabularyStatus.SelectedWord, &newMeaning);
+
+			SetWindowText(g_WordEdit, NULL);
+			SetWindowText(g_MeaningEdit, NULL);
+			SetWindowText(g_PronunciationEdit, NULL);
+
+			SendMessage(g_MeaningList, LB_ADDSTRING, 0, (LPARAM)meaning);
+			SendMessage(handle, AM_MEANINGSUPDATE, 0, 0);
+			break;
+		}
+
+		case 6: {
+			int index = (int)SendMessage(g_MeaningList, LB_GETCURSEL, 0, 0);
+			if (index == -1) {
+				MessageBox(handle, _T("삭제할 뜻을 선택해야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			}
+
+			RemoveMeaning(g_VocabularyStatus.SelectedWord, index);
+			g_VocabularyStatus.SelectedMeaning = NULL;
+
+			SendMessage(g_MeaningList, LB_DELETESTRING, index, 0);
+			SetWindowText(g_MeaningEdit, NULL);
+			SetWindowText(g_PronunciationEdit, NULL);
+
+			SendMessage(handle, AM_MEANINGSUPDATE, 0, 0);
+
+			if (g_VocabularyStatus.SelectedWord->Meanings.Count == 0) {
+				index = (int)SendMessage(g_WordList, LB_GETCURSEL, 0, 0);
+				RemoveWord(&g_VocabularyStatus.Vocabulary, index);
+				g_VocabularyStatus.SelectedWord = NULL;
+
+				SetWindowText(g_WordEdit, NULL);
+				SendMessage(g_WordList, LB_DELETESTRING, index, 0);
+
+				SendMessage(handle, AM_WORDSUPDATE, 0, 0);
+			}
+			break;
+		}
+
+		case 7: {
+			const int count = g_VocabularyStatus.SelectedWord->Meanings.Count;
+			for (int i = 0; i < count; ++i) {
+				SendMessage(g_MeaningList, LB_SETCURSEL, 0, 0);
+				SendMessage(g_RemoveMeaningButton, BM_CLICK, 0, 0);
+			}
+			break;
+		}
+
+		case 8: {
+			if (!g_VocabularyStatus.IsSaved &&
+				MessageBox(handle, _T("변경 사항이 저장되지 않았습니다. 다른 단어장을 열면 저장되지 않은 내용은 모두 삭제됩니다. 정말 다른 단어장을 여시겠습니까?"), _T("경고"), MB_YESNO | MB_ICONWARNING) != IDYES) break;
+
+			const LPCTSTR path = ShowOpenFileDialog(handle);
+			if (path) {
+				const int meaningCount = (int)SendMessage(g_MeaningList, LB_GETCOUNT, 0, 0);
+				for (int i = 0; i < g_VocabularyStatus.Vocabulary.Words.Count; ++i) {
+					SendMessage(g_WordList, LB_DELETESTRING, 0, 0);
+				}
+				for (int i = 0; i < meaningCount; ++i) {
+					SendMessage(g_MeaningList, LB_DELETESTRING, 0, 0);
+				}
+				DestroyVocabularyStatus(&g_VocabularyStatus);
+				SendMessage(handle, AM_MEANINGSUPDATE, 0, 0);
+
+				CreateVocabularyStatus(&g_VocabularyStatus);
+				if (!LoadVocabulary(&g_VocabularyStatus.Vocabulary, path)) {
+					MessageBox(handle, _T("단어장을 읽는 중 오류가 발생했습니다. 올바른 단어장인지 확인해 보십시오."), _T("경고"), MB_OK | MB_ICONERROR);
+					break;
+				}
+
+				for (int i = 0; i < g_VocabularyStatus.Vocabulary.Words.Count; ++i) {
+					SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)GetWord(&g_VocabularyStatus.Vocabulary, i)->Word);
+				}
+				SetWindowText(g_WordEdit, NULL);
+				SetWindowText(g_MeaningEdit, NULL);
+				SetWindowText(g_PronunciationEdit, NULL);
+
+				SendMessage(handle, AM_WORDSUPDATE, 0, 0);
+			}
+			break;
+		}
+
+		case 9: {
+			// TODO
+
+			const LPCTSTR path = ShowSaveFileDialog(handle);
+			if (path) {
+				if (SaveVocabulary(&g_VocabularyStatus.Vocabulary, path)) {
+					g_VocabularyStatus.IsSaved = true;
+				} else {
+					MessageBox(handle, _T("단어장 저장 중 오류가 발생했습니다. 다시 시도해 보십시오."), _T("오류"), MB_OK | MB_ICONERROR);
+				}
+			}
+			break;
+		}
+		}
+		return 0;
+
+	case AM_WORDSELCHANGE: {
+		SetWindowText(g_WordEdit, g_VocabularyStatus.SelectedWord->Word);
+		SetWindowText(g_MeaningEdit, NULL);
+		SetWindowText(g_PronunciationEdit, NULL);
+
+		const int meaningCount = (int)SendMessage(g_MeaningList, LB_GETCOUNT, 0, 0);
+		for (int i = 0; i < meaningCount; ++i) {
+			SendMessage(g_MeaningList, LB_DELETESTRING, 0, 0);
+		}
+		for (int i = 0; i < g_VocabularyStatus.SelectedWord->Meanings.Count; ++i) {
+			SendMessage(g_MeaningList, LB_ADDSTRING, 0, (LPARAM)GetMeaning(g_VocabularyStatus.SelectedWord, i)->Meaning);
+		}
+		SendMessage(handle, AM_MEANINGSUPDATE, 0, 0);
+		return 0;
+	}
+
+	case AM_MEANINGSELCHANGE: {
+		SetWindowText(g_WordEdit, g_VocabularyStatus.SelectedWord->Word);
+		SetWindowText(g_MeaningEdit, g_VocabularyStatus.SelectedMeaning->Meaning);
+		SetWindowText(g_PronunciationEdit, g_VocabularyStatus.SelectedMeaning->Pronunciation);
+		return 0;
+	}
+
+	case AM_WORDSUPDATE: {
+		TCHAR text[100] = _T("단어 목록("), count[100];
+		_itot(g_VocabularyStatus.Vocabulary.Words.Count, count, 10);
+		_tcscat(text, count);
+		_tcscat(text, _T("개)"));
+
+		SetWindowText(g_WordListStatic, text);
+		return 0;
+	}
+
+	case AM_MEANINGSUPDATE: {
+		TCHAR text[100] = _T("뜻 목록("), count[100] = _T("0");
+		if (g_VocabularyStatus.SelectedWord) {
+			_itot(g_VocabularyStatus.SelectedWord->Meanings.Count, count, 10);
+		}
+		_tcscat(text, count);
+		_tcscat(text, _T("개)"));
+
+		SetWindowText(g_MeaningListStatic, text);
+		return 0;
+	}
 
 	default:
 		return DefSubclassProc(handle, message, wParam, lParam);
 	}
+}
+
+void CreateVocabularyStatus(VocabularyStatus* vocabularyStatus) {
+	CreateVocabulary(&vocabularyStatus->Vocabulary);
+	vocabularyStatus->IsSaved = true;
+}
+void DestroyVocabularyStatus(VocabularyStatus* vocabularyStatus) {
+	DestroyVocabulary(&vocabularyStatus->Vocabulary, true);
+	memset(vocabularyStatus, 0, sizeof(*vocabularyStatus));
 }

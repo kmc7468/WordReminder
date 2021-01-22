@@ -22,6 +22,12 @@ void CopyWord(Word* destination, const Word* source) {
 		AddMeaning(destination, &copied);
 	}
 }
+int FindMeaning(const Word* word, LPCTSTR meaning) {
+	for (int i = 0; i < word->Meanings.Count; ++i) {
+		if (_tcscmp(GetMeaning((Word*)word, i)->Meaning, meaning) == 0) return i;
+	}
+	return -1;
+}
 void DestroyWord(Word* word) {
 	free(word->Word);
 
@@ -58,7 +64,12 @@ Meaning* GetMeaning(Word* word, int index) {
 }
 
 static LPTSTR ReadString(FILE* file);
-static void WriteString(FILE* file, LPCTSTR string);
+static int WriteString(FILE* file, LPCTSTR string);
+
+#define HOMONYM_CONTAINER 0x00000000
+
+static void ReadHomonymContainer(FILE* file, Vocabulary* vocabulary);
+static void WriteHomonymContainer(FILE* file, const Vocabulary* vocabulary);
 
 void CreateVocabulary(Vocabulary* vocabulary) {
 	CreateArray(&vocabulary->Words, sizeof(Word));
@@ -76,8 +87,6 @@ bool LoadVocabulary(Vocabulary* vocabulary, LPCTSTR path) {
 	FILE* const file = _tfopen(path, _T("rb"));
 	if (!file) return false;
 
-	CreateVocabulary(vocabulary);
-
 	int count;
 	fread(&count, sizeof(count), 1, file);
 	for (int i = 0; i < count; ++i) {
@@ -94,7 +103,24 @@ bool LoadVocabulary(Vocabulary* vocabulary, LPCTSTR path) {
 		AddWord(vocabulary, &word);
 	}
 
-	// TODO
+	int containerCount;
+	fread(&containerCount, sizeof(containerCount), 1, file);
+	if (!feof(file)) {
+		for (int i = 0; i < containerCount; ++i) {
+			int containerId, containerLength;
+			fread(&containerId, sizeof(containerId), 1, file);
+			fread(&containerLength, sizeof(containerLength), 1, file);
+			switch (containerId) {
+			case HOMONYM_CONTAINER:
+				ReadHomonymContainer(file, vocabulary);
+				break;
+
+			default:
+				fseek(file, containerLength, SEEK_CUR);
+				break;
+			}
+		}
+	}
 
 	fclose(file);
 	return true;
@@ -103,9 +129,14 @@ bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path) {
 	FILE* const file = _tfopen(path, _T("wb"));
 	if (!file) return false;
 
+	bool needHomonymContainer = false;
+
 	fwrite(&vocabulary->Words.Count, sizeof(vocabulary->Words.Count), 1, file);
 	for (int i = 0; i < vocabulary->Words.Count; ++i) {
 		Word* const word = GetWord((Vocabulary*)vocabulary, i);
+		if (word->Meanings.Count > 1) {
+			needHomonymContainer = true;
+		}
 
 		WriteString(file, word->Word);
 
@@ -113,18 +144,29 @@ bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path) {
 		int meaningLength = pronunciationLength;
 		for (int j = 0; j < word->Meanings.Count; ++j) {
 			pronunciationLength += (int)_tcslen(GetMeaning(word, j)->Pronunciation);
-			pronunciationLength += (int)_tcslen(GetMeaning(word, j)->Meaning);
+			meaningLength += (int)_tcslen(GetMeaning(word, j)->Meaning);
 		}
 
 		const LPTSTR legacyPronunciation = calloc(pronunciationLength + 1, sizeof(TCHAR));
 		const LPTSTR legacyMeaning = calloc(meaningLength + 1, sizeof(TCHAR));
+		bool isFirstPronunciation = true;
 		for (int j = 0; j < word->Meanings.Count; ++j) {
-			if (j) {
-				_tcscat(legacyPronunciation, _T(", "));
-				_tcscat(legacyMeaning, _T(", "));
+			Meaning* const meaning = GetMeaning(word, j);
+
+			if (_tcslen(meaning->Pronunciation) > 0) {
+				if (!isFirstPronunciation) {
+					_tcscat(legacyPronunciation, _T(", "));
+				}
+				_tcscat(legacyPronunciation, meaning->Pronunciation);
+				isFirstPronunciation = false;
 			}
-			_tcscat(legacyPronunciation, GetMeaning(word, j)->Pronunciation);
-			_tcscat(legacyMeaning, GetMeaning(word, j)->Meaning);
+
+			if (_tcslen(meaning->Meaning) > 0) {
+				if (j) {
+					_tcscat(legacyMeaning, _T(", "));
+				}
+				_tcscat(legacyMeaning, meaning->Meaning);
+			}
 		}
 
 		WriteString(file, legacyPronunciation);
@@ -133,7 +175,11 @@ bool SaveVocabulary(const Vocabulary* vocabulary, LPCTSTR path) {
 		free(legacyMeaning);
 	}
 
-	// TODO
+	if (needHomonymContainer) {
+		const int buffer = 1;
+		fwrite(&buffer, sizeof(buffer), 1, file);
+		WriteHomonymContainer(file, vocabulary);
+	}
 
 	fclose(file);
 	return true;
@@ -147,6 +193,12 @@ void RemoveWord(Vocabulary* vocabulary, int index) {
 }
 Word* GetWord(Vocabulary* vocabulary, int index) {
 	return GetElement(&vocabulary->Words, index);
+}
+int FindWord(const Vocabulary* vocabulary, LPCTSTR word) {
+	for (int i = 0; i < vocabulary->Words.Count; ++i) {
+		if (_tcscmp(GetWord((Vocabulary*)vocabulary, i)->Word, word) == 0) return i;
+	}
+	return -1;
 }
 void DestroyVocabulary(Vocabulary* vocabulary, bool destroyWords) {
 	if (destroyWords) {
@@ -165,12 +217,52 @@ LPTSTR ReadString(FILE* file) {
 	fread(rawString, sizeof(WCHAR), length, file);
 	return MakeGenericString(rawString);
 }
-void WriteString(FILE* file, LPCTSTR string) {
+int WriteString(FILE* file, LPCTSTR string) {
 	const LPCWSTR rawString = GetRawString(string);
 	const int rawStringLength = (int)wcslen(rawString);
 	fwrite(&rawStringLength, sizeof(rawStringLength), 1, file);
 	fwrite(rawString, sizeof(WCHAR), rawStringLength, file);
 	FreeRawString(rawString);
+	return sizeof(rawStringLength) + sizeof(WCHAR) * rawStringLength;
+}
+
+void ReadHomonymContainer(FILE* file, Vocabulary* vocabulary) {
+	for (int i = 0; i < vocabulary->Words.Count; ++i) {
+		Word* const word = GetWord(vocabulary, i);
+		RemoveMeaning(word, 0);
+
+		int count;
+		fread(&count, sizeof(count), 1, file);
+		for (int j = 0; j < count; ++j) {
+			Meaning	meaning = { 0 };
+			meaning.Pronunciation = ReadString(file);
+			meaning.Meaning = ReadString(file);
+			AddMeaning(word, &meaning);
+		}
+	}
+}
+void WriteHomonymContainer(FILE* file, const Vocabulary* vocabulary) {
+	int buffer = HOMONYM_CONTAINER;
+	fwrite(&buffer, sizeof(buffer), 1, file);
+
+	const int lengthOffset = (int)ftell(file);
+	fwrite(&buffer, sizeof(buffer), 1, file);
+
+	int length = 0;
+	for (int i = 0; i < vocabulary->Words.Count; ++i) {
+		Word* const word = GetWord((Vocabulary*)vocabulary, i);
+
+		length += (int)fwrite(&word->Meanings.Count, sizeof(word->Meanings.Count), 1, file);
+		for (int j = 0; j < word->Meanings.Count; ++j) {
+			Meaning* const meaning = GetMeaning(word, j);
+			length += WriteString(file, meaning->Pronunciation);
+			length += WriteString(file, meaning->Meaning);
+		}
+	}
+
+	fseek(file, lengthOffset, SEEK_SET);
+	fwrite(&length, sizeof(length), 1, file);
+	fseek(file, 0, SEEK_END);
 }
 
 void CreateQuestionType(QuestionType* questionType) {
