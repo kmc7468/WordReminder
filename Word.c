@@ -242,26 +242,27 @@ void ReadHomonymContainer(FILE* file, Vocabulary* vocabulary) {
 	}
 }
 void WriteHomonymContainer(FILE* file, const Vocabulary* vocabulary) {
-	int buffer = HOMONYM_CONTAINER;
-	fwrite(&buffer, sizeof(buffer), 1, file);
+	const int containerId = HOMONYM_CONTAINER;
+	fwrite(&containerId, sizeof(containerId), 1, file);
 
-	const int lengthOffset = (int)ftell(file);
-	fwrite(&buffer, sizeof(buffer), 1, file);
+	const int containerLengthOffset = (int)ftell(file);
+	fwrite(&containerId, sizeof(containerId), 1, file);
 
-	int length = 0;
+	int containerLength = 0;
 	for (int i = 0; i < vocabulary->Words.Count; ++i) {
 		Word* const word = GetWord((Vocabulary*)vocabulary, i);
 
-		length += (int)fwrite(&word->Meanings.Count, sizeof(word->Meanings.Count), 1, file);
+		fwrite(&word->Meanings.Count, sizeof(word->Meanings.Count), 1, file);
+		containerLength += sizeof(word->Meanings.Count);
 		for (int j = 0; j < word->Meanings.Count; ++j) {
 			Meaning* const meaning = GetMeaning(word, j);
-			length += WriteString(file, meaning->Pronunciation);
-			length += WriteString(file, meaning->Meaning);
+			containerLength += WriteString(file, meaning->Pronunciation);
+			containerLength += WriteString(file, meaning->Meaning);
 		}
 	}
 
-	fseek(file, lengthOffset, SEEK_SET);
-	fwrite(&length, sizeof(length), 1, file);
+	fseek(file, containerLengthOffset, SEEK_SET);
+	fwrite(&containerLength, sizeof(containerLength), 1, file);
 	fseek(file, 0, SEEK_END);
 }
 
