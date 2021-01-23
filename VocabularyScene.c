@@ -37,7 +37,7 @@ static HWND g_AddMeaningButton, g_RemoveMeaningButton;
 
 static HWND g_RemoveWordButton;
 
-static HWND g_LoadVocabularyButton, g_SaveVocabularyButton;
+static HWND g_MainButton, g_LoadVocabularyButton, g_SaveVocabularyButton;
 static VocabularyStatus g_VocabularyStatus;
 
 LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1) {
@@ -62,8 +62,9 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 
 		g_RemoveWordButton = CreateButton(_T("단어 삭제하기"), WS_VISIBLE, handle, 7);
 
-		g_LoadVocabularyButton = CreateButton(_T("단어장 열기"), WS_VISIBLE, handle, 8);
-		g_SaveVocabularyButton = CreateButton(_T("단어장 저장하기"), WS_VISIBLE, handle, 9);
+		g_MainButton = CreateButton(_T("이전으로"), WS_VISIBLE, handle, 8);
+		g_LoadVocabularyButton = CreateButton(_T("단어장 열기"), WS_VISIBLE, handle, 9);
+		g_SaveVocabularyButton = CreateButton(_T("단어장 저장하기"), WS_VISIBLE, handle, 10);
 		CreateVocabularyStatus(&g_VocabularyStatus);
 		return 0;
 
@@ -76,12 +77,15 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 		UICOMP_DOH(section, Horizontal, None, 100, &uiEngine->RootComponent);
 		UIMARG_CON_AS(section, 10);
 
-		UICOMP_CON_W(wordListStatic, &g_WordListStatic, Horizontal, None, 23, childFont, section);
+		UICOMP_WIN(vocabularySection, None, section);
+		UIMARG_CON(vocabularySection, Bottom, -60);
+
+		UICOMP_CON_W(wordListStatic, &g_WordListStatic, Horizontal, None, 23, childFont, vocabularySection);
 		UIMARG_CON(wordListStatic, Bottom, 5);
-		UICOMP_DOW_W(wordList, &g_WordList, Vertical, None, 33, itemFont, section);
+		UICOMP_DOW_W(wordList, &g_WordList, Vertical, None, 33, itemFont, vocabularySection);
 		UIMARG_CON(wordList, Right, 5);
 
-		UICOMP_WIN(wordSection, None, section);
+		UICOMP_WIN(wordSection, None, vocabularySection);
 		UIMARG_CON(wordSection, Left, 5);
 
 		UICOMP_CON_W(wordStatic, &g_WordStatic, Horizontal, None, 23, childFont, wordSection);
@@ -89,40 +93,43 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 		UICOMP_CON_W(wordEdit, &g_WordEdit, Horizontal, None, 35, itemFont, wordSection);
 		UIMARG_CON(wordEdit, Bottom, 10);
 
-		UICOMP_WIN(meaningSection1, None, wordSection);
-		UIMARG_CON(meaningSection1, Bottom, -60);
-
-		UICOMP_CON_W(meaningListStatic, &g_MeaningListStatic, Horizontal, None, 23, childFont, meaningSection1);
+		UICOMP_CON_W(meaningListStatic, &g_MeaningListStatic, Horizontal, None, 23, childFont, wordSection);
 		UIMARG_CON(meaningListStatic, Bottom, 5);
-		UICOMP_DOW_W(meaningList, &g_MeaningList, Vertical, None, 50, itemFont, meaningSection1);
+		UICOMP_DOW_W(meaningList, &g_MeaningList, Vertical, None, 50, itemFont, wordSection);
 		UIMARG_CON(meaningList, Right, 5);
 
-		UICOMP_WIN(meaningSection2, None, meaningSection1);
-		UIMARG_CON(meaningSection2, Left, 5);
-		UIMARG_CON(meaningSection2, Bottom, -60);
+		UICOMP_WIN(meaningSection, None, wordSection);
+		UIMARG_CON(meaningSection, Left, 5);
+		UIMARG_CON(meaningSection, Bottom, -60);
 
-		UICOMP_CON_W(meaningStatic, &g_MeaningStatic, Horizontal, None, 23, childFont, meaningSection2);
+		UICOMP_CON_W(meaningStatic, &g_MeaningStatic, Horizontal, None, 23, childFont, meaningSection);
 		UIMARG_CON(meaningStatic, Bottom, 5);
-		UICOMP_CON_W(meaningEdit, &g_MeaningEdit, Horizontal, None, 35, itemFont, meaningSection2);
+		UICOMP_CON_W(meaningEdit, &g_MeaningEdit, Horizontal, None, 35, itemFont, meaningSection);
 		UIMARG_CON(meaningEdit, Bottom, 10);
-		UICOMP_CON_W(pronunciationStatic, &g_PronunciationStatic, Horizontal, None, 23, childFont, meaningSection2);
+		UICOMP_CON_W(pronunciationStatic, &g_PronunciationStatic, Horizontal, None, 23, childFont, meaningSection);
 		UIMARG_CON(pronunciationStatic, Bottom, 5);
-		UICOMP_CON_W(pronunciationEdit, &g_PronunciationEdit, Horizontal, None, 35, itemFont, meaningSection2);
+		UICOMP_CON_W(pronunciationEdit, &g_PronunciationEdit, Horizontal, None, 35, itemFont, meaningSection);
 		UIMARG_CON(pronunciationEdit, Bottom, 10);
-		UICOMP_CON_W(addMeaningButton, &g_AddMeaningButton, Horizontal, None, 55, childFont, meaningSection2);
+		UICOMP_CON_W(addMeaningButton, &g_AddMeaningButton, Horizontal, None, 55, childFont, meaningSection);
 		UIMARG_CON(addMeaningButton, Bottom, 5);
-		UICOMP_CON_W(removeMeaningButton, &g_RemoveMeaningButton, Horizontal, None, 50, childFont, meaningSection2);
+		UICOMP_CON_W(removeMeaningButton, &g_RemoveMeaningButton, Horizontal, None, 50, childFont, meaningSection);
 
-		UICOMP_CON_W(removeWordButton, &g_RemoveWordButton, Horizontal, None, 60, childFont, meaningSection1);
+		UICOMP_CON_W(removeWordButton, &g_RemoveWordButton, Horizontal, None, 60, childFont, wordSection);
 		UIMARG_CON(removeWordButton, Left, 5);
 		UIMARG_CON(removeWordButton, Top, 10);
 
-		UICOMP_WIN(vocabularyButtonSection, None, wordSection);
-		UIMARG_CON(vocabularyButtonSection, Top, 10);
+		UICOMP_WIN(vocabularyButtonSection1, None, section);
+		UIMARG_CON(vocabularyButtonSection1, Top, 10);
 
-		UICOMP_DOW_W(loadVocabularyButton, &g_LoadVocabularyButton, Vertical, None, 50, childFont, vocabularyButtonSection);
+		UICOMP_DOW_W(mainButon, &g_MainButton, Vertical, None, 33, childFont, vocabularyButtonSection1);
+		UIMARG_CON(mainButon, Right, 5);
+
+		UICOMP_WIN(vocabularyButtonSection2, None, vocabularyButtonSection1);
+		UIMARG_CON(vocabularyButtonSection2, Left, 5);
+
+		UICOMP_DOW_W(loadVocabularyButton, &g_LoadVocabularyButton, Vertical, None, 50, childFont, vocabularyButtonSection2);
 		UIMARG_CON(loadVocabularyButton, Right, 5);
-		UICOMP_DOW_W(saveVocabularyButton, &g_SaveVocabularyButton, Vertical, None, 50, childFont, vocabularyButtonSection);
+		UICOMP_DOW_W(saveVocabularyButton, &g_SaveVocabularyButton, Vertical, None, 50, childFont, vocabularyButtonSection2);
 		UIMARG_CON(saveVocabularyButton, Left, 5);
 		return 0;
 	}
@@ -259,7 +266,11 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 			break;
 		}
 
-		case 8: {
+		case 8:
+			DestroyWindow(ChangeScene(MainWindow, CreateScene(MainWindow, MainSceneProc)));
+			break;
+
+		case 9: {
 			if (!g_VocabularyStatus.IsSaved &&
 				MessageBox(handle, _T("변경 사항이 저장되지 않았습니다. 다른 단어장을 열면 저장되지 않은 내용은 모두 삭제됩니다. 정말 다른 단어장을 여시겠습니까?"), _T("경고"), MB_YESNO | MB_ICONWARNING) != IDYES) break;
 
@@ -293,7 +304,7 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 			break;
 		}
 
-		case 9: {
+		case 10: {
 			if (!IsUsableVocabulary(&g_VocabularyStatus.Vocabulary)) {
 				MessageBox(handle, _T("다른 단어에는 없는 고유한 뜻을 가진 단어가 적어도 5개 이상 있어야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;

@@ -89,7 +89,7 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case 1:
-			ChangeScene(MainWindow, CreateScene(MainWindow, VocabularySceneProc));
+			DestroyWindow(ChangeScene(MainWindow, CreateScene(MainWindow, VocabularySceneProc)));
 			break;
 
 		case 3:

@@ -76,15 +76,15 @@ HWND CreateScene(HWND window, SUBCLASSPROC sceneProc) {
 }
 HWND ChangeScene(HWND window, HWND newScene) {
 	const HWND oldScene = (HWND)SendMessage(window, AM_CHANGESCENE, 0, (LPARAM)newScene);
-	ShowWindow(oldScene, SW_HIDE);
 	SendMessage(oldScene, AM_DEACTIVATE, 0, 0);
 
 	RECT clientRect;
 	GetClientRect(window, &clientRect);
-	SetWindowPos(newScene, NULL, 0, 0, clientRect.right, clientRect.bottom, SWP_NOZORDER | SWP_NOMOVE);
-
+	SetWindowPos(newScene, HWND_TOP, 0, 0, clientRect.right, clientRect.bottom, SWP_NOMOVE);
 	SendMessage(newScene, AM_ACTIVATE, 0, 0);
+
 	ShowWindow(newScene, SW_SHOW);
+	ShowWindow(oldScene, SW_HIDE);
 	return oldScene;
 }
 void SetSceneTitle(HWND scene, LPCTSTR newTitle) {
