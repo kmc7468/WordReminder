@@ -164,11 +164,9 @@ void DrawString(HDC dc, HFONT font, int x, int y, LPCTSTR string, int length) {
 
 LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
-#if WR_APPLICATION_ENABLE_DPI_AWARENESS
 	case WM_CREATE:
 		SetProp(handle, PROP_CURRENT_DPI, (HANDLE)USER_DEFAULT_SCREEN_DPI);
 		return 0;
-#endif
 
 	case WM_SIZE: {
 		const HWND scene = GetProp(handle, PROP_CURRENT_SCENE);
@@ -176,7 +174,6 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 		return 0;
 	}
 
-#if WR_APPLICATION_ENABLE_DPI_AWARENESS
 	case WM_DPICHANGED: {
 		RECT rect;
 		GetClientRect(handle, &rect);
@@ -195,7 +192,6 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 		SetProp(handle, PROP_CURRENT_DPI, (HANDLE)(UINT_PTR)newDpi);
 		return 0;
 	}
-#endif
 
 	case AM_CHANGESCENE: {
 		const HWND oldScene = GetProp(handle, PROP_CURRENT_SCENE);
