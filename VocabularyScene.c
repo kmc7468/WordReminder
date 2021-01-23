@@ -235,6 +235,7 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 			SendMessage(handle, AM_MEANINGSUPDATE, 0, 0);
 
 			g_VocabularyStatus.IsSaved = false;
+			SetSceneTitle(handle, _T("단어장 편집하기*"));
 			break;
 		}
 
@@ -261,6 +262,7 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 			}
 
 			g_VocabularyStatus.IsSaved = false;
+			SetSceneTitle(handle, _T("단어장 편집하기*"));
 			break;
 		}
 
@@ -274,6 +276,9 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 		}
 
 		case 8:
+			if (!g_VocabularyStatus.IsSaved &&
+				MessageBox(handle, _T("변경 사항이 저장되지 않았습니다. 이전 화면으로 돌아가면 저장되지 않은 내용은 모두 삭제됩니다. 정말 이전 화면으로 돌아가시겠습니까?"), _T("경고"), MB_YESNO | MB_ICONWARNING) != IDYES) break;
+
 			DestroyWindow(ChangeScene(MainWindow, CreateScene(MainWindow, MainSceneProc)));
 			break;
 
@@ -291,6 +296,7 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 					SendMessage(g_MeaningList, LB_DELETESTRING, 0, 0);
 				}
 				DestroyVocabularyStatus(&g_VocabularyStatus);
+				SetSceneTitle(handle, _T("단어장 편집하기"));
 				SendMessage(handle, AM_MEANINGSUPDATE, 0, 0);
 
 				CreateVocabularyStatus(&g_VocabularyStatus);
@@ -321,6 +327,7 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 			if (path) {
 				if (SaveVocabulary(&g_VocabularyStatus.Vocabulary, path)) {
 					g_VocabularyStatus.IsSaved = true;
+					SetSceneTitle(handle, _T("단어장 편집하기"));
 				} else {
 					MessageBox(handle, _T("단어장 저장 중 오류가 발생했습니다. 다시 시도해 보십시오."), _T("오류"), MB_OK | MB_ICONERROR);
 				}
@@ -419,7 +426,6 @@ LRESULT ReturnAwarenessEditSubclassProc(HWND handle, UINT message, WPARAM wParam
 		switch (wParam) {
 		case VK_RETURN:
 			SendMessage(g_AddMeaningButton, BM_CLICK, 0, 0);
-			SetFocus(handle);
 			break;
 		}
 	default:
