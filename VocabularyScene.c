@@ -21,6 +21,8 @@ typedef struct {
 static void CreateVocabularyStatus(VocabularyStatus* vocabularyStatus);
 static void DestroyVocabularyStatus(VocabularyStatus* vocabularyStatus);
 
+static bool IsUsableVocabulary(Vocabulary* vocabulary);
+
 static HWND g_WordListStatic;
 static HWND g_WordList;
 
@@ -217,6 +219,8 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 
 			SendMessage(g_MeaningList, LB_ADDSTRING, 0, (LPARAM)meaning);
 			SendMessage(handle, AM_MEANINGSUPDATE, 0, 0);
+
+			g_VocabularyStatus.IsSaved = false;
 			break;
 		}
 
@@ -231,9 +235,6 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 			g_VocabularyStatus.SelectedMeaning = NULL;
 
 			SendMessage(g_MeaningList, LB_DELETESTRING, index, 0);
-			SetWindowText(g_MeaningEdit, NULL);
-			SetWindowText(g_PronunciationEdit, NULL);
-
 			SendMessage(handle, AM_MEANINGSUPDATE, 0, 0);
 
 			if (g_VocabularyStatus.SelectedWord->Meanings.Count == 0) {
@@ -241,11 +242,11 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 				RemoveWord(&g_VocabularyStatus.Vocabulary, index);
 				g_VocabularyStatus.SelectedWord = NULL;
 
-				SetWindowText(g_WordEdit, NULL);
 				SendMessage(g_WordList, LB_DELETESTRING, index, 0);
-
 				SendMessage(handle, AM_WORDSUPDATE, 0, 0);
 			}
+
+			g_VocabularyStatus.IsSaved = false;
 			break;
 		}
 
@@ -293,7 +294,10 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 		}
 
 		case 9: {
-			// TODO
+			if (!IsUsableVocabulary(&g_VocabularyStatus.Vocabulary)) {
+				MessageBox(handle, _T("다른 단어에는 없는 고유한 뜻을 가진 단어가 적어도 5개 이상 있어야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			}
 
 			const LPCTSTR path = ShowSaveFileDialog(handle);
 			if (path) {
@@ -365,4 +369,28 @@ void CreateVocabularyStatus(VocabularyStatus* vocabularyStatus) {
 void DestroyVocabularyStatus(VocabularyStatus* vocabularyStatus) {
 	DestroyVocabulary(&vocabularyStatus->Vocabulary, true);
 	memset(vocabularyStatus, 0, sizeof(*vocabularyStatus));
+}
+
+bool IsUsableVocabulary(Vocabulary* vocabulary) {
+	int uniqueWord = vocabulary->Words.Count;
+	for (int i = 1; i < vocabulary->Words.Count; ++i) {
+		Word* const word = GetWord(vocabulary, i);
+		int uniqueMeaning = word->Meanings.Count;
+		for (int j = 0; j < word->Meanings.Count; ++j) {
+			Meaning* const meaning = GetMeaning(word, j);
+
+			for (int k = 0; k < i; ++k) {
+				Word* const targetWord = GetWord(vocabulary, k);
+				for (int l = 0; l < targetWord->Meanings.Count; ++l) {
+					if (_tcscmp(meaning->Meaning, GetMeaning(targetWord, l)->Meaning) == 0) {
+						if (--uniqueMeaning == 0) goto next;
+					}
+				}
+			}
+
+		next:
+			if (uniqueMeaning == 0 && --uniqueWord < 5) return false;
+		}
+	}
+	return uniqueWord >= 5;
 }
