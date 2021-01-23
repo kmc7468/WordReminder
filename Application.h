@@ -6,7 +6,6 @@
 #include <stdbool.h>
 
 #define WR_APPLICATION_VERSION _T("1.4.0")
-#define WR_APPLICATION_ENABLE_DPI_AWARENESS true
 #define WR_APPLICATION_GITHUB_RELEASE _T("https://github.com/kmc7468/WordReminder/releases/latest")
 
 extern HINSTANCE Instance;
