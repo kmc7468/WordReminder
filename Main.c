@@ -18,8 +18,11 @@ int APIENTRY WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdArgs, 
 
 	MSG message;
 	while (GetMessage(&message, NULL, 0, 0)) {
-		TranslateMessage(&message);
-		DispatchMessage(&message);
+		if (IsDialogMessage((HWND)GetScene(MainWindow), &message) == 0 &&
+			IsDialogMessage((HWND)GetScene(DialogWindow), &message) == 0) {
+			TranslateMessage(&message);
+			DispatchMessage(&message);
+		}
 	}
 
 	DestroyApplication();

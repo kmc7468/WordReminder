@@ -74,6 +74,9 @@ HWND CreateScene(HWND window, SUBCLASSPROC sceneProc) {
 	SendMessage(scene, WM_SIZE, 0, MAKELPARAM(clientRect.right, clientRect.bottom));
 	return scene;
 }
+HWND GetScene(HWND window) {
+	return (HWND)SendMessage(window, AM_CHANGESCENE, 0, 0);
+}
 HWND ChangeScene(HWND window, HWND newScene) {
 	const HWND oldScene = (HWND)SendMessage(window, AM_CHANGESCENE, 0, (LPARAM)newScene);
 	SendMessage(oldScene, AM_DEACTIVATE, 0, 0);
@@ -196,10 +199,12 @@ LRESULT CALLBACK SceneWindowProc(HWND handle, UINT message, WPARAM wParam, LPARA
 
 	case AM_CHANGESCENE: {
 		const HWND oldScene = GetProp(handle, PROP_CURRENT_SCENE);
-		ShowWindow(oldScene, SW_HIDE);
+		if (lParam) {
+			ShowWindow(oldScene, SW_HIDE);
 
-		SetProp(handle, PROP_CURRENT_SCENE, (HWND)lParam);
-		ShowWindow((HWND)lParam, SW_SHOW);
+			SetProp(handle, PROP_CURRENT_SCENE, (HWND)lParam);
+			ShowWindow((HWND)lParam, SW_SHOW);
+		}
 		return (LRESULT)oldScene;
 	}
 

@@ -17,6 +17,7 @@ extern HWND MainWindow, DialogWindow;
 HWND CreateSceneWindow(SUBCLASSPROC windowProc, SUBCLASSPROC sceneProc);
 
 HWND CreateScene(HWND window, SUBCLASSPROC sceneProc);
+HWND GetScene(HWND window);
 HWND ChangeScene(HWND window, HWND newScene);
 void SetSceneTitle(HWND scene, LPCTSTR newTitle);
 

@@ -34,6 +34,8 @@ static HWND g_MeaningList;
 static HWND g_MeaningStatic, g_MeaningEdit;
 static HWND g_PronunciationStatic, g_PronunciationEdit;
 static HWND g_AddMeaningButton, g_RemoveMeaningButton;
+static WNDPROC g_MeaningEditDefWndProc, g_PronunciationEditDefWndProc;
+static LRESULT CALLBACK ReturnAwarenessEditSubclassProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 
 static HWND g_RemoveWordButton;
 
@@ -56,6 +58,8 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 		g_MeaningEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP, handle, 3);
 		g_PronunciationStatic = CreateStatic(_T("발음"), WS_VISIBLE | SS_LEFT, handle, -1);
 		g_PronunciationEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP, handle, 4);
+		g_MeaningEditDefWndProc = (WNDPROC)SetWindowLongPtr(g_MeaningEdit, GWLP_WNDPROC, (LONG_PTR)ReturnAwarenessEditSubclassProc);
+		g_PronunciationEditDefWndProc = (WNDPROC)SetWindowLongPtr(g_PronunciationEdit, GWLP_WNDPROC, (LONG_PTR)ReturnAwarenessEditSubclassProc);
 
 		g_AddMeaningButton = CreateButton(_T("뜻 추가하기"), WS_VISIBLE, handle, 5);
 		g_RemoveMeaningButton = CreateButton(_T("뜻 삭제하기"), WS_VISIBLE, handle, 6);
@@ -139,6 +143,9 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 		return 0;
 
 	case WM_DESTROY:
+		SetWindowLongPtr(g_MeaningEdit, GWLP_WNDPROC, (LONG_PTR)g_MeaningEditDefWndProc);
+		SetWindowLongPtr(g_PronunciationEdit, GWLP_WNDPROC, (LONG_PTR)g_PronunciationEditDefWndProc);
+
 		DestroyVocabularyStatus(&g_VocabularyStatus);
 		return 0;
 
@@ -404,4 +411,18 @@ bool IsUsableVocabulary(Vocabulary* vocabulary) {
 		}
 	}
 	return uniqueWord >= 5;
+}
+
+LRESULT ReturnAwarenessEditSubclassProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
+	switch (message) {
+	case WM_KEYUP:
+		switch (wParam) {
+		case VK_RETURN:
+			SendMessage(g_AddMeaningButton, BM_CLICK, 0, 0);
+			SetFocus(handle);
+			break;
+		}
+	default:
+		return CallWindowProc(handle == g_MeaningEdit ? g_MeaningEditDefWndProc : g_PronunciationEditDefWndProc, handle, message, wParam, lParam);
+	}
 }
