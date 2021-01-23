@@ -19,6 +19,13 @@ bool InitializeApplication(HINSTANCE instance) {
 	srand((unsigned)time(NULL));
 
 #if WR_APPLICATION_ENABLE_DPI_AWARENESS
+	if (GetProcAddress(GetModuleHandle(_T("User32.dll")), "SetProcessDpiAwarenessContext") == NULL ||
+		GetProcAddress(GetModuleHandle(_T("User32.dll")), "GetDpiForWindow") == NULL ||
+		GetProcAddress(GetModuleHandle(_T("User32.dll")), "AdjustWindowRectExForDpi") == NULL) {
+		MessageBox(NULL, _T("이 바이너리는 HiDPI를 지원하는 버전으로, Windows 10 RS2(버전 1703) 또는 그 이상 버전의 Windows에서만 작동합니다.\n\n")
+			_T("GitHub에서 HiDPI를 지원하지 않는 버전으로 다운로드 하거나, 직접 빌드했다면 Application.h 파일에 정의된 WR_APPLICATION_ENABLE_DPI_AWARENESS 매크로의 값을 false로 변경해 다시 빌드하시기 바랍니다."), _T("경고"), MB_OK | MB_ICONWARNING);
+		return false;
+	}
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 #endif
 
