@@ -31,6 +31,9 @@ HWND CreateChild(LPCTSTR name, LPCTSTR text, HFONT font, int flags, int x, int y
 HWND CreateButton(LPCTSTR text, int flags, HWND parent, int menu) {
 	return CreateChild(_T("button"), text, NULL, BS_PUSHBUTTON | flags, 0, 0, 0, 0, parent, menu);
 }
+HWND CreateCheckBox(LPCTSTR text, int flags, HWND parent, int menu) {
+	return CreateChild(_T("button"), text, NULL, BS_AUTOCHECKBOX | flags, 0, 0, 0, 0, parent, menu);
+}
 HWND CreateStatic(LPCTSTR text, int flags, HWND parent, int menu) {
 	return CreateChild(_T("static"), text, NULL, flags, 0, 0, 0, 0, parent, menu);
 }

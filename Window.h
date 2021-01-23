@@ -7,6 +7,7 @@
 void RegisterWindow(LPCTSTR className, WNDPROC wndProc);
 HWND CreateChild(LPCTSTR className, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu);
 HWND CreateButton(LPCTSTR text, int flags, HWND parent, int menu);
+HWND CreateCheckBox(LPCTSTR text, int flags, HWND parent, int menu);
 HWND CreateStatic(LPCTSTR text, int flags, HWND parent, int menu);
 HWND CreateList(int flags, HWND parent, int menu);
 HWND CreateEdit(int flags, HWND parent, int menu);
@@ -69,4 +70,5 @@ LRESULT CALLBACK MainWindowProc(HWND handle, UINT message, WPARAM wParam, LPARAM
 
 LRESULT CALLBACK SceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1);
+LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1);
 LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1);
