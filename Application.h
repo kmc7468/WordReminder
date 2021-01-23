@@ -20,11 +20,10 @@ LPCTSTR ShowSaveFileDialog(HWND window);
 
 typedef struct {
 	// QuestionOptionScene
-	bool GuessMeaning;
-	bool GuessWord;
-	bool GuessPronunciation;
+	bool GuessMeaning, GuessMeaningWithPronunciation;
+	bool GuessWord, GuessWordWithPronunciation;
+	bool GuessPronunciation, GuessPronunciationWithMeaning, GroupGuessingMeaningAndPronunciation;
 
-	bool ShowPronunciation;
 	bool ExcludeDuplicatedAnswer;
 
 	// OnlineMultiplayScene

@@ -11,6 +11,7 @@ static HWND g_QuestionTypeStatic;
 static HWND g_GuessMeaningCheckBox, g_GuessMeaningWithPronunciationCheckBox;
 static HWND g_GuessWordCheckBox, g_GuessWordWithPronunciationCheckBox;
 static HWND g_GuessPronunciationCheckBox, g_GuessPronunciationWithMeaningCheckBox, g_GroupGuessingMeaningAndPronunciationCheckBox;
+static void UpdateQuestionTypeCheckBoxVisibility();
 
 static HWND g_OtherOptionStatic;
 static HWND g_ExcludeDuplicatedAnswerCheckBox;
@@ -37,6 +38,17 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 
 		g_MainButton = CreateButton(_T("이전으로"), WS_VISIBLE, handle, 9);
 		g_StartButton = CreateButton(_T("시작하기"), WS_VISIBLE, handle, 10);
+
+		SendMessage(g_GuessMeaningCheckBox, BM_SETCHECK, Setting.GuessMeaning, 0);
+		SendMessage(g_GuessMeaningWithPronunciationCheckBox, BM_SETCHECK, Setting.GuessMeaningWithPronunciation, 0);
+		SendMessage(g_GuessWordCheckBox, BM_SETCHECK, Setting.GuessWord, 0);
+		SendMessage(g_GuessWordWithPronunciationCheckBox, BM_SETCHECK, Setting.GuessWordWithPronunciation, 0);
+		SendMessage(g_GuessPronunciationCheckBox, BM_SETCHECK, Setting.GuessPronunciation, 0);
+		SendMessage(g_GuessPronunciationWithMeaningCheckBox, BM_SETCHECK, Setting.GuessPronunciationWithMeaning, 0);
+		SendMessage(g_GroupGuessingMeaningAndPronunciationCheckBox, BM_SETCHECK, Setting.GroupGuessingMeaningAndPronunciation, 0);
+		UpdateQuestionTypeCheckBoxVisibility();
+
+		SendMessage(g_ExcludeDuplicatedAnswerCheckBox, BM_SETCHECK, Setting.ExcludeDuplicatedAnswer, 0);
 		return 0;
 
 	case AM_CREATEUI: {
@@ -120,17 +132,7 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 		case 5:
 		case 6:
 		case 7:
-			ShowWindow(g_GuessMeaningWithPronunciationCheckBox,
-				SendMessage(g_GuessMeaningCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED ? SW_SHOW : SW_HIDE);
-			ShowWindow(g_GuessWordWithPronunciationCheckBox,
-				SendMessage(g_GuessWordCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED &&
-				SendMessage(g_GroupGuessingMeaningAndPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_UNCHECKED ? SW_SHOW : SW_HIDE);
-			ShowWindow(g_GuessPronunciationWithMeaningCheckBox,
-				SendMessage(g_GuessPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED ? SW_SHOW : SW_HIDE);
-			ShowWindow(g_GroupGuessingMeaningAndPronunciationCheckBox,
-				SendMessage(g_GuessWordCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED &&
-				SendMessage(g_GuessPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED &&
-				SendMessage(g_GuessWordWithPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_UNCHECKED ? SW_SHOW : SW_HIDE);
+			UpdateQuestionTypeCheckBoxVisibility();
 			break;
 
 		case 9:
@@ -142,4 +144,18 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 	default:
 		return DefSubclassProc(handle, message, wParam, lParam);
 	}
+}
+
+void UpdateQuestionTypeCheckBoxVisibility() {
+	ShowWindow(g_GuessMeaningWithPronunciationCheckBox,
+		SendMessage(g_GuessMeaningCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED ? SW_SHOW : SW_HIDE);
+	ShowWindow(g_GuessWordWithPronunciationCheckBox,
+		SendMessage(g_GuessWordCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED &&
+		SendMessage(g_GroupGuessingMeaningAndPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_UNCHECKED ? SW_SHOW : SW_HIDE);
+	ShowWindow(g_GuessPronunciationWithMeaningCheckBox,
+		SendMessage(g_GuessPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED ? SW_SHOW : SW_HIDE);
+	ShowWindow(g_GroupGuessingMeaningAndPronunciationCheckBox,
+		SendMessage(g_GuessWordCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED &&
+		SendMessage(g_GuessPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED &&
+		SendMessage(g_GuessWordWithPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_UNCHECKED ? SW_SHOW : SW_HIDE);
 }

@@ -85,10 +85,13 @@ void LoadSetting() {
 
 	// QuestionOptionScene
 	Setting.GuessMeaning = (bool)ReadDWord(key, _T("GuessMeaning"), false);
+	Setting.GuessMeaningWithPronunciation = (bool)ReadDWord(key, _T("GuessMeaningWithPronunciation"), false);
 	Setting.GuessWord = (bool)ReadDWord(key, _T("GuessWord"), false);
+	Setting.GuessWordWithPronunciation = (bool)ReadDWord(key, _T("GuessWordWithPronunciation"), false);
 	Setting.GuessPronunciation = (bool)ReadDWord(key, _T("GuessPronunciation"), false);
+	Setting.GuessPronunciationWithMeaning = (bool)ReadDWord(key, _T("GuessPronunciationWithMeaning"), false);
+	Setting.GroupGuessingMeaningAndPronunciation = (bool)ReadDWord(key, _T("GroupGuessingMeaningAndPronunciation"), false);
 
-	Setting.ShowPronunciation = (bool)ReadDWord(key, _T("GivePronunciation"), false); // Legacy
 	Setting.ExcludeDuplicatedAnswer = (bool)ReadDWord(key, _T("ExcludeDuplicatedAnswer"), false);
 
 	// OnlineMultiplayScene
@@ -108,10 +111,13 @@ void SaveSetting() {
 
 	// QuestionOptionScene
 	WriteDWord(key, _T("GuessMeaning"), Setting.GuessMeaning);
+	WriteDWord(key, _T("GuessMeaningWithPronunciation"), Setting.GuessMeaningWithPronunciation);
 	WriteDWord(key, _T("GuessWord"), Setting.GuessWord);
+	WriteDWord(key, _T("GuessWordWithPronunciation"), Setting.GuessWordWithPronunciation);
 	WriteDWord(key, _T("GuessPronunciation"), Setting.GuessPronunciation);
+	WriteDWord(key, _T("GuessPronunciationWithMeaning"), Setting.GuessPronunciationWithMeaning);
+	WriteDWord(key, _T("GroupGuessingMeaningAndPronunciation"), Setting.GroupGuessingMeaningAndPronunciation);
 
-	WriteDWord(key, _T("GivePronunciation"), Setting.ShowPronunciation); // Legacy
 	WriteDWord(key, _T("ExcludeDuplicatedAnswer"), Setting.ExcludeDuplicatedAnswer);
 
 	// OnlineMultiplayScene
