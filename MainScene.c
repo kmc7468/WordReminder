@@ -5,6 +5,7 @@
 
 #include "Application.h"
 #include "Http.h"
+#include "String.h"
 #include "UIEngine.h"
 
 #include <stdlib.h>
@@ -19,6 +20,7 @@ static Thread g_MergeButtonThread;
 static DWORD WINAPI MergeButtonThread(LPVOID param);
 
 static HWND g_UpdateButton;
+static bool g_NeedPrereleaseWarning;
 static Thread g_UpdateCheckThread;
 static DWORD WINAPI UpdateCheckThread(LPVOID param);
 
@@ -27,7 +29,7 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 	case AM_CREATE:
 		g_TitleStatic = CreateStatic(_T("단어 암기 프로그램"), WS_VISIBLE | SS_CENTER, handle, -1);
 		g_CopyrightStatic = CreateStatic(_T("(C) 2020-2021. kmc7468 All rights reserved."), WS_VISIBLE | SS_CENTER, handle, -1);
-		g_VersionStatic = CreateStatic(_T("v") WR_APPLICATION_VERSION, WS_VISIBLE | SS_CENTER, handle, -1);
+		g_VersionStatic = CreateStatic(WR_APPLICATION_VERSION, WS_VISIBLE | SS_CENTER, handle, -1);
 
 		g_SingleplayButton = CreateButton(_T("단어 암기하기"), WS_VISIBLE, handle, 0);
 		g_VocabularyButton = CreateButton(_T("단어장 편집하기"), WS_VISIBLE, handle, 1);
@@ -105,14 +107,24 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 			break;
 
 		case 6:
+			if (g_NeedPrereleaseWarning &&
+				MessageBox(handle, _T("프리릴리즈는 불안정한 버전으로, 테스트 목적으로 개발 중인 버전을 공개한 것입니다. 정말 프로그램을 업데이트하시겠습니까?"), _T("경고"), MB_YESNO | MB_ICONWARNING) != IDYES) break;
+
 			ShellExecute(NULL, _T("open"), WR_APPLICATION_GITHUB_RELEASE, NULL, NULL, SW_SHOWNORMAL);
 			break;
 		}
 		return 0;
 
 	case AM_HASUPDATE:
-		ShowWindow(g_VersionStatic, SW_HIDE);
+		if (wParam > 0) {
+			SetWindowText(g_UpdateButton, _T("새 프리릴리즈가 있습니다"));
+			g_NeedPrereleaseWarning = (lParam == 0);
+		} else {
+			g_NeedPrereleaseWarning = false;
+		}
+
 		ShowWindow(g_UpdateButton, SW_SHOW);
+		ShowWindow(g_VersionStatic, SW_HIDE);
 		return 0;
 
 	case AM_MERGEBUTTON:
@@ -145,11 +157,22 @@ DWORD WINAPI UpdateCheckThread(LPVOID param) {
 				begin = temp + 1;
 			}
 
-			if (_tcsncmp(begin, WR_APPLICATION_VERSION, ARRAYSIZE(WR_APPLICATION_VERSION) - 1)) {
+			SemanticVersion parsedLatestVersion = { 0 }, parsedApplicationVersion = { 0 };
+			CreateSemanticVersion(&parsedLatestVersion);
+			CreateSemanticVersion(&parsedApplicationVersion);
+
+			ParseSemanticVersion(&parsedLatestVersion, begin);
+			TCHAR applicationVersion[] = WR_APPLICATION_VERSION;
+			ParseSemanticVersion(&parsedApplicationVersion, applicationVersion);
+
+			const int compared = CompareSemanticVersion(&parsedLatestVersion, &parsedApplicationVersion);
+			if (compared > 0) {
 				Sleep(600);
-				SendMessage((HWND)param, AM_HASUPDATE, 0, 0);
+				SendMessage((HWND)param, AM_HASUPDATE, parsedLatestVersion.Identifiers.Count, parsedApplicationVersion.Identifiers.Count);
 			}
 
+			DestroySemanticVersion(&parsedLatestVersion);
+			DestroySemanticVersion(&parsedApplicationVersion);
 			free(result);
 		}
 	}
