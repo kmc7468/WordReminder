@@ -88,6 +88,7 @@ void LoadSetting() {
 	Setting.GuessMeaningWithPronunciation = (int)ReadDWord(key, _T("GuessMeaningWithPronunciation"), 0);
 	Setting.GuessWord = (bool)ReadDWord(key, _T("GuessWord"), false);
 	Setting.GuessWordWithPronunciation = (int)ReadDWord(key, _T("GuessWordWithPronunciation"), 0);
+	Setting.GuessPronunciation = (bool)ReadDWord(key, _T("GuessPronunciation"), false);
 
 	Setting.ExcludeDuplicatedAnswer = (bool)ReadDWord(key, _T("ExcludeDuplicatedAnswer"), false);
 
@@ -111,6 +112,7 @@ void SaveSetting() {
 	WriteDWord(key, _T("GuessMeaningWithPronunciation"), Setting.GuessMeaningWithPronunciation);
 	WriteDWord(key, _T("GuessWord"), Setting.GuessWord);
 	WriteDWord(key, _T("GuessWordWithPronunciation"), Setting.GuessWordWithPronunciation);
+	WriteDWord(key, _T("GuessPronunciation"), Setting.GuessPronunciation);
 
 	WriteDWord(key, _T("ExcludeDuplicatedAnswer"), Setting.ExcludeDuplicatedAnswer);
 

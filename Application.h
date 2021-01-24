@@ -24,6 +24,7 @@ typedef struct {
 	int GuessMeaningWithPronunciation;
 	bool GuessWord;
 	int	GuessWordWithPronunciation;
+	bool GuessPronunciation;
 
 	bool ExcludeDuplicatedAnswer;
 
