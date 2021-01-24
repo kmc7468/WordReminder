@@ -51,7 +51,7 @@ typedef struct {
 	QuestionTypeType Type;
 	Vocabulary UnusedVocabulary;
 
-	bool ShowSubProperty;
+	int Option;
 } QuestionType;
 
 void CreateQuestionType(QuestionType* questionType);

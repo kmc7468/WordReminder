@@ -8,9 +8,8 @@ static HWND g_SelectVocabularyStatic, g_SelectVocabularyButton;
 static LPCTSTR g_VocabularyPath;
 
 static HWND g_QuestionTypeStatic;
-static HWND g_GuessMeaningCheckBox, g_GuessMeaningWithPronunciationCheckBox;
-static HWND g_GuessWordCheckBox, g_GuessWordWithPronunciationCheckBox;
-static HWND g_GuessPronunciationCheckBox, g_GuessPronunciationWithMeaningCheckBox, g_GroupGuessingMeaningAndPronunciationCheckBox;
+static HWND g_GuessMeaningCheckBox, g_GuessMeaningWithoutPronunciationRadioButton, g_GuessMeaningWithPronunciationRadioButton, g_GuessMeaningAndPronunciationRadioButton;
+static HWND g_GuessWordCheckBox, g_GuessWordWithoutPronunciationRadioButton, g_GuessWordWithPronunciationRadioButton, g_GuessWordAndPronunciationRadioButton;
 static void UpdateQuestionTypeCheckBoxVisibility();
 
 static HWND g_OtherOptionStatic;
@@ -26,26 +25,28 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 
 		g_QuestionTypeStatic = CreateStatic(_T("문제 유형"), WS_VISIBLE | SS_LEFT, handle, -1);
 		g_GuessMeaningCheckBox = CreateCheckBox(_T("단어 보고 뜻 맞히기"), WS_VISIBLE, handle, 1);
-		g_GuessMeaningWithPronunciationCheckBox = CreateCheckBox(_T("발음 표시하기"), 0, handle, 2);
-		g_GuessWordCheckBox = CreateCheckBox(_T("뜻 보고 단어 맞히기"), WS_VISIBLE, handle, 3);
-		g_GuessWordWithPronunciationCheckBox = CreateCheckBox(_T("발음 표시하기"), 0, handle, 4);
-		g_GuessPronunciationCheckBox = CreateCheckBox(_T("단어 보고 발음 맞히기"), WS_VISIBLE, handle, 5);
-		g_GuessPronunciationWithMeaningCheckBox = CreateCheckBox(_T("뜻 표시하기"), 0, handle, 6);
-		g_GroupGuessingMeaningAndPronunciationCheckBox = CreateCheckBox(_T("뜻 문제와 발음 문제 묶기"), 0, handle, 7);
+		g_GuessMeaningWithoutPronunciationRadioButton = CreateRadioButton(_T("발음 표시하지 않기"), WS_GROUP, handle, 2);
+		g_GuessMeaningWithPronunciationRadioButton = CreateRadioButton(_T("발음 표시하기"), 0, handle, 3);
+		g_GuessMeaningAndPronunciationRadioButton = CreateRadioButton(_T("발음도 맞히기"), 0, handle, 4);
+		g_GuessWordCheckBox = CreateCheckBox(_T("뜻 보고 단어 맞히기"), WS_VISIBLE, handle, 5);
+		g_GuessWordWithoutPronunciationRadioButton = CreateRadioButton(_T("발음 표시하지 않기"), WS_GROUP, handle, 6);
+		g_GuessWordWithPronunciationRadioButton = CreateRadioButton(_T("발음 표시하기"), 0, handle, 7);
+		g_GuessWordAndPronunciationRadioButton = CreateRadioButton(_T("발음도 맞히기"), 0, handle, 8);
 
 		g_OtherOptionStatic = CreateStatic(_T("기타 옵션"), WS_VISIBLE | SS_LEFT, handle, -1);
-		g_ExcludeDuplicatedAnswerCheckBox = CreateCheckBox(_T("중복된 문제 제외하기"), WS_VISIBLE, handle, 8);
+		g_ExcludeDuplicatedAnswerCheckBox = CreateCheckBox(_T("중복된 문제 제외하기"), WS_VISIBLE, handle, 9);
 
-		g_MainButton = CreateButton(_T("이전으로"), WS_VISIBLE, handle, 9);
-		g_StartButton = CreateButton(_T("시작하기"), WS_VISIBLE, handle, 10);
+		g_MainButton = CreateButton(_T("이전으로"), WS_VISIBLE, handle, 10);
+		g_StartButton = CreateButton(_T("시작하기"), WS_VISIBLE, handle, 11);
 
 		SendMessage(g_GuessMeaningCheckBox, BM_SETCHECK, Setting.GuessMeaning, 0);
-		SendMessage(g_GuessMeaningWithPronunciationCheckBox, BM_SETCHECK, Setting.GuessMeaningWithPronunciation, 0);
+		SendMessage(g_GuessMeaningWithoutPronunciationRadioButton, BM_SETCHECK, !Setting.GuessMeaningWithPronunciation || Setting.GuessMeaningWithPronunciation > 2, 0);
+		SendMessage(g_GuessMeaningWithPronunciationRadioButton, BM_SETCHECK, !(Setting.GuessMeaningWithPronunciation - 1), 0);
+		SendMessage(g_GuessMeaningAndPronunciationRadioButton, BM_SETCHECK, !(Setting.GuessMeaningWithPronunciation - 2), 0);
 		SendMessage(g_GuessWordCheckBox, BM_SETCHECK, Setting.GuessWord, 0);
-		SendMessage(g_GuessWordWithPronunciationCheckBox, BM_SETCHECK, Setting.GuessWordWithPronunciation, 0);
-		SendMessage(g_GuessPronunciationCheckBox, BM_SETCHECK, Setting.GuessPronunciation, 0);
-		SendMessage(g_GuessPronunciationWithMeaningCheckBox, BM_SETCHECK, Setting.GuessPronunciationWithMeaning, 0);
-		SendMessage(g_GroupGuessingMeaningAndPronunciationCheckBox, BM_SETCHECK, Setting.GroupGuessingMeaningAndPronunciation, 0);
+		SendMessage(g_GuessWordWithoutPronunciationRadioButton, BM_SETCHECK, !Setting.GuessWordWithPronunciation || Setting.GuessWordWithPronunciation > 2, 0);
+		SendMessage(g_GuessWordWithPronunciationRadioButton, BM_SETCHECK, !(Setting.GuessWordWithPronunciation - 1), 0);
+		SendMessage(g_GuessWordAndPronunciationRadioButton, BM_SETCHECK, !(Setting.GuessWordWithPronunciation - 2), 0);
 		UpdateQuestionTypeCheckBoxVisibility();
 
 		SendMessage(g_ExcludeDuplicatedAnswerCheckBox, BM_SETCHECK, Setting.ExcludeDuplicatedAnswer, 0);
@@ -71,26 +72,29 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 		UICOMP_CON_W(questionTypeStatic, &g_QuestionTypeStatic, Horizontal, None, 23, buttonFont, section2);
 		UIMARG_CON(questionTypeStatic, Bottom, 5);
 
-		UICOMP_CON(questionTypeSection1, Horizontal, None, 80, section2);
+		UICOMP_CON(questionTypeSection1, Horizontal, None, 55, section2);
 		UICOMP_DOW(questionTypeSection2, Vertical, None, 33.35f, questionTypeSection1);
 		UICOMP_DOW(questionTypeSection3, Vertical, None, 66.65f, questionTypeSection1);
+		UICOMP_CON(questionTypeOptionSection1, Vertical, None, 155, questionTypeSection3);
+		UICOMP_CON(questionTypeOptionSection2, Vertical, None, 121, questionTypeSection3);
+		UICOMP_WIN(questionTypeOptionSection3, None, questionTypeSection3);
 
 		UICOMP_CON_W(guessMeaningCheckBox, &g_GuessMeaningCheckBox, Horizontal, None, 25, checkBoxFont, questionTypeSection2);
 		UIMARG_CON(guessMeaningCheckBox, Bottom, 10);
-		UICOMP_CON_W(guessMeaningCheckBoxWithPronunciationCheckBox, &g_GuessMeaningWithPronunciationCheckBox, Horizontal, None, 25, checkBoxFont, questionTypeSection3);
-		UIMARG_CON(guessMeaningCheckBoxWithPronunciationCheckBox, Bottom, 10);
-		UICOMP_CON_W(guessWordCheckBox, &g_GuessWordCheckBox, Horizontal, None, 25, checkBoxFont, questionTypeSection2);
-		UIMARG_CON(guessWordCheckBox, Bottom, 10);
-		UICOMP_CON_W(guessWordCheckBoxWithPronunciationCheckBox, &g_GuessWordWithPronunciationCheckBox, Horizontal, None, 25, checkBoxFont, questionTypeSection3);
-		UIMARG_CON(guessWordCheckBoxWithPronunciationCheckBox, Bottom, 10);
-		UICOMP_CON_W(guessPronunciationCheckBox, &g_GuessPronunciationCheckBox, Horizontal, None, 25, checkBoxFont, questionTypeSection2);
-		UIMARG_CON(guessPronunciationCheckBox, Bottom, 10);
-
-		UICOMP_CON(guessPronunciationOptionSection, Horizontal, None, 25, questionTypeSection3);
-		UIMARG_CON(guessPronunciationOptionSection, Bottom, 10);
-		UICOMP_DOW_W(guessPronunciationWithMeaningCheckBox, &g_GuessPronunciationWithMeaningCheckBox, Vertical, None, 50, checkBoxFont, guessPronunciationOptionSection);
-		UIMARG_CON(guessPronunciationWithMeaningCheckBox, Right, 1);
-		UICOMP_DOW_W(groupGuessingMeaningAndPronunciationCheckBox, &g_GroupGuessingMeaningAndPronunciationCheckBox, Vertical, None, 50, checkBoxFont, guessPronunciationOptionSection);
+		UICOMP_CON_W(guessMeaningWithoutPronunciationRadioButton, &g_GuessMeaningWithoutPronunciationRadioButton, Horizontal, None, 25, checkBoxFont, questionTypeOptionSection1);
+		UIMARG_CON(guessMeaningWithoutPronunciationRadioButton, Bottom, 10);
+		UICOMP_CON_W(guessMeaningWithPronunciationRadioButton, &g_GuessMeaningWithPronunciationRadioButton, Horizontal, None, 25, checkBoxFont, questionTypeOptionSection2);
+		UIMARG_CON(guessMeaningWithPronunciationRadioButton, Bottom, 10);
+		UICOMP_CON_W(guessMeaningAndPronunciationRadioButton, &g_GuessMeaningAndPronunciationRadioButton, Horizontal, None, 25, checkBoxFont, questionTypeOptionSection3);
+		UIMARG_CON(guessMeaningAndPronunciationRadioButton, Bottom, 10);
+		UICOMP_CON_W(guessWordCheckBox, &g_GuessWordCheckBox, Horizontal, None, 30, checkBoxFont, questionTypeSection2);
+		UIMARG_CON(guessWordCheckBox, Bottom, 15);
+		UICOMP_CON_W(guessWordWithoutPronunciationRadioButton, &g_GuessWordWithoutPronunciationRadioButton, Horizontal, None, 30, checkBoxFont, questionTypeOptionSection1);
+		UIMARG_CON(guessWordWithoutPronunciationRadioButton, Bottom, 15);
+		UICOMP_CON_W(guessWordWithPronunciationRadioButton, &g_GuessWordWithPronunciationRadioButton, Horizontal, None, 30, checkBoxFont, questionTypeOptionSection2);
+		UIMARG_CON(guessWordWithPronunciationRadioButton, Bottom, 15);
+		UICOMP_CON_W(guessWordAndPronunciationRadioButton, &g_GuessWordAndPronunciationRadioButton, Horizontal, None, 30, checkBoxFont, questionTypeOptionSection3);
+		UIMARG_CON(guessWordAndPronunciationRadioButton, Bottom, 15);
 
 		UICOMP_CON_W(otherOptionStatic, &g_OtherOptionStatic, Horizontal, None, 23, buttonFont, section2);
 		UIMARG_CON(otherOptionStatic, Bottom, 5);
@@ -126,17 +130,15 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 		}
 
 		case 1:
-		case 2:
-		case 3:
-		case 4:
 		case 5:
-		case 6:
-		case 7:
 			UpdateQuestionTypeCheckBoxVisibility();
 			break;
 
-		case 9:
+		case 10:
 			DestroyWindow(ChangeScene(MainWindow, CreateScene(MainWindow, MainSceneProc)));
+			break;
+
+		case 11:
 			break;
 		}
 		return 0;
@@ -147,15 +149,13 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 }
 
 void UpdateQuestionTypeCheckBoxVisibility() {
-	ShowWindow(g_GuessMeaningWithPronunciationCheckBox,
-		SendMessage(g_GuessMeaningCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED ? SW_SHOW : SW_HIDE);
-	ShowWindow(g_GuessWordWithPronunciationCheckBox,
-		SendMessage(g_GuessWordCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED &&
-		SendMessage(g_GroupGuessingMeaningAndPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_UNCHECKED ? SW_SHOW : SW_HIDE);
-	ShowWindow(g_GuessPronunciationWithMeaningCheckBox,
-		SendMessage(g_GuessPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED ? SW_SHOW : SW_HIDE);
-	ShowWindow(g_GroupGuessingMeaningAndPronunciationCheckBox,
-		SendMessage(g_GuessWordCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED &&
-		SendMessage(g_GuessPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED &&
-		SendMessage(g_GuessWordWithPronunciationCheckBox, BM_GETCHECK, 0, 0) == BST_UNCHECKED ? SW_SHOW : SW_HIDE);
+	const int guessMeaningVisibility = SendMessage(g_GuessMeaningCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED ? SW_SHOW : SW_HIDE;
+	ShowWindow(g_GuessMeaningWithoutPronunciationRadioButton, guessMeaningVisibility);
+	ShowWindow(g_GuessMeaningWithPronunciationRadioButton, guessMeaningVisibility);
+	ShowWindow(g_GuessMeaningAndPronunciationRadioButton, guessMeaningVisibility);
+
+	const int guessWordVisibility = SendMessage(g_GuessWordCheckBox, BM_GETCHECK, 0, 0) == BST_CHECKED ? SW_SHOW : SW_HIDE;
+	ShowWindow(g_GuessWordWithoutPronunciationRadioButton, guessWordVisibility);
+	ShowWindow(g_GuessWordWithPronunciationRadioButton, guessWordVisibility);
+	ShowWindow(g_GuessWordAndPronunciationRadioButton, guessWordVisibility);
 }
