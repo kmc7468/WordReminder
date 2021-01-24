@@ -64,7 +64,8 @@ switch (message)
 #define AM_CHANGESCENE		WM_APP + 2
 #define AM_ACTIVATE			WM_APP + 3
 #define AM_DEACTIVATE		WM_APP + 4
-#define AM_PAINT			WM_APP + 5
+#define AM_DESTROY			WM_APP + 5
+#define AM_PAINT			WM_APP + 6
 
 #define AM_USER				WM_USER + 2
 

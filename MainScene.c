@@ -35,6 +35,8 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 		g_VocabularyButton = CreateButton(_T("단어장 편집하기"), WS_VISIBLE, handle, 1);
 		g_LocalMultiplayButton = CreateButton(_T("로컬 멀티 플레이"), WS_VISIBLE, handle, 2);
 		g_OnlineMultiplayButton = CreateButton(_T("온라인 멀티 플레이"), WS_VISIBLE, handle, 3);
+		EnableWindow(g_LocalMultiplayButton, FALSE);
+		EnableWindow(g_OnlineMultiplayButton, FALSE);
 
 		g_CreateServerButton = CreateButton(_T("서버 만들기"), 0, handle, 4);
 		g_JoinServerButton = CreateButton(_T("서버 접속하기"), 0, handle, 5);
@@ -83,7 +85,7 @@ LRESULT CALLBACK MainSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM 
 		SetSceneTitle(handle, NULL);
 		return 0;
 
-	case WM_DESTROY:
+	case AM_DESTROY:
 		DestroyThread(&g_MergeButtonThread);
 		DestroyThread(&g_UpdateCheckThread);
 		return 0;

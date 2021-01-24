@@ -258,7 +258,10 @@ LRESULT CALLBACK SceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lPar
 
 	case WM_DESTROY: {
 		UIEngine* const uiEngine = (UIEngine*)GetProp(handle, PROP_UIENGINE);
+		DestroyUIEngine(uiEngine);
 		free(uiEngine);
+
+		SendMessage(handle, AM_DESTROY, 0, 0);
 		return DefWindowProc(handle, message, wParam, lParam);
 	}
 

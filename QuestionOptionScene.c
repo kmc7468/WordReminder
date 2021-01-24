@@ -119,7 +119,7 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 		SetSceneTitle(handle, _T("단어 암기하기"));
 		return 0;
 
-	case WM_DESTROY:
+	case AM_DESTROY:
 		g_VocabularyPath = NULL;
 		return 0;
 

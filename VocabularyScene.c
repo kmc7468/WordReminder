@@ -142,7 +142,7 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 		SetSceneTitle(handle, _T("단어장 편집하기"));
 		return 0;
 
-	case WM_DESTROY:
+	case AM_DESTROY:
 		SetWindowLongPtr(g_MeaningEdit, GWLP_WNDPROC, (LONG_PTR)g_MeaningEditDefWndProc);
 		SetWindowLongPtr(g_PronunciationEdit, GWLP_WNDPROC, (LONG_PTR)g_PronunciationEditDefWndProc);
 
