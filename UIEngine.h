@@ -7,6 +7,7 @@
 
 typedef enum {
 	Constant,
+	FitConstant,
 	DependentOnWidth,
 	DependentOnHeight,
 	DependentOnChildren,
@@ -52,6 +53,7 @@ tag->Height->Constant = constant;																\
 tag->IsBold = isBold;																			\
 AddFont(uiEngine, tag)
 #define UIFONT_CON(tag, constant, isBold)									UIFONT_BASE(tag, Constant, constant, isBold)
+#define UIFONT_FCN(tag, constant, isBold)									UIFONT_BASE(tag, FitConstant, constant, isBold)
 #define UIFONT_DOW(tag, constant, isBold)									UIFONT_BASE(tag, DependentOnWidth, constant, isBold)
 #define UIFONT_DOH(tag, constant, isBold)									UIFONT_BASE(tag, DependentOnHeight, constant, isBold)
 
@@ -110,10 +112,14 @@ AddChild(parent, tag)
 UIComponent* tag = calloc(1, sizeof(UIComponent));												\
 CreateUIComponent(tag, NULL);																	\
 tag->Type = Window;																				\
+tag->Alignment = alignment;																		\
 AddChild(parent, tag)
 #define UICOMP_CON(tag, type, alignment, constant, parent)					UICOMP_BASE(tag, NULL, NULL, type, alignment, Constant, constant, NULL, parent)
 #define UICOMP_CON_N(tag, name, type, alignment, constant, font, parent)	UICOMP_BASE(tag, name, NULL, type, alignment, Constant, constant, font, parent)
 #define UICOMP_CON_W(tag, window, type, alignment, constant, font, parent)	UICOMP_BASE(tag, NULL, window, type, alignment, Constant, constant, font, parent)
+#define UICOMP_FCN(tag, type, alignment, constant, parent)					UICOMP_BASE(tag, NULL, NULL, type, alignment, FitConstant, constant, NULL, parent)
+#define UICOMP_FCN_N(tag, name, type, alignment, constant, font, parent)	UICOMP_BASE(tag, name, NULL, type, alignment, FitConstant, constant, font, parent)
+#define UICOMP_FCN_W(tag, window, type, alignment, constant, font, parent)	UICOMP_BASE(tag, NULL, window, type, alignment, FitConstant, constant, font, parent)
 #define UICOMP_DOW(tag, type, alignment, constant, parent)					UICOMP_BASE(tag, NULL, NULL, type, alignment, DependentOnWidth, constant, NULL, parent)
 #define UICOMP_DOW_N(tag, name, type, alignment, constant, font, parent)	UICOMP_BASE(tag, name, NULL, type, alignment, DependentOnWidth, constant, font, parent)
 #define UICOMP_DOW_W(tag, window, type, alignment, constant, font, parent)	UICOMP_BASE(tag, NULL, window, type, alignment, DependentOnWidth, constant, font, parent)

@@ -108,9 +108,9 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 		UICOMP_WIN(buttonSection, None, section1);
 		UIMARG_CON(buttonSection, Top, 10);
 
-		UICOMP_DOW_W(mainButon, &g_MainButton, Vertical, None, 33, buttonFont, buttonSection);
+		UICOMP_DOW_W(mainButon, &g_MainButton, Vertical, None, 33.35f, buttonFont, buttonSection);
 		UIMARG_CON(mainButon, Right, 5);
-		UICOMP_DOW_W(startButon, &g_StartButton, Vertical, None, 67, buttonFont, buttonSection);
+		UICOMP_DOW_W(startButon, &g_StartButton, Vertical, None, 66.65f, buttonFont, buttonSection);
 		UIMARG_CON(startButon, Left, 5);
 		return 0;
 	}
@@ -144,6 +144,8 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 			break;
 
 		case 12:
+			// TODO
+			DestroyWindow(ChangeScene(MainWindow, CreateScene(MainWindow, QuestionSceneProc)));
 			break;
 		}
 		return 0;

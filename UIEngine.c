@@ -12,6 +12,10 @@ void EvaluateUILength(UILength* uiLength, HWND window, float width, float height
 		uiLength->Evaluated = GetAppropriateFloatLengthForDpi(window, uiLength->Constant);
 		break;
 
+	case FitConstant:
+		uiLength->Evaluated = GetAppropriateFloatLengthForSize(window, uiLength->Constant);
+		break;
+
 	case DependentOnWidth:
 		uiLength->Evaluated = width * uiLength->Constant / 100.f;
 		break;
@@ -179,8 +183,11 @@ void EvaluateUIComponent(UIComponent* uiComponent, HWND window, float x, float y
 	}
 
 	if (uiComponent->Type != Window && uiComponent->Length->Type == DependentOnChildren) {
-		uiComponent->EvaluatedVirtualWidth = (uiComponent->EvaluatedWidth = fabsf(width)) + xDelta;
-		uiComponent->EvaluatedVirtualHeight = (uiComponent->EvaluatedHeight = fabsf(height)) + yDelta;
+		if (uiComponent->Type == Horizontal) {
+			uiComponent->EvaluatedVirtualHeight = (uiComponent->EvaluatedHeight = fabsf(height)) + yDelta;
+		} else {
+			uiComponent->EvaluatedVirtualWidth = (uiComponent->EvaluatedWidth = fabsf(width)) + xDelta;
+		}
 	}
 }
 void UpdateUIComponent(UIComponent* uiComponent) {

@@ -133,7 +133,7 @@ float GetAppropriateFloatLengthForSize(HWND window, float originalLength) {
 	} else {
 		fitHeight = clientRect.right * 3.f / 4;
 	}
-	return originalLength * fitHeight / GetAppropriateLengthForDpi(window, 480);
+	return originalLength * fitHeight / 480;
 }
 int GetAppropriateLengthForSize(HWND window, int originalLength) {
 	return (int)floorf(GetAppropriateFloatLengthForSize(window, (float)originalLength) + 0.5f);
