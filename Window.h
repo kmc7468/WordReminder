@@ -8,6 +8,7 @@ void RegisterWindow(LPCTSTR className, WNDPROC wndProc);
 HWND CreateChild(LPCTSTR className, LPCTSTR text, HFONT font, int flags, int x, int y, int w, int h, HWND parent, int menu);
 HWND CreateButton(LPCTSTR text, int flags, HWND parent, int menu);
 HWND CreateCheckBox(LPCTSTR text, int flags, HWND parent, int menu);
+HWND CreateRadioButton(LPCTSTR text, int flags, HWND parent, int menu);
 HWND CreateStatic(LPCTSTR text, int flags, HWND parent, int menu);
 HWND CreateList(int flags, HWND parent, int menu);
 HWND CreateEdit(int flags, HWND parent, int menu);
@@ -22,7 +23,9 @@ HWND GetScene(HWND window);
 HWND ChangeScene(HWND window, HWND newScene);
 void SetSceneTitle(HWND scene, LPCTSTR newTitle);
 
+float GetAppropriateFloatLengthForDpi(HWND window, float originalLength);
 int GetAppropriateLengthForDpi(HWND window, int originalLength);
+float GetAppropriateFloatLengthForSize(HWND window, float originalLength);
 int GetAppropriateLengthForSize(HWND window, int originalLength);
 
 typedef struct {

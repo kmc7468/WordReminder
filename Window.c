@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "UIEngine.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -33,6 +34,9 @@ HWND CreateButton(LPCTSTR text, int flags, HWND parent, int menu) {
 }
 HWND CreateCheckBox(LPCTSTR text, int flags, HWND parent, int menu) {
 	return CreateChild(_T("button"), text, NULL, BS_AUTOCHECKBOX | flags, 0, 0, 0, 0, parent, menu);
+}
+HWND CreateRadioButton(LPCTSTR text, int flags, HWND parent, int menu) {
+	return CreateChild(_T("button"), text, NULL, BS_AUTORADIOBUTTON | flags, 0, 0, 0, 0, parent, menu);
 }
 HWND CreateStatic(LPCTSTR text, int flags, HWND parent, int menu) {
 	return CreateChild(_T("static"), text, NULL, flags, 0, 0, 0, 0, parent, menu);
@@ -113,20 +117,26 @@ void SetSceneTitle(HWND scene, LPCTSTR newTitle) {
 	free(buffer);
 }
 
-int GetAppropriateLengthForDpi(HWND window, int originalLength) {
-	return MulDiv(originalLength, GetDpiForWindowSafely(window), USER_DEFAULT_SCREEN_DPI);
+float GetAppropriateFloatLengthForDpi(HWND window, float originalLength) {
+	return originalLength * GetDpiForWindowSafely(window) / USER_DEFAULT_SCREEN_DPI;
 }
-int GetAppropriateLengthForSize(HWND window, int originalLength) {
+int GetAppropriateLengthForDpi(HWND window, int originalLength) {
+	return (int)floorf(GetAppropriateFloatLengthForDpi(window, (float)originalLength) + 0.5f);
+}
+float GetAppropriateFloatLengthForSize(HWND window, float originalLength) {
 	RECT clientRect;
 	GetClientRect(window, &clientRect);
 
-	int fitHeight;
+	float fitHeight;
 	if (clientRect.right * 3 >= clientRect.bottom * 4) {
-		fitHeight = clientRect.bottom;
+		fitHeight = (float)clientRect.bottom;
 	} else {
-		fitHeight = MulDiv(clientRect.right, 3, 4);
+		fitHeight = clientRect.right * 3.f / 4;
 	}
-	return MulDiv(originalLength, fitHeight, GetAppropriateLengthForDpi(window, 480));
+	return originalLength * fitHeight / GetAppropriateLengthForDpi(window, 480);
+}
+int GetAppropriateLengthForSize(HWND window, int originalLength) {
+	return (int)floorf(GetAppropriateFloatLengthForSize(window, (float)originalLength) + 0.5f);
 }
 
 HDC StartPaint(HWND window, int width, int height, PaintContext* paintContext) {

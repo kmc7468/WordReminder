@@ -9,7 +9,7 @@
 void EvaluateUILength(UILength* uiLength, HWND window, float width, float height) {
 	switch (uiLength->Type) {
 	case Constant:
-		uiLength->Evaluated = (float)GetAppropriateLengthForDpi(window, uiLength->Constant);
+		uiLength->Evaluated = GetAppropriateFloatLengthForDpi(window, uiLength->Constant);
 		break;
 
 	case DependentOnWidth:

@@ -14,7 +14,7 @@ typedef enum {
 
 typedef struct {
 	UILengthType Type;
-	int Constant;
+	float Constant;
 
 	float Evaluated;
 } UILength;
