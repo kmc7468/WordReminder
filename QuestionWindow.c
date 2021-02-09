@@ -177,15 +177,20 @@ LRESULT CALLBACK QuestionWindowProc(HWND handle, UINT message, WPARAM wParam, LP
 		return ENDPAINT;
 	}
 
-	case WM_KEYDOWN:
+	case WM_KEYDOWN: {
+		HWND selector = NULL;
 		if ('1' <= wParam && wParam <= '5') {
-			const HWND selector = g_Buttons[wParam - '1'];
-			if (IsWindowEnabled(selector)) {
-				SendMessage(selector, BM_CLICK, 0, 0);
-				SetFocus(handle);
-			}
+			selector = g_Buttons[wParam - '1'];
+		} else if (VK_NUMPAD1 <= wParam && wParam <= VK_NUMPAD5) {
+			selector = g_Buttons[wParam - VK_NUMPAD1];
+		}
+
+		if (selector && IsWindowEnabled(selector)) {
+			SendMessage(selector, BM_CLICK, 0, 0);
+			SetFocus(handle);
 		}
 		return 0;
+	}
 
 	case WM_COMMAND: {
 		const WORD menu = LOWORD(wParam);
