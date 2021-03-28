@@ -116,6 +116,9 @@ void SetSceneTitle(HWND scene, LPCTSTR newTitle) {
 	SetWindowText(GetParent(scene), buffer);
 	free(buffer);
 }
+UIEngine* GetUIEngine(HWND scene) {
+	return (UIEngine*)GetProp(scene, PROP_UIENGINE);
+}
 
 float GetAppropriateFloatLengthForDpi(HWND window, float originalLength) {
 	return originalLength * GetDpiForWindowSafely(window) / USER_DEFAULT_SCREEN_DPI;

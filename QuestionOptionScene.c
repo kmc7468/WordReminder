@@ -143,10 +143,75 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 			DestroyWindow(ChangeScene(MainWindow, CreateScene(MainWindow, MainSceneProc)));
 			break;
 
-		case 12:
-			// TODO
-			DestroyWindow(ChangeScene(MainWindow, CreateScene(MainWindow, QuestionSceneProc)));
+		case 12: {
+			if (!g_VocabularyPath) {
+				MessageBox(handle, _T("암기할 단어장을 선택해야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			}
+
+			const bool guessMeaning = (bool)SendMessage(g_GuessMeaningCheckBox, BM_GETCHECK, 0, 0);
+			const bool guessWord = (bool)SendMessage(g_GuessWordCheckBox, BM_GETCHECK, 0, 0);
+			const bool guessPronunciation = (bool)SendMessage(g_GuessPronunciationCheckBox, BM_GETCHECK, 0, 0);
+			if (!(guessMeaning || guessWord || guessPronunciation)) {
+				MessageBox(handle, _T("문제 유형을 적어도 하나 선택해야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				break;
+			}
+
+			QuestionOption* option = calloc(1, sizeof(QuestionOption));
+			CreateQuestionOption(option);
+			if (!LoadVocabulary(&option->Vocabulary, g_VocabularyPath)) {
+				MessageBox(handle, _T("단어장을 읽는 중 오류가 발생했습니다. 올바른 단어장인지 확인해 보십시오."), _T("경고"), MB_OK | MB_ICONERROR);
+
+				DestroyQuestionOption(option);
+				free(option);
+				break;
+			}
+
+			if (guessMeaning) {
+				QuestionType type = { 0 };
+				CreateQuestionType(&type);
+
+				type.Type = GuessMeaning;
+				if ((bool)SendMessage(g_GuessMeaningWithPronunciationRadioButton, BM_GETCHECK, 0, 0)) {
+					type.Option = 1;
+				} else if ((bool)SendMessage(g_GuessMeaningAndPronunciationRadioButton, BM_GETCHECK, 0, 0)) {
+					// TODO
+					type.Option = 2;
+				}
+
+				AddElement(&option->Types, &type);
+			}
+			if (guessWord) {
+				QuestionType type = { 0 };
+				CreateQuestionType(&type);
+
+				type.Type = GuessWord;
+				if ((bool)SendMessage(g_GuessWordWithPronunciationRadioButton, BM_GETCHECK, 0, 0)) {
+					type.Option = 1;
+				} else if ((bool)SendMessage(g_GuessWordAndPronunciationRadioButton, BM_GETCHECK, 0, 0)) {
+					// TODO
+					type.Option = 2;
+				}
+
+				AddElement(&option->Types, &type);
+			}
+			if (guessPronunciation) {
+				// TODO
+
+				QuestionType type = { 0 };
+				CreateQuestionType(&type);
+
+				type.Type = GuessPronunciation;
+
+				AddElement(&option->Types, &type);
+			}
+
+			const HWND questionScene = CreateScene(MainWindow, QuestionSceneProc);
+			SendMessage(questionScene, AM_DATA, DT_QUESTIONOPTION, (LPARAM)option);
+
+			DestroyWindow(ChangeScene(MainWindow, questionScene));
 			break;
+		}
 		}
 		return 0;
 

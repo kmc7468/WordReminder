@@ -1,5 +1,6 @@
 #pragma once
 
+#include "UIEngine.h"
 #include "WinAPI.h"
 
 #include <stdbool.h>
@@ -22,6 +23,7 @@ HWND CreateScene(HWND window, SUBCLASSPROC sceneProc);
 HWND GetScene(HWND window);
 HWND ChangeScene(HWND window, HWND newScene);
 void SetSceneTitle(HWND scene, LPCTSTR newTitle);
+UIEngine* GetUIEngine(HWND scene);
 
 float GetAppropriateFloatLengthForDpi(HWND window, float originalLength);
 int GetAppropriateLengthForDpi(HWND window, int originalLength);
@@ -66,6 +68,9 @@ switch (message)
 #define AM_DEACTIVATE		WM_APP + 4
 #define AM_DESTROY			WM_APP + 5
 #define AM_PAINT			WM_APP + 6
+#define AM_DATA				WM_APP + 7
+
+#define DT_QUESTIONOPTION	(WPARAM)0
 
 #define AM_USER				WM_USER + 2
 

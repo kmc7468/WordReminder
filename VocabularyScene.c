@@ -223,6 +223,7 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 			}
 
 			Meaning	newMeaning = { 0 };
+			newMeaning.Word = g_VocabularyStatus.SelectedWord - (Word*)g_VocabularyStatus.Vocabulary.Words.Array;
 			newMeaning.Meaning = meaning;
 			newMeaning.Pronunciation = pronunciation;
 			AddMeaning(g_VocabularyStatus.SelectedWord, &newMeaning);

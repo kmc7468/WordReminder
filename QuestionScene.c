@@ -1,25 +1,29 @@
 #include "Window.h"
 
 #include "UIEngine.h"
+#include "Word.h"
 
 static HWND g_DescriptionStatic;
 static HWND g_QuestionStatic, g_HintStatic;
+static Question g_Question;
 
 static HWND g_Selectors[5];
 static HWND g_PronunciationSelectors[5];
+
+static void UpdateQuestion(UIEngine* uiEngine, bool generateQuestion);
 
 static HWND g_StopButton;
 
 LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR dummy0, DWORD_PTR dummy1) {
 	EVENT {
 	case AM_CREATE:
-		g_DescriptionStatic = CreateStatic(_T("설명란입니다"), WS_VISIBLE | SS_CENTER, handle, -1);
-		g_QuestionStatic = CreateStatic(_T("문제란입니다"), WS_VISIBLE | SS_CENTER, handle, -1);
-		g_HintStatic = CreateStatic(_T("힌트란입니다"), WS_VISIBLE | SS_CENTER, handle, -1);
+		g_DescriptionStatic = CreateStatic(NULL, WS_VISIBLE | SS_CENTER, handle, -1);
+		g_QuestionStatic = CreateStatic(NULL, WS_VISIBLE | SS_CENTER, handle, -1);
+		g_HintStatic = CreateStatic(NULL, WS_VISIBLE | SS_CENTER, handle, -1);
 
 		for (int i = 0; i < 5; ++i) {
-			g_Selectors[i] = CreateButton(_T("선지입니다"), WS_VISIBLE, handle, i);
-			g_PronunciationSelectors[i] = CreateButton(NULL, 0, handle, i + 5);
+			g_Selectors[i] = CreateButton(NULL, WS_VISIBLE | BS_MULTILINE, handle, i);
+			g_PronunciationSelectors[i] = CreateButton(NULL, BS_MULTILINE, handle, i + 5);
 		}
 
 		g_StopButton = CreateButton(_T("그만 외우기"), WS_VISIBLE, handle, 10);
@@ -50,44 +54,49 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 		UICOMP_WIN(selectorSection1, Center, section2);
 		UICOMP_DOW(selectorSection2, Vertical, Center, 50, selectorSection1);
 
-		UICOMP_DOC(selector1Section, Horizontal, None, selectorSection2);
-		UICOMP_DOC_N(selector1, _T("Selector1"), Horizontal, None, selectorFont, selector1Section);
-		UICOMP_FCN(selector1Text, Horizontal, None, 36, selector1);
-		UICOMP_CON(selector1Body, Horizontal, None, 14, selector1);
-		UICOMP_CON(selector1Margin, Horizontal, None, 10, selector1Section);
-		UICOMP_DOC(selector2Section, Horizontal, None, selectorSection2);
-		UICOMP_DOC_N(selector2, _T("Selector2"), Horizontal, None, selectorFont, selector2Section);
-		UICOMP_FCN(selector2Text, Horizontal, None, 36, selector2);
-		UICOMP_CON(selector2Body, Horizontal, None, 14, selector2);
-		UICOMP_CON(selector2Margin, Horizontal, None, 10, selector2Section);
-		UICOMP_DOC(selector3Section, Horizontal, None, selectorSection2);
-		UICOMP_DOC_N(selector3, _T("Selector3"), Horizontal, None, selectorFont, selector3Section);
-		UICOMP_FCN(selector3Text, Horizontal, None, 36, selector3);
-		UICOMP_CON(selector3Body, Horizontal, None, 14, selector3);
-		UICOMP_CON(selector3Margin, Horizontal, None, 10, selector3Section);
-		UICOMP_DOC(selector4Section, Horizontal, None, selectorSection2);
-		UICOMP_DOC_N(selector4, _T("Selector4"), Horizontal, None, selectorFont, selector4Section);
-		UICOMP_FCN(selector4Text, Horizontal, None, 36, selector4);
-		UICOMP_CON(selector4Body, Horizontal, None, 14, selector4);
-		UICOMP_CON(selector4Margin, Horizontal, None, 10, selector4Section);
-		UICOMP_DOC(selector5Section, Horizontal, None, selectorSection2);
-		UICOMP_DOC_N(selector5, _T("Selector5"), Horizontal, None, selectorFont, selector5Section);
-		UICOMP_FCN(selector5Text, Horizontal, None, 36, selector5);
-		UICOMP_CON(selector5Body, Horizontal, None, 14, selector5);
+		for (int i = 0; i < 5; ++i) {
+			TCHAR defaultName[] = _T("SelectorN"), enabledName[] = _T("EnabledSelectorN"), disabledName[] = _T("DisabledSelectorN"),
+				enabledPronunciationName[] = _T("EnabledPronunciationSelectorN"), disabledPronunciationName[] = _T("DisabledPronunciationSelectorN");
+			defaultName[ARRAYSIZE(defaultName) - 2] = i + 1 + '0';
+			enabledName[ARRAYSIZE(enabledName) - 2] = i + 1 + '0';
+			disabledName[ARRAYSIZE(disabledName) - 2] = i + 1 + '0';
+			enabledPronunciationName[ARRAYSIZE(enabledPronunciationName) - 2] = i + 1 + '0';
+			disabledPronunciationName[ARRAYSIZE(disabledPronunciationName) - 2] = i + 1 + '0';
 
-		selector1->Window = &g_Selectors[0];
-		selector2->Window = &g_Selectors[1];
-		selector3->Window = &g_Selectors[2];
-		selector4->Window = &g_Selectors[3];
-		selector5->Window = &g_Selectors[4];
+			UICOMP_DOC(selectorSection, Horizontal, None, selectorSection2);
+
+			UICOMP_DOC_N(selector, defaultName, Horizontal, None, selectorFont, selectorSection);
+			selector->Window = &g_Selectors[i];
+			UICOMP_DOC(selectorButton, Horizontal, None, selector);
+			selectorButton->IsOverridable = true;
+			UICOMP_FCN(selectorText, Horizontal, None, 36, selectorButton);
+			UICOMP_CON(selectorBody, Horizontal, None, 14, selectorButton);
+
+			if (i < 4) {
+				UICOMP_CON(selectorMargin, Horizontal, None, 10, selectorSection);
+			}
+
+			UICOMP_WIN(enabledSelectorSection, None, selector);
+			enabledSelectorSection->IsOverridable = true;
+			UICOMP_DOW_N(enabledSelector, enabledName, Vertical, None, 80, selectorFont, enabledSelectorSection);
+			UIMARG_CON(enabledSelector, Right, 5);
+			UICOMP_DOW_N(disabledPronunciationSelector, disabledPronunciationName, Vertical, None, 20, selectorFont, enabledSelectorSection);
+			UIMARG_CON(disabledPronunciationSelector, Left, 5);
+
+			UICOMP_WIN(disabledSelectorSection, None, selector);
+			UICOMP_DOW_N(disabledSelector, disabledName, Vertical, None, 20, selectorFont, disabledSelectorSection);
+			UIMARG_CON(disabledSelector, Right, 5);
+			UICOMP_DOW_N(enabledPronunciationSelector, enabledPronunciationName, Vertical, None, 80, selectorFont, disabledSelectorSection);
+			UIMARG_CON(enabledPronunciationSelector, Left, 5);
+		}
 
 		UICOMP_WIN(buttonSection, None, section1);
 		UIMARG_CON(buttonSection, Top, 10);
 
-		UICOMP_DOW_N(buttonSection11, _T("ButtonSection-1/1"), Vertical, None, 100, buttonFont, buttonSection);
-		UICOMP_DOW_N(buttonSection12, _T("ButtonSection-1/2"), Vertical, None, 50, buttonFont, buttonSection);
+		UICOMP_DOW_N(buttonSection11, _T("ButtonSection1/1"), Vertical, None, 100, buttonFont, buttonSection);
+		UICOMP_DOW_N(buttonSection12, _T("ButtonSection1/2"), Vertical, None, 50, buttonFont, buttonSection);
 		UIMARG_CON(buttonSection12, Right, 5);
-		UICOMP_DOW_N(buttonSection22, _T("ButtonSection-2/2"), Vertical, None, 50, buttonFont, buttonSection);
+		UICOMP_DOW_N(buttonSection22, _T("ButtonSection2/2"), Vertical, None, 50, buttonFont, buttonSection);
 		UIMARG_CON(buttonSection22, Left, 5);
 
 		buttonSection11->Window = &g_StopButton;
@@ -96,6 +105,17 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 
 	case AM_ACTIVATE:
 		SetSceneTitle(handle, _T("단어 암기하기"));
+		return 0;
+
+	case AM_DATA:
+		switch (wParam) {
+		case DT_QUESTIONOPTION:
+			g_Question.Option = (QuestionOption*)lParam;
+			g_Question.Option->NumberOfSelectors = 5;
+
+			UpdateQuestion(GetUIEngine(handle), true);
+			break;
+		}
 		return 0;
 
 	case WM_COMMAND:
@@ -108,5 +128,102 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 
 	default:
 		return DefSubclassProc(handle, message, wParam, lParam);
+	}
+}
+
+void UpdateQuestion(UIEngine* uiEngine, bool generateQuestion) {
+	const int oldTypeOption = g_Question.Type ? g_Question.Type->Option : 0;
+
+	if (generateQuestion) {
+		GenerateQuestion(&g_Question, NULL);
+	}
+
+	const bool needTwoButtons = oldTypeOption <= 1 && g_Question.Type->Option == 2,
+		needOneButton = oldTypeOption == 2 && g_Question.Type->Option <= 1;
+	if (needTwoButtons || needOneButton) {
+		for (int i = 0; i < 5; ++i) {
+			TCHAR defaultName[] = _T("SelectorN"), enabledName[] = _T("EnabledSelectorN"), disabledName[] = _T("DisabledSelectorN"),
+				enabledPronunciationName[] = _T("EnabledPronunciationSelectorN"), disabledPronunciationName[] = _T("DisabledPronunciationSelectorN");
+			defaultName[ARRAYSIZE(defaultName) - 2] = i + 1 + '0';
+			enabledName[ARRAYSIZE(enabledName) - 2] = i + 1 + '0';
+			disabledName[ARRAYSIZE(disabledName) - 2] = i + 1 + '0';
+			enabledPronunciationName[ARRAYSIZE(enabledPronunciationName) - 2] = i + 1 + '0';
+			disabledPronunciationName[ARRAYSIZE(disabledPronunciationName) - 2] = i + 1 + '0';
+
+			if (needTwoButtons) {
+				UICOMP_FIND(selector, defaultName);
+				selector->Window = NULL;
+
+				UICOMP_FIND(enabledSelector, enabledName);
+				enabledSelector->Window = g_Selectors + i;
+
+				UICOMP_FIND(disabledPronunciationSelector, disabledPronunciationName);
+				disabledPronunciationSelector->Window = g_PronunciationSelectors + i;
+				ShowWindow(g_PronunciationSelectors[i], SW_SHOW);
+			} else {
+				UICOMP_FIND(selector, defaultName);
+				selector->Window = g_Selectors + i;
+
+				UICOMP_FIND(enabledSelector, enabledName);
+				UICOMP_FIND(disabledSelector, disabledName);
+				enabledSelector->Window = NULL;
+				disabledSelector->Window = NULL;
+
+				UICOMP_FIND(enabledPronunciationSelector, enabledPronunciationName);
+				UICOMP_FIND(disabledPronunciationSelector, disabledPronunciationName);
+				enabledPronunciationSelector->Window = NULL;
+				disabledPronunciationSelector->Window = NULL;
+				ShowWindow(g_PronunciationSelectors[i], SW_HIDE);
+			}
+		}
+
+		UpdateUIEngine(uiEngine);
+	}
+
+	switch (g_Question.Type->Type) {
+	case GuessMeaning:
+		SetWindowText(g_DescriptionStatic, _T("다음 단어의 뜻은?"));
+		SetWindowText(g_QuestionStatic, GetWord(&g_Question.Option->Vocabulary, g_Question.Meanings[g_Question.Answer]->Word)->Word);
+		if (g_Question.Type->Option == 1) {
+			SetWindowText(g_HintStatic, g_Question.Meanings[g_Question.Answer]->Pronunciation);
+		}
+		break;
+
+	case GuessWord:
+		SetWindowText(g_DescriptionStatic, _T("다음 뜻을 가진 단어는?"));
+		SetWindowText(g_QuestionStatic, g_Question.Meanings[g_Question.Answer]->Meaning);
+		break;
+
+	case GuessPronunciation:
+		SetWindowText(g_DescriptionStatic, _T("다음 단어의 발음은?"));
+		SetWindowText(g_QuestionStatic, GetWord(&g_Question.Option->Vocabulary, g_Question.Meanings[g_Question.Answer]->Word)->Word);
+		SetWindowText(g_HintStatic, g_Question.Meanings[g_Question.Answer]->Meaning);
+		break;
+	}
+
+	for (int i = 0; i < 5; ++i) {
+		if (g_Question.Type->Type == GuessMeaning) {
+			SetWindowText(g_Selectors[i], g_Question.Meanings[i]->Meaning);
+		} else if (g_Question.Type->Type == GuessPronunciation) {
+			SetWindowText(g_Selectors[i], g_Question.Meanings[i]->Pronunciation);
+		} else {
+			const Word* const word = GetWord(&g_Question.Option->Vocabulary, g_Question.Meanings[i]->Word);
+			if (g_Question.Type->Option != 1) {
+				SetWindowText(g_Selectors[i], word->Word);
+			} else {
+				LPTSTR text = malloc(sizeof(TCHAR) * (_tcslen(word->Word) + _tcslen(g_Question.Meanings[i]->Pronunciation) + 4));
+				_tcscpy(text, word->Word);
+				_tcscat(text, _T("\n("));
+				_tcscat(text, g_Question.Meanings[i]->Pronunciation);
+				_tcscat(text, _T(")"));
+
+				SetWindowText(g_Selectors[i], text);
+				free(text);
+			}
+		}
+
+		if (g_Question.Type->Option == 2) {
+			SetWindowText(g_PronunciationSelectors[i], g_Question.Meanings[i]->Pronunciation);
+		}
 	}
 }

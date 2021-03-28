@@ -51,8 +51,6 @@ void DestroyMeaning(Meaning* meaning) {
 }
 
 void AddMeaning(Word* word, Meaning* meaning) {
-	meaning->Word = word;
-
 	AddElement(&word->Meanings, meaning);
 }
 void RemoveMeaning(Word* word, int index) {
@@ -96,6 +94,7 @@ bool LoadVocabulary(Vocabulary* vocabulary, LPCTSTR path) {
 		word.Word = ReadString(file);
 
 		Meaning	legacyMeaning = { 0 };
+		legacyMeaning.Word = i;
 		legacyMeaning.Pronunciation = ReadString(file);
 		legacyMeaning.Meaning = ReadString(file);
 		AddMeaning(&word, &legacyMeaning);
@@ -235,6 +234,7 @@ void ReadHomonymContainer(FILE* file, Vocabulary* vocabulary) {
 		fread(&count, sizeof(count), 1, file);
 		for (int j = 0; j < count; ++j) {
 			Meaning	meaning = { 0 };
+			meaning.Word = i;
 			meaning.Pronunciation = ReadString(file);
 			meaning.Meaning = ReadString(file);
 			AddMeaning(word, &meaning);
@@ -282,6 +282,7 @@ bool IsUniqueMeaning(const QuestionType* questionType, const Meaning* const oldM
 }
 
 void CreateQuestionOption(QuestionOption* questionOption) {
+	CreateVocabulary(&questionOption->Vocabulary);
 	CreateArray(&questionOption->Types, sizeof(QuestionType));
 }
 void DestroyQuestionOption(QuestionOption* questionOption) {
@@ -308,7 +309,7 @@ void GenerateQuestion(Question* question, const Meaning* answer) {
 		question->Meanings[0] = answer;
 	}
 
-	for (int i = answer != NULL; i < question->Option->NumberOfMeanings; ++i) {
+	for (int i = answer != NULL; i < question->Option->NumberOfSelectors; ++i) {
 		do {
 			Word* const word = GetWord((Vocabulary*)&question->Option->Vocabulary, rand() % question->Option->Vocabulary.Words.Count);
 			question->Meanings[i] = GetMeaning(word, rand() % word->Meanings.Count);
@@ -316,12 +317,12 @@ void GenerateQuestion(Question* question, const Meaning* answer) {
 	}
 
 	if (answer) {
-		question->Answer = rand() % question->Option->NumberOfMeanings;
+		question->Answer = rand() % question->Option->NumberOfSelectors;
 		question->Meanings[0] = question->Meanings[question->Answer];
 		question->Meanings[question->Answer] = answer;
 	} else {
 		do {
-			question->Answer = rand() % question->Option->NumberOfMeanings;
+			question->Answer = rand() % question->Option->NumberOfSelectors;
 		} while (oldAnswer && !IsUniqueMeaning(question->Type, &oldAnswer, 1, question->Meanings[question->Answer]));
 	}
 }

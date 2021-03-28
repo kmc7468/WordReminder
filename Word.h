@@ -14,7 +14,7 @@ int FindMeaning(const Word* word, LPCTSTR meaning);
 void DestroyWord(Word* word);
 
 typedef struct {
-	Word* Word;
+	int Word;
 	LPTSTR Pronunciation;
 	LPTSTR Meaning;
 	int Wrong;
@@ -61,7 +61,7 @@ bool IsUniqueMeaning(const QuestionType* questionType, const Meaning* const oldM
 typedef struct {
 	Vocabulary Vocabulary;
 	Array Types;
-	int NumberOfMeanings;
+	int NumberOfSelectors;
 
 	bool ExcludeDuplicatedAnswer;
 } QuestionOption;

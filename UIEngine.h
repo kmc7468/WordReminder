@@ -72,6 +72,7 @@ typedef struct {
 	UILength* RightMargin;
 	UILength* TopMargin;
 	UILength* BottomMargin;
+	bool IsOverridable;
 
 	UIComponentFont* Font;
 
@@ -139,6 +140,7 @@ tag-> UIMARG_MEMB(location, Margin) ->Constant = constant
 #define UIMARG_CON_LR(tag, constant) UIMARG_CON(tag, Left, constant); UIMARG_CON(tag, Right, constant)
 #define UIMARG_CON_TB(tag, constant) UIMARG_CON(tag, Top, constant); UIMARG_CON(tag, Bottom, constant)
 #define UIMARG_CON_AS(tag, constant) UIMARG_CON_LR(tag, constant); UIMARG_CON_TB(tag, constant)
+#define UIMARG_DOW(tag, location, constant) UIMARG_BASE(tag, location, DependentOnWidth, constant)
 
 #define UICOMP_FIND(tag, name) UIComponent* const tag = FindUIComponent(&uiEngine->RootComponent, name)
 

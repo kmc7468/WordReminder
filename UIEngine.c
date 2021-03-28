@@ -123,37 +123,62 @@ void EvaluateUIComponent(UIComponent* uiComponent, HWND window, float x, float y
 	uiComponent->EvaluatedVirtualWidth = uiComponent->EvaluatedWidth + (uiComponent->RightMargin && uiComponent->RightMargin->Evaluated > 0 ? widthDelta : xDelta);
 	uiComponent->EvaluatedVirtualHeight = uiComponent->EvaluatedHeight + (uiComponent->BottomMargin && uiComponent->BottomMargin->Evaluated > 0 ? heightDelta : yDelta);
 
+	UIComponent* prevChild = NULL;
 	bool hasHorizontal = false, hasVertical = false;
 	for (int i = 0; i < uiComponent->Children.Count; ++i) {
 		UIComponent* const child = *(UIComponent**)GetElement(&uiComponent->Children, i);
 		switch (child->Type) {
 		case Window:
-			EvaluateUIComponent(child, window, x, y, width, height);
-
-			y += child->EvaluatedVirtualHeight;
-			height -= child->EvaluatedVirtualHeight;
-			hasHorizontal = true;
-			hasVertical = true;
+			EvaluateUIComponent(child, window, x, y, fabsf(width), fabsf(height));
 			break;
 
 		case Horizontal:
 			EvaluateUILength(child->Length, window, uiComponent->EvaluatedWidth, uiComponent->EvaluatedHeight);
 			EvaluateUIComponent(child, window, x, y, width, child->Length->Evaluated);
-
-			y += child->EvaluatedVirtualHeight;
-			height -= child->EvaluatedVirtualHeight;
-			hasHorizontal = true;
 			break;
 
 		case Vertical:
 			EvaluateUILength(child->Length, window, uiComponent->EvaluatedWidth, uiComponent->EvaluatedHeight);
 			EvaluateUIComponent(child, window, x, y, child->Length->Evaluated, height);
-
-			x += child->EvaluatedVirtualWidth;
-			width -= child->EvaluatedVirtualWidth;
-			hasVertical = true;
 			break;
 		}
+
+		/*bool isHorizontal = false, isVertical = true;
+		if (child->Type == Window) {
+			if (fabsf(height - child->EvaluatedVirtualHeight) < 0.0001f) {
+				isHorizontal = true;
+			}
+			if (fabsf(width - child->EvaluatedVirtualWidth) < 0.0001f) {
+				isVertical = true;
+			}
+		}*/
+
+		if (child->Type == Horizontal || child->Type == Window) {
+			if (!child->IsOverridable) {
+				y += child->EvaluatedVirtualHeight;
+			}
+
+			if (!prevChild || !prevChild->IsOverridable) {
+				height -= child->EvaluatedVirtualHeight;
+			} else {
+				height -= max(0, child->EvaluatedVirtualHeight - prevChild->EvaluatedVirtualHeight);
+			}
+			hasHorizontal = true;
+		}
+		if (child->Type == Vertical) {
+			if (!child->IsOverridable) {
+				x += child->EvaluatedVirtualWidth;
+			}
+
+			if (!prevChild || !prevChild->IsOverridable) {
+				width -= child->EvaluatedVirtualWidth;
+			} else {
+				width -= max(0, child->EvaluatedVirtualWidth - prevChild->EvaluatedVirtualWidth);
+			}
+			hasVertical = true;
+		}
+
+		prevChild = child;
 	}
 
 	if (hasHorizontal) {
