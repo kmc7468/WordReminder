@@ -9,6 +9,7 @@ static Question g_Question;
 
 static HWND g_Selectors[5];
 static HWND g_PronunciationSelectors[5];
+static int g_CheckedSelector = -1, g_CheckedPronunciationSelector = -1;
 
 static void UpdateQuestion(UIEngine* uiEngine, bool generateQuestion);
 
@@ -22,8 +23,8 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 		g_HintStatic = CreateStatic(NULL, WS_VISIBLE | SS_CENTER, handle, -1);
 
 		for (int i = 0; i < 5; ++i) {
-			g_Selectors[i] = CreateButton(NULL, WS_VISIBLE | BS_MULTILINE, handle, i);
-			g_PronunciationSelectors[i] = CreateButton(NULL, BS_MULTILINE, handle, i + 5);
+			g_Selectors[i] = CreateButton(NULL, WS_VISIBLE | BS_MULTILINE | BS_NOTIFY, handle, i);
+			g_PronunciationSelectors[i] = CreateButton(NULL, BS_MULTILINE | BS_NOTIFY, handle, i + 5);
 		}
 
 		g_StopButton = CreateButton(_T("그만 외우기"), WS_VISIBLE, handle, 10);
@@ -119,12 +120,96 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 		return 0;
 
 	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
+		if (LOWORD(wParam) < 10) {
+			if (HIWORD(wParam) != BN_CLICKED) return 0;
+
+			const bool isSelector = LOWORD(wParam) < 5;
+			for (int i = 0; i < 5; ++i) {
+				SendMessage((isSelector ? g_Selectors : g_PronunciationSelectors)[i], BM_SETSTATE, i == LOWORD(wParam) % 5, 0);
+			}
+
+			if (isSelector) {
+				g_CheckedSelector = LOWORD(wParam) % 5;
+				if (g_Question.Type->Option != 2) {
+					g_CheckedPronunciationSelector = g_CheckedSelector;
+				}
+			} else {
+				g_CheckedPronunciationSelector = LOWORD(wParam) % 5;
+			}
+
+			if (g_CheckedSelector != -1 && g_CheckedPronunciationSelector != -1) {
+				// TODO
+				if (g_CheckedSelector == g_CheckedPronunciationSelector && g_CheckedSelector == g_Question.Answer) {
+					SendMessage(g_Selectors[g_CheckedSelector], BM_SETSTATE, FALSE, 0);
+					SendMessage(g_PronunciationSelectors[g_CheckedPronunciationSelector], BM_SETSTATE, FALSE, 0);
+					g_CheckedSelector = -1;
+					g_CheckedPronunciationSelector = -1;
+
+					UpdateQuestion(GetUIEngine(handle), true);
+				} else {
+					if (g_CheckedSelector != g_Question.Answer) {
+						SendMessage(g_Selectors[g_CheckedSelector], BM_SETSTATE, FALSE, 0);
+						EnableWindow(g_Selectors[g_CheckedSelector], FALSE);
+						g_CheckedSelector = -1;
+					}
+					if (g_CheckedPronunciationSelector != g_Question.Answer) {
+						SendMessage(g_PronunciationSelectors[g_CheckedPronunciationSelector], BM_SETSTATE, FALSE, 0);
+						EnableWindow(g_PronunciationSelectors[g_CheckedPronunciationSelector], FALSE);
+						g_CheckedPronunciationSelector = -1;
+					}
+
+					// TODO
+				}
+			}
+		} else switch (LOWORD(wParam)) {
 		case 10:
 			// TODO
 			break;
 		}
 		return 0;
+
+	case WM_NOTIFY: {
+		const LPNMHDR header = (LPNMHDR)lParam;
+		switch (header->code) {
+		case BCN_HOTITEMCHANGE: {
+			const LPNMBCHOTITEM hotItem = (LPNMBCHOTITEM)lParam;
+			const bool entered = hotItem->dwFlags & HICF_ENTERING;
+			if (entered && g_Question.Type->Option == 2) {
+				const UIEngine* uiEngine = GetUIEngine(handle);
+
+				for (int i = 0; i < 5; ++i) {
+					TCHAR enabledName[] = _T("EnabledSelectorN"), disabledName[] = _T("DisabledSelectorN"),
+						enabledPronunciationName[] = _T("EnabledPronunciationSelectorN"), disabledPronunciationName[] = _T("DisabledPronunciationSelectorN");
+					enabledName[ARRAYSIZE(enabledName) - 2] = i + 1 + '0';
+					disabledName[ARRAYSIZE(disabledName) - 2] = i + 1 + '0';
+					enabledPronunciationName[ARRAYSIZE(enabledPronunciationName) - 2] = i + 1 + '0';
+					disabledPronunciationName[ARRAYSIZE(disabledPronunciationName) - 2] = i + 1 + '0';
+
+					UICOMP_FIND(enabledSelector, enabledName);
+					UICOMP_FIND(disabledSelector, disabledName);
+					UICOMP_FIND(enabledPronunciationSelector, enabledPronunciationName);
+					UICOMP_FIND(disabledPronunciationSelector, disabledPronunciationName);
+
+					if ((int)GetMenu(hotItem->hdr.hwndFrom) < 5) {
+						enabledSelector->Window = g_Selectors + i;
+						disabledSelector->Window = NULL;
+						enabledPronunciationSelector->Window = NULL;
+						disabledPronunciationSelector->Window = g_PronunciationSelectors + i;
+					} else {
+						enabledSelector->Window = NULL;
+						disabledSelector->Window = g_Selectors + i;
+						enabledPronunciationSelector->Window = g_PronunciationSelectors + i;
+						disabledPronunciationSelector->Window = NULL;
+					}
+				}
+
+				UpdateUIEngine(uiEngine);
+			}
+			break;
+		}
+		}
+		return 0;
+	}
 
 	default:
 		return DefSubclassProc(handle, message, wParam, lParam);
@@ -225,5 +310,8 @@ void UpdateQuestion(UIEngine* uiEngine, bool generateQuestion) {
 		if (g_Question.Type->Option == 2) {
 			SetWindowText(g_PronunciationSelectors[i], g_Question.Meanings[i]->Pronunciation);
 		}
+
+		EnableWindow(g_Selectors[i], TRUE);
+		EnableWindow(g_PronunciationSelectors[i], TRUE);
 	}
 }
