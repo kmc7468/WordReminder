@@ -335,6 +335,20 @@ void GenerateQuestion(Question* question, Meaning* answer) {
 			Word* const word = GetWord(&question->Type->UnusedVocabulary, rand() % question->Type->UnusedVocabulary.Words.Count);
 			answer = GetMeaning(word, rand() % word->Meanings.Count);
 		} while (oldAnswer && !IsUniqueMeaning(prevQuestionType, &oldAnswer, 1, answer));
+
+		for (int i = 0; i < question->Option->Vocabulary.Words.Count; ++i) {
+			Word* const word = GetWord(&question->Option->Vocabulary, i);
+			for (int j = 0; j < word->Meanings.Count; ++j) {
+				Meaning* const meaning = GetMeaning(word, j);
+				if (meaning->Word != answer->Word) goto nextWord;
+				else if (_tcscmp(meaning->Meaning, answer->Meaning) == 0 && _tcscmp(meaning->Pronunciation, answer->Pronunciation) == 0) {
+					answer = meaning;
+					goto complete;
+				}
+			}
+		nextWord:;
+		}
+	complete:;
 	}
 	if (answer) {
 		question->Meanings[0] = answer;

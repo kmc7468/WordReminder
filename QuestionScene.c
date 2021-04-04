@@ -6,13 +6,14 @@
 static HWND g_DescriptionStatic;
 static HWND g_QuestionStatic, g_HintStatic;
 static Question g_Question;
+static int g_RemainingQuestions = -1, g_TotalQuestions = -1;
 static int g_AnswerState = 0;
 
 static HWND g_Selectors[5];
 static HWND g_PronunciationSelectors[5];
 static int g_CheckedSelector = -1, g_CheckedPronunciationSelector = -1;
 
-static void UpdateQuestion(UIEngine* uiEngine, bool generateQuestion);
+static void UpdateQuestion(HWND handle, UIEngine* uiEngine, bool generateQuestion);
 
 static HWND g_StopButton;
 
@@ -65,31 +66,31 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 			enabledPronunciationName[ARRAYSIZE(enabledPronunciationName) - 2] = i + 1 + '0';
 			disabledPronunciationName[ARRAYSIZE(disabledPronunciationName) - 2] = i + 1 + '0';
 
-			UICOMP_DOC(selectorSection, Horizontal, None, selectorSection2);
+UICOMP_DOC(selectorSection, Horizontal, None, selectorSection2);
 
-			UICOMP_DOC_N(selector, defaultName, Horizontal, None, selectorFont, selectorSection);
-			selector->Window = &g_Selectors[i];
-			UICOMP_DOC(selectorButton, Horizontal, None, selector);
-			selectorButton->IsOverridable = true;
-			UICOMP_FCN(selectorText, Horizontal, None, 36, selectorButton);
-			UICOMP_CON(selectorBody, Horizontal, None, 14, selectorButton);
+UICOMP_DOC_N(selector, defaultName, Horizontal, None, selectorFont, selectorSection);
+selector->Window = &g_Selectors[i];
+UICOMP_DOC(selectorButton, Horizontal, None, selector);
+selectorButton->IsOverridable = true;
+UICOMP_FCN(selectorText, Horizontal, None, 36, selectorButton);
+UICOMP_CON(selectorBody, Horizontal, None, 14, selectorButton);
 
-			if (i < 4) {
-				UICOMP_CON(selectorMargin, Horizontal, None, 10, selectorSection);
-			}
+if (i < 4) {
+	UICOMP_CON(selectorMargin, Horizontal, None, 10, selectorSection);
+}
 
-			UICOMP_WIN(enabledSelectorSection, None, selector);
-			enabledSelectorSection->IsOverridable = true;
-			UICOMP_DOW_N(enabledSelector, enabledName, Vertical, None, 80, selectorFont, enabledSelectorSection);
-			UIMARG_CON(enabledSelector, Right, 5);
-			UICOMP_DOW_N(disabledPronunciationSelector, disabledPronunciationName, Vertical, None, 20, selectorFont, enabledSelectorSection);
-			UIMARG_CON(disabledPronunciationSelector, Left, 5);
+UICOMP_WIN(enabledSelectorSection, None, selector);
+enabledSelectorSection->IsOverridable = true;
+UICOMP_DOW_N(enabledSelector, enabledName, Vertical, None, 80, selectorFont, enabledSelectorSection);
+UIMARG_CON(enabledSelector, Right, 5);
+UICOMP_DOW_N(disabledPronunciationSelector, disabledPronunciationName, Vertical, None, 20, selectorFont, enabledSelectorSection);
+UIMARG_CON(disabledPronunciationSelector, Left, 5);
 
-			UICOMP_WIN(disabledSelectorSection, None, selector);
-			UICOMP_DOW_N(disabledSelector, disabledName, Vertical, None, 20, selectorFont, disabledSelectorSection);
-			UIMARG_CON(disabledSelector, Right, 5);
-			UICOMP_DOW_N(enabledPronunciationSelector, enabledPronunciationName, Vertical, None, 80, selectorFont, disabledSelectorSection);
-			UIMARG_CON(enabledPronunciationSelector, Left, 5);
+UICOMP_WIN(disabledSelectorSection, None, selector);
+UICOMP_DOW_N(disabledSelector, disabledName, Vertical, None, 20, selectorFont, disabledSelectorSection);
+UIMARG_CON(disabledSelector, Right, 5);
+UICOMP_DOW_N(enabledPronunciationSelector, enabledPronunciationName, Vertical, None, 80, selectorFont, disabledSelectorSection);
+UIMARG_CON(enabledPronunciationSelector, Left, 5);
 		}
 
 		UICOMP_WIN(buttonSection, None, section1);
@@ -123,7 +124,26 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 			g_Question.Option = (QuestionOption*)lParam;
 			g_Question.Option->NumberOfSelectors = 5;
 
-			UpdateQuestion(GetUIEngine(handle), true);
+			if (g_Question.Option->ExcludeDuplicatedAnswer) {
+				g_RemainingQuestions = 0;
+
+				for (int i = 0; i < g_Question.Option->Types.Count; ++i) {
+					QuestionType* const type = (QuestionType*)GetElement(&g_Question.Option->Types, i);
+					CopyVocabulary(&type->UnusedVocabulary, &g_Question.Option->Vocabulary);
+
+					if (i == 0) {
+						for (int j = 0; j < type->UnusedVocabulary.Words.Count; ++j) {
+							g_RemainingQuestions += GetWord(&type->UnusedVocabulary, j)->Meanings.Count;
+						}
+						g_RemainingQuestions *= g_Question.Option->Types.Count;
+						g_TotalQuestions = g_RemainingQuestions;
+					}
+				}
+			} else {
+				g_RemainingQuestions = -1;
+			}
+
+			UpdateQuestion(handle, GetUIEngine(handle), true);
 			break;
 		}
 		return 0;
@@ -150,6 +170,27 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 				if (g_CheckedSelector == g_Question.Answer && g_CheckedPronunciationSelector == g_Question.PronunciationAnswer) {
 					if (g_AnswerState != 0) {
 						g_Question.Meanings[g_CheckedSelector]->IsWrong = true;
+					} else if (g_Question.Option->ExcludeDuplicatedAnswer) {
+						const Meaning* const answer = g_Question.Meanings[g_CheckedSelector];
+
+						for (int i = 0; i < g_Question.Type->UnusedVocabulary.Words.Count; ++i) {
+							Word* const word = GetWord(&g_Question.Type->UnusedVocabulary, i);
+							for (int j = 0; j < word->Meanings.Count; ++j) {
+								Meaning* const meaning = GetMeaning(word, j);
+								if (meaning->Word != answer->Word) goto nextWord;
+								else if (_tcscmp(meaning->Meaning, answer->Meaning) == 0 && _tcscmp(meaning->Pronunciation, answer->Pronunciation) == 0) {
+									RemoveMeaning(word, j);
+									if (word->Meanings.Count == 0) {
+										RemoveWord(&g_Question.Type->UnusedVocabulary, i);
+									}
+
+									--g_RemainingQuestions;
+									goto complete;
+								}
+							}
+						nextWord:;
+						}
+					complete:;
 					}
 
 					SendMessage(g_Selectors[g_CheckedSelector], BM_SETSTATE, FALSE, 0);
@@ -158,7 +199,7 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 					g_CheckedPronunciationSelector = -1;
 
 					g_AnswerState = 0;
-					UpdateQuestion(GetUIEngine(handle), true);
+					UpdateQuestion(handle, GetUIEngine(handle), true);
 				} else {
 					int localAnswerState = 0;
 					if (g_CheckedSelector != g_Question.Answer) {
@@ -258,10 +299,16 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 	}
 }
 
-void UpdateQuestion(UIEngine* uiEngine, bool generateQuestion) {
+void UpdateQuestion(HWND handle, UIEngine* uiEngine, bool generateQuestion) {
 	const int oldTypeOption = g_Question.Type ? g_Question.Type->Option : 0;
 
 	if (generateQuestion) {
+		if (g_RemainingQuestions == 0) {
+			MessageBox(handle, _T("모든 문제를 풀었습니다. 단어 암기를 종료합니다."), _T("정보"), MB_OK | MB_ICONINFORMATION);
+			SendMessage(g_StopButton, BM_CLICK, 0, 0);
+			return;
+		}
+
 		GenerateQuestion(&g_Question, NULL);
 	}
 
@@ -307,9 +354,10 @@ void UpdateQuestion(UIEngine* uiEngine, bool generateQuestion) {
 		UpdateUIEngine(uiEngine);
 	}
 
+	LPCTSTR description = NULL;
 	switch (g_Question.Type->Type) {
 	case GuessMeaning:
-		SetWindowText(g_DescriptionStatic, _T("다음 단어의 뜻은?"));
+		description = _T("다음 단어의 뜻은?");
 		SetWindowText(g_QuestionStatic, GetWord(&g_Question.Option->Vocabulary, g_Question.Meanings[g_Question.Answer]->Word)->Word);
 		if (g_Question.Type->Option == 1) {
 			SetWindowText(g_HintStatic, g_Question.Meanings[g_Question.Answer]->Pronunciation);
@@ -317,15 +365,34 @@ void UpdateQuestion(UIEngine* uiEngine, bool generateQuestion) {
 		break;
 
 	case GuessWord:
-		SetWindowText(g_DescriptionStatic, _T("다음 뜻을 가진 단어는?"));
+		description = _T("다음 뜻을 가진 단어는?");
 		SetWindowText(g_QuestionStatic, g_Question.Meanings[g_Question.Answer]->Meaning);
 		break;
 
 	case GuessPronunciation:
-		SetWindowText(g_DescriptionStatic, _T("다음 단어의 발음은?"));
+		description = _T("다음 단어의 발음은?");
 		SetWindowText(g_QuestionStatic, GetWord(&g_Question.Option->Vocabulary, g_Question.Meanings[g_Question.Answer]->Word)->Word);
 		SetWindowText(g_HintStatic, g_Question.Meanings[g_Question.Answer]->Meaning);
 		break;
+	}
+
+	if (g_Question.Option->ExcludeDuplicatedAnswer) {
+		TCHAR number[20] = { 0 }, total[20] = { 0 };
+		_itot(g_TotalQuestions - g_RemainingQuestions + 1, number, 10);
+		_itot(g_TotalQuestions, total, 10);
+
+		LPTSTR realDescription = malloc(sizeof(TCHAR) * (_tcslen(description) + 2 + _tcslen(number) + 1 + _tcslen(total) + 1 + 1));
+		_tcscpy(realDescription, description);
+		_tcscat(realDescription, _T(" ("));
+		_tcscat(realDescription, number);
+		_tcscat(realDescription, _T("/"));
+		_tcscat(realDescription, total);
+		_tcscat(realDescription, _T(")"));
+
+		SetWindowText(g_DescriptionStatic, realDescription);
+		free(realDescription);
+	} else {
+		SetWindowText(g_DescriptionStatic, description);
 	}
 
 	for (int i = 0; i < 5; ++i) {

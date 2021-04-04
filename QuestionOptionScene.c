@@ -241,6 +241,8 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 				AddElement(&option->Types, &type);
 			}
 
+			option->ExcludeDuplicatedAnswer = (bool)SendMessage(g_ExcludeDuplicatedAnswerCheckBox, BM_GETCHECK, 0, 0);
+
 			const HWND questionScene = CreateScene(MainWindow, QuestionSceneProc);
 			SendMessage(questionScene, AM_DATA, DT_QUESTIONOPTION, (LPARAM)option);
 
