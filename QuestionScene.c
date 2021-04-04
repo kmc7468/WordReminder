@@ -146,8 +146,7 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 			}
 
 			if (g_CheckedSelector != -1 && g_CheckedPronunciationSelector != -1) {
-				// TODO
-				if (g_CheckedSelector == g_CheckedPronunciationSelector && g_CheckedSelector == g_Question.Answer) {
+				if (g_CheckedSelector == g_Question.Answer && g_CheckedPronunciationSelector == g_Question.PronunciationAnswer) {
 					SendMessage(g_Selectors[g_CheckedSelector], BM_SETSTATE, FALSE, 0);
 					SendMessage(g_PronunciationSelectors[g_CheckedPronunciationSelector], BM_SETSTATE, FALSE, 0);
 					g_CheckedSelector = -1;
@@ -165,8 +164,7 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 						g_AnswerState |= 1;
 						localAnswerState |= 1;
 					}
-					if (g_CheckedPronunciationSelector != g_Question.Answer &&
-						g_Question.Type->Option == 2) {
+					if (g_CheckedPronunciationSelector != g_Question.PronunciationAnswer && g_Question.Type->Option == 2) {
 						SendMessage(g_PronunciationSelectors[g_CheckedPronunciationSelector], BM_SETSTATE, FALSE, 0);
 						EnableWindow(g_PronunciationSelectors[g_CheckedPronunciationSelector], FALSE);
 						g_CheckedPronunciationSelector = -1;
@@ -334,7 +332,7 @@ void UpdateQuestion(UIEngine* uiEngine, bool generateQuestion) {
 		}
 
 		if (g_Question.Type->Option == 2) {
-			SetWindowText(g_PronunciationSelectors[i], g_Question.Meanings[i]->Pronunciation);
+			SetWindowText(g_PronunciationSelectors[g_Question.Pronunciations[i]], g_Question.Meanings[i]->Pronunciation);
 		}
 
 		EnableWindow(g_Selectors[i], TRUE);

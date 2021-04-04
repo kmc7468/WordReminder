@@ -325,4 +325,23 @@ void GenerateQuestion(Question* question, const Meaning* answer) {
 			question->Answer = rand() % question->Option->NumberOfSelectors;
 		} while (oldAnswer && !IsUniqueMeaning(question->Type, &oldAnswer, 1, question->Meanings[question->Answer]));
 	}
+
+	for (int i = 0; i < question->Option->NumberOfSelectors; ++i) {
+		bool isUnique;
+		do {
+			isUnique = true;
+
+			question->Pronunciations[i] = rand() % question->Option->NumberOfSelectors;
+			for (int j = 0; j < i; ++j) {
+				if (question->Pronunciations[i] == question->Pronunciations[j]) {
+					isUnique = false;
+					break;
+				}
+			}
+		} while (!isUnique);
+
+		if (i == question->Answer) {
+			question->PronunciationAnswer = question->Pronunciations[i];
+		}
+	}
 }

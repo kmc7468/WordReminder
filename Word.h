@@ -74,6 +74,8 @@ typedef struct {
 	QuestionType* Type;
 	const Meaning* Meanings[5];
 	int Answer;
+	int Pronunciations[5];
+	int PronunciationAnswer;
 } Question;
 
 void GenerateQuestion(Question* question, const Meaning* answer);
