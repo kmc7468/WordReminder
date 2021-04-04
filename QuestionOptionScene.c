@@ -271,6 +271,16 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 
 			option->ExcludeDuplicatedAnswer = (bool)SendMessage(g_ExcludeDuplicatedAnswerCheckBox, BM_GETCHECK, 0, 0);
 
+			Setting.GuessMeaning = guessMeaning;
+			Setting.GuessMeaningWithPronunciation = ((bool)SendMessage(g_GuessMeaningWithPronunciationRadioButton, BM_GETCHECK, 0, 0) ? 1
+				: ((bool)SendMessage(g_GuessMeaningAndPronunciationRadioButton, BM_GETCHECK, 0, 0) ? 2 : 0));
+			Setting.GuessWord = guessWord;
+			Setting.GuessWordWithPronunciation = ((bool)SendMessage(g_GuessWordWithPronunciationRadioButton, BM_GETCHECK, 0, 0) ? 1
+				: ((bool)SendMessage(g_GuessWordAndPronunciationRadioButton, BM_GETCHECK, 0, 0) ? 2 : 0));
+			Setting.GuessPronunciation = guessPronunciation;
+
+			Setting.ExcludeDuplicatedAnswer = option->ExcludeDuplicatedAnswer;
+
 			const HWND questionScene = CreateScene(MainWindow, QuestionSceneProc);
 			SendMessage(questionScene, AM_DATA, DT_QUESTIONOPTION, (LPARAM)option);
 
