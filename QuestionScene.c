@@ -242,6 +242,10 @@ UIMARG_CON(enabledPronunciationSelector, Left, 5);
 			}
 		} else switch (LOWORD(wParam)) {
 		case 10: {
+			if (g_AnswerState != 0) {
+				g_Question.Meanings[g_Question.Answer]->IsWrong = true;
+			}
+
 			const HWND statisticScene = CreateScene(MainWindow, StatisticSceneProc);
 			SendMessage(statisticScene, AM_DATA, DT_QUESTIONOPTION, (LPARAM)g_Question.Option);
 
