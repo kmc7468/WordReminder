@@ -274,8 +274,9 @@ void DestroyQuestionType(QuestionType* questionType) {
 }
 bool IsUniqueMeaning(const QuestionType* questionType, const Meaning* const oldMeanings[], int numberOfOldMeanings, const Meaning* meaning) {
 	for (int i = 0; i < numberOfOldMeanings; ++i) {
-		if (questionType->Type == GuessMeaning && (oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Meaning, meaning->Meaning) == 0) ||
-			questionType->Type == GuessWord && (oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Meaning, meaning->Meaning) == 0) ||
+		if ((questionType->Type == GuessMeaning || questionType->Type == GuessWord) &&
+				(oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Meaning, meaning->Meaning) == 0 ||
+				questionType->Option == 2 && _tcscmp(oldMeanings[i]->Pronunciation, meaning->Pronunciation) == 0) ||
 			questionType->Type == GuessPronunciation && (oldMeanings[i]->Word == meaning->Word || _tcscmp(oldMeanings[i]->Pronunciation, meaning->Pronunciation) == 0)) return false;
 	}
 	return true;

@@ -139,7 +139,7 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 			if (isSelector) {
 				g_CheckedSelector = LOWORD(wParam) % 5;
 				if (g_Question.Type->Option != 2) {
-					g_CheckedPronunciationSelector = g_CheckedSelector;
+					g_CheckedPronunciationSelector = g_Question.PronunciationAnswer;
 				}
 			} else {
 				g_CheckedPronunciationSelector = LOWORD(wParam) % 5;
