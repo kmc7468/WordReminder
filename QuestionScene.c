@@ -147,6 +147,10 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 
 			if (g_CheckedSelector != -1 && g_CheckedPronunciationSelector != -1) {
 				if (g_CheckedSelector == g_Question.Answer && g_CheckedPronunciationSelector == g_Question.PronunciationAnswer) {
+					if (g_AnswerState != 0) {
+						g_Question.Meanings[g_CheckedSelector]->IsWrong = true;
+					}
+
 					SendMessage(g_Selectors[g_CheckedSelector], BM_SETSTATE, FALSE, 0);
 					SendMessage(g_PronunciationSelectors[g_CheckedPronunciationSelector], BM_SETSTATE, FALSE, 0);
 					g_CheckedSelector = -1;
@@ -157,6 +161,8 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 				} else {
 					int localAnswerState = 0;
 					if (g_CheckedSelector != g_Question.Answer) {
+						g_Question.Meanings[g_CheckedSelector]->IsWrong = true;
+
 						SendMessage(g_Selectors[g_CheckedSelector], BM_SETSTATE, FALSE, 0);
 						EnableWindow(g_Selectors[g_CheckedSelector], FALSE);
 						g_CheckedSelector = -1;
@@ -165,6 +171,13 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 						localAnswerState |= 1;
 					}
 					if (g_CheckedPronunciationSelector != g_Question.PronunciationAnswer && g_Question.Type->Option == 2) {
+						for (int i = 0; i < 5; ++i) {
+							if (g_Question.Pronunciations[i] == g_CheckedPronunciationSelector) {
+								g_Question.Meanings[i]->IsWrong = true;
+								break;
+							}
+						}
+
 						SendMessage(g_PronunciationSelectors[g_CheckedPronunciationSelector], BM_SETSTATE, FALSE, 0);
 						EnableWindow(g_PronunciationSelectors[g_CheckedPronunciationSelector], FALSE);
 						g_CheckedPronunciationSelector = -1;
@@ -186,9 +199,13 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 				}
 			}
 		} else switch (LOWORD(wParam)) {
-		case 10:
-			// TODO
+		case 10: {
+			const HWND statisticScene = CreateScene(MainWindow, StatisticSceneProc);
+			SendMessage(statisticScene, AM_DATA, DT_QUESTIONOPTION, (LPARAM)g_Question.Option);
+
+			DestroyWindow(ChangeScene(MainWindow, statisticScene));
 			break;
+		}
 		}
 		return 0;
 

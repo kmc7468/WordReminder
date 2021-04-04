@@ -3,6 +3,8 @@
 #include "Array.h"
 #include "WinAPI.h"
 
+#include <stdbool.h>
+
 typedef struct {
 	LPTSTR Word;
 	Array Meanings;
@@ -11,13 +13,14 @@ typedef struct {
 void CreateWord(Word* word);
 void CopyWord(Word* destination, const Word* source);
 int FindMeaning(const Word* word, LPCTSTR meaning);
+bool IsWrong(const Word* word);
 void DestroyWord(Word* word);
 
 typedef struct {
 	int Word;
 	LPTSTR Pronunciation;
 	LPTSTR Meaning;
-	int Wrong;
+	bool IsWrong;
 } Meaning;
 
 void CopyMeaning(Meaning* destination, const Meaning* source);
@@ -72,10 +75,10 @@ void DestroyQuestionOption(QuestionOption* questionOption);
 typedef struct {
 	QuestionOption* Option;
 	QuestionType* Type;
-	const Meaning* Meanings[5];
+	Meaning* Meanings[5];
 	int Answer;
 	int Pronunciations[5];
 	int PronunciationAnswer;
 } Question;
 
-void GenerateQuestion(Question* question, const Meaning* answer);
+void GenerateQuestion(Question* question, Meaning* answer);

@@ -28,6 +28,12 @@ int FindMeaning(const Word* word, LPCTSTR meaning) {
 	}
 	return -1;
 }
+bool IsWrong(const Word* word) {
+	for (int i = 0; i < word->Meanings.Count; ++i) {
+		if (GetMeaning((Word*)word, i)->IsWrong) return true;
+	}
+	return false;
+}
 void DestroyWord(Word* word) {
 	free(word->Word);
 
@@ -43,7 +49,7 @@ void CopyMeaning(Meaning* destination, const Meaning* source) {
 
 	_tcscpy(destination->Pronunciation, source->Pronunciation);
 	_tcscpy(destination->Meaning, source->Meaning);
-	destination->Wrong = source->Wrong;
+	destination->IsWrong = source->IsWrong;
 }
 void DestroyMeaning(Meaning* meaning) {
 	free(meaning->Pronunciation);
@@ -293,7 +299,7 @@ void DestroyQuestionOption(QuestionOption* questionOption) {
 	DestroyArray(&questionOption->Types);
 }
 
-void GenerateQuestion(Question* question, const Meaning* answer) {
+void GenerateQuestion(Question* question, Meaning* answer) {
 	const QuestionType* const prevQuestionType = question->Type;
 	do {
 		question->Type = GetElement(&question->Option->Types, rand() % question->Option->Types.Count);
@@ -312,7 +318,7 @@ void GenerateQuestion(Question* question, const Meaning* answer) {
 
 	for (int i = answer != NULL; i < question->Option->NumberOfSelectors; ++i) {
 		do {
-			Word* const word = GetWord((Vocabulary*)&question->Option->Vocabulary, rand() % question->Option->Vocabulary.Words.Count);
+			Word* const word = GetWord(&question->Option->Vocabulary, rand() % question->Option->Vocabulary.Words.Count);
 			question->Meanings[i] = GetMeaning(word, rand() % word->Meanings.Count);
 		} while (!IsUniqueMeaning(question->Type, question->Meanings, i, question->Meanings[i]));
 	}
