@@ -317,7 +317,7 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 		}
 
 		case 10: {
-			if (!IsUsableVocabulary(&g_VocabularyStatus.Vocabulary)) {
+			if (!IsUsableVocabulary(&g_VocabularyStatus.Vocabulary, GuessMeaning, 0)) {
 				MessageBox(handle, _T("다른 단어에는 없는 고유한 뜻을 가진 단어가 적어도 5개 이상 있어야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}

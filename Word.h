@@ -42,7 +42,6 @@ void AddWord(Vocabulary* vocabulary, Word* word);
 void RemoveWord(Vocabulary* vocabulary, int index);
 Word* GetWord(Vocabulary* vocabulary, int index);
 int FindWord(const Vocabulary* vocabulary, LPCTSTR word);
-bool IsUsableVocabulary(Vocabulary* vocabulary);
 void DestroyVocabulary(Vocabulary* vocabulary, bool destroyWords);
 
 typedef enum {
@@ -50,6 +49,8 @@ typedef enum {
 	GuessWord,
 	GuessPronunciation,
 } QuestionTypeType;
+
+bool IsUsableVocabulary(Vocabulary* vocabulary, QuestionTypeType questionType, int option);
 
 typedef struct {
 	QuestionTypeType Type;

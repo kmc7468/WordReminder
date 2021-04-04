@@ -158,7 +158,7 @@ LRESULT CALLBACK StatisticSceneProc(HWND handle, UINT message, WPARAM wParam, LP
 				vocabulary = g_VocabularyStatus.OriginalVocabulary;
 				g_VocabularyStatus.OriginalVocabulary = NULL;
 			} else {
-				if (!IsUsableVocabulary(g_VocabularyStatus.WrongVocabulary)) {
+				if (!IsUsableVocabulary(g_VocabularyStatus.WrongVocabulary, GuessMeaning, 0)) {
 					MessageBox(handle, _T("다른 단어에는 없는 고유한 뜻을 가진 단어를 적어도 5개 이상 틀렸어야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
 					break;
 				}
@@ -219,6 +219,7 @@ LRESULT CALLBACK StatisticSceneProc(HWND handle, UINT message, WPARAM wParam, LP
 void CreateVocabularyStatus(VocabularyStatus* vocabularyStatus, QuestionOption* questionOption) {
 	vocabularyStatus->OriginalVocabulary = calloc(1, sizeof(Vocabulary));
 	*vocabularyStatus->OriginalVocabulary = questionOption->Vocabulary;
+	DestroyQuestionOption(questionOption);
 	free(questionOption);
 
 	vocabularyStatus->WrongVocabulary = calloc(1, sizeof(Vocabulary));

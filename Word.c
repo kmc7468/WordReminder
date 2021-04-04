@@ -206,29 +206,6 @@ int FindWord(const Vocabulary* vocabulary, LPCTSTR word) {
 	}
 	return -1;
 }
-bool IsUsableVocabulary(Vocabulary* vocabulary) {
-	int uniqueWord = vocabulary->Words.Count;
-	for (int i = 1; i < vocabulary->Words.Count; ++i) {
-		Word* const word = GetWord(vocabulary, i);
-		int uniqueMeaning = word->Meanings.Count;
-		for (int j = 0; j < word->Meanings.Count; ++j) {
-			Meaning* const meaning = GetMeaning(word, j);
-
-			for (int k = 0; k < i; ++k) {
-				Word* const targetWord = GetWord(vocabulary, k);
-				for (int l = 0; l < targetWord->Meanings.Count; ++l) {
-					if (_tcscmp(meaning->Meaning, GetMeaning(targetWord, l)->Meaning) == 0) {
-						if (--uniqueMeaning == 0) goto next;
-					}
-				}
-			}
-
-		next:
-			if (uniqueMeaning == 0 && --uniqueWord < 5) return false;
-		}
-	}
-	return uniqueWord >= 5;
-}
 void DestroyVocabulary(Vocabulary* vocabulary, bool destroyWords) {
 	if (destroyWords) {
 		for (int i = 0; i < vocabulary->Words.Count; ++i) {
@@ -295,6 +272,57 @@ void WriteHomonymContainer(FILE* file, const Vocabulary* vocabulary) {
 	fwrite(&containerLength, sizeof(containerLength), 1, file);
 	fseek(file, 0, SEEK_END);
 }
+
+bool IsUsableVocabulary(Vocabulary* vocabulary, QuestionTypeType questionType, int option) {
+	Vocabulary uniqueVocabulary = { 0 };
+	CreateVocabulary(&uniqueVocabulary);
+
+	int uniqueWords = vocabulary->Words.Count;
+	for (int i = 0; i < vocabulary->Words.Count; ++i) {
+		Word uniqueWord = { 0 };
+		CreateWord(&uniqueWord);
+
+		Word* const word = GetWord(vocabulary, i);
+		int uniqueMeanings = word->Meanings.Count;
+		for (int j = 0; j < word->Meanings.Count; ++j) {
+			Meaning* const meaning = GetMeaning(word, j);
+
+			for (int k = 0; k <= i; ++k) {
+				if ((questionType == GuessMeaning || questionType == GuessWord) && k == i) break;
+
+				Word* const targetWord = GetWord(vocabulary, k);
+				for (int l = 0; l < targetWord->Meanings.Count; ++l) {
+					if (k == i && l == j) break;
+
+					if ((questionType == GuessMeaning || questionType == GuessWord) && _tcscmp(meaning->Meaning, GetMeaning(targetWord, l)->Meaning) == 0 ||
+						questionType == GuessPronunciation && _tcscmp(meaning->Pronunciation, GetMeaning(targetWord, l)->Pronunciation) == 0) {
+						--uniqueMeanings;
+						goto next;
+					}
+				}
+			}
+
+			AddMeaning(&uniqueWord, meaning);
+
+		next:
+			if (uniqueMeanings == 0 && --uniqueWords < 5) {
+				DestroyVocabulary(&uniqueVocabulary, false);
+				return false;
+			}
+		}
+
+		if (uniqueWord.Meanings.Count != 0) {
+			AddWord(&uniqueVocabulary, &uniqueWord);
+		}
+	}
+
+	if ((questionType == GuessMeaning || questionType == GuessWord) && option == 2) {
+		const bool result = IsUsableVocabulary(&uniqueVocabulary, GuessPronunciation, 0);
+		DestroyVocabulary(&uniqueVocabulary, false);
+		return result;
+	} else return uniqueWords >= 5;
+}
+
 
 void CreateQuestionType(QuestionType* questionType) {
 	CreateVocabulary(&questionType->UnusedVocabulary);
