@@ -395,7 +395,7 @@ void DestroyVocabularyStatus(VocabularyStatus* vocabularyStatus) {
 	memset(vocabularyStatus, 0, sizeof(*vocabularyStatus));
 }
 
-LRESULT ReturnAwarenessEditSubclassProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK ReturnAwarenessEditSubclassProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_KEYUP:
 		switch (wParam) {
