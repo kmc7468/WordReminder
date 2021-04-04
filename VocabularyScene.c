@@ -21,8 +21,6 @@ typedef struct {
 static void CreateVocabularyStatus(VocabularyStatus* vocabularyStatus);
 static void DestroyVocabularyStatus(VocabularyStatus* vocabularyStatus);
 
-static bool IsUsableVocabulary(Vocabulary* vocabulary);
-
 static HWND g_WordListStatic;
 static HWND g_WordList;
 
@@ -395,30 +393,6 @@ void CreateVocabularyStatus(VocabularyStatus* vocabularyStatus) {
 void DestroyVocabularyStatus(VocabularyStatus* vocabularyStatus) {
 	DestroyVocabulary(&vocabularyStatus->Vocabulary, true);
 	memset(vocabularyStatus, 0, sizeof(*vocabularyStatus));
-}
-
-bool IsUsableVocabulary(Vocabulary* vocabulary) {
-	int uniqueWord = vocabulary->Words.Count;
-	for (int i = 1; i < vocabulary->Words.Count; ++i) {
-		Word* const word = GetWord(vocabulary, i);
-		int uniqueMeaning = word->Meanings.Count;
-		for (int j = 0; j < word->Meanings.Count; ++j) {
-			Meaning* const meaning = GetMeaning(word, j);
-
-			for (int k = 0; k < i; ++k) {
-				Word* const targetWord = GetWord(vocabulary, k);
-				for (int l = 0; l < targetWord->Meanings.Count; ++l) {
-					if (_tcscmp(meaning->Meaning, GetMeaning(targetWord, l)->Meaning) == 0) {
-						if (--uniqueMeaning == 0) goto next;
-					}
-				}
-			}
-
-		next:
-			if (uniqueMeaning == 0 && --uniqueWord < 5) return false;
-		}
-	}
-	return uniqueWord >= 5;
 }
 
 LRESULT ReturnAwarenessEditSubclassProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam) {

@@ -153,7 +153,24 @@ LRESULT CALLBACK StatisticSceneProc(HWND handle, UINT message, WPARAM wParam, LP
 
 		case 6:
 		case 7: {
-			// TODO
+			Vocabulary* vocabulary;
+			if (LOWORD(wParam) == 6) {
+				vocabulary = g_VocabularyStatus.OriginalVocabulary;
+				g_VocabularyStatus.OriginalVocabulary = NULL;
+			} else {
+				if (!IsUsableVocabulary(g_VocabularyStatus.WrongVocabulary)) {
+					MessageBox(handle, _T("다른 단어에는 없는 고유한 뜻을 가진 단어를 적어도 5개 이상 틀렸어야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
+					break;
+				}
+
+				vocabulary = g_VocabularyStatus.WrongVocabulary;
+				g_VocabularyStatus.WrongVocabulary = NULL;
+			}
+
+			const HWND questionOptionScene = CreateScene(MainWindow, QuestionOptionSceneProc);
+			SendMessage(questionOptionScene, AM_DATA, DT_VOCABULARY, (LPARAM)vocabulary);
+
+			DestroyWindow(ChangeScene(MainWindow, questionOptionScene));
 			break;
 		}
 		}
@@ -201,9 +218,7 @@ LRESULT CALLBACK StatisticSceneProc(HWND handle, UINT message, WPARAM wParam, LP
 
 void CreateVocabularyStatus(VocabularyStatus* vocabularyStatus, QuestionOption* questionOption) {
 	vocabularyStatus->OriginalVocabulary = calloc(1, sizeof(Vocabulary));
-	CopyVocabulary(vocabularyStatus->OriginalVocabulary, &questionOption->Vocabulary);
-
-	DestroyVocabulary(&questionOption->Vocabulary, true);
+	*vocabularyStatus->OriginalVocabulary = questionOption->Vocabulary;
 	free(questionOption);
 
 	vocabularyStatus->WrongVocabulary = calloc(1, sizeof(Vocabulary));
@@ -213,6 +228,10 @@ void CreateVocabularyStatus(VocabularyStatus* vocabularyStatus, QuestionOption* 
 		if (IsWrong(word)) {
 			Word newWord = { 0 };
 			CopyWord(&newWord, word);
+			for (int j = 0; j < newWord.Meanings.Count; ++j) {
+				GetMeaning(&newWord, j)->Word = vocabularyStatus->WrongVocabulary->Words.Count;
+			}
+
 			AddWord(vocabularyStatus->WrongVocabulary, &newWord);
 
 			SendMessage(g_WordList, LB_ADDSTRING, 0, (LPARAM)word->Word);
@@ -220,10 +239,14 @@ void CreateVocabularyStatus(VocabularyStatus* vocabularyStatus, QuestionOption* 
 	}
 }
 void DestroyVocabularyStatus(VocabularyStatus* vocabularyStatus) {
-	DestroyVocabulary(vocabularyStatus->OriginalVocabulary, true);
-	DestroyVocabulary(vocabularyStatus->WrongVocabulary, true);
-	free(vocabularyStatus->OriginalVocabulary);
-	free(vocabularyStatus->WrongVocabulary);
+	if (vocabularyStatus->OriginalVocabulary) {
+		DestroyVocabulary(vocabularyStatus->OriginalVocabulary, true);
+		free(vocabularyStatus->OriginalVocabulary);
+	}
+	if (vocabularyStatus->WrongVocabulary) {
+		DestroyVocabulary(vocabularyStatus->WrongVocabulary, true);
+		free(vocabularyStatus->WrongVocabulary);
+	}
 
 	memset(vocabularyStatus, 0, sizeof(*vocabularyStatus));
 }

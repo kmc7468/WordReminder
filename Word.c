@@ -44,12 +44,13 @@ void DestroyWord(Word* word) {
 }
 
 void CopyMeaning(Meaning* destination, const Meaning* source) {
+	destination->Word = source->Word;
 	destination->Pronunciation = malloc(sizeof(TCHAR) * (_tcslen(source->Pronunciation) + 1));
 	destination->Meaning = malloc(sizeof(TCHAR) * (_tcslen(source->Meaning) + 1));
+	destination->IsWrong = source->IsWrong;
 
 	_tcscpy(destination->Pronunciation, source->Pronunciation);
 	_tcscpy(destination->Meaning, source->Meaning);
-	destination->IsWrong = source->IsWrong;
 }
 void DestroyMeaning(Meaning* meaning) {
 	free(meaning->Pronunciation);
@@ -204,6 +205,29 @@ int FindWord(const Vocabulary* vocabulary, LPCTSTR word) {
 		if (_tcscmp(GetWord((Vocabulary*)vocabulary, i)->Word, word) == 0) return i;
 	}
 	return -1;
+}
+bool IsUsableVocabulary(Vocabulary* vocabulary) {
+	int uniqueWord = vocabulary->Words.Count;
+	for (int i = 1; i < vocabulary->Words.Count; ++i) {
+		Word* const word = GetWord(vocabulary, i);
+		int uniqueMeaning = word->Meanings.Count;
+		for (int j = 0; j < word->Meanings.Count; ++j) {
+			Meaning* const meaning = GetMeaning(word, j);
+
+			for (int k = 0; k < i; ++k) {
+				Word* const targetWord = GetWord(vocabulary, k);
+				for (int l = 0; l < targetWord->Meanings.Count; ++l) {
+					if (_tcscmp(meaning->Meaning, GetMeaning(targetWord, l)->Meaning) == 0) {
+						if (--uniqueMeaning == 0) goto next;
+					}
+				}
+			}
+
+		next:
+			if (uniqueMeaning == 0 && --uniqueWord < 5) return false;
+		}
+	}
+	return uniqueWord >= 5;
 }
 void DestroyVocabulary(Vocabulary* vocabulary, bool destroyWords) {
 	if (destroyWords) {

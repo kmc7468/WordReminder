@@ -6,6 +6,7 @@
 
 static HWND g_SelectVocabularyStatic, g_SelectVocabularyButton;
 static LPCTSTR g_VocabularyPath;
+static Vocabulary* g_Vocabulary;
 
 static HWND g_QuestionTypeStatic;
 static HWND g_GuessMeaningCheckBox, g_GuessMeaningWithoutPronunciationRadioButton, g_GuessMeaningWithPronunciationRadioButton, g_GuessMeaningAndPronunciationRadioButton;
@@ -121,6 +122,29 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 
 	case AM_DESTROY:
 		g_VocabularyPath = NULL;
+
+		if (g_Vocabulary) {
+			DestroyVocabulary(g_Vocabulary, true);
+			free(g_Vocabulary);
+			g_Vocabulary = NULL;
+		}
+		return 0;
+
+	case AM_DATA:
+		switch (wParam) {
+		case DT_VOCABULARY:
+			g_Vocabulary = (Vocabulary*)lParam;
+			for (int i = 0; i < g_Vocabulary->Words.Count; ++i) {
+				Word* const word = GetWord(g_Vocabulary, i);
+				for (int j = 0; j < word->Meanings.Count; ++j) {
+					GetMeaning(word, j)->IsWrong = false;
+				}
+			}
+
+			SetWindowText(g_SelectVocabularyButton, _T("단어장 선택됨"));
+			SetWindowText(g_MainButton, _T("메인으로"));
+			break;
+		}
 		return 0;
 
 	case WM_COMMAND:
@@ -130,6 +154,12 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 			if (path) {
 				SetWindowText(g_SelectVocabularyButton, _T("단어장 선택됨"));
 				g_VocabularyPath = path;
+
+				if (g_Vocabulary) {
+					DestroyVocabulary(g_Vocabulary, true);
+					free(g_Vocabulary);
+					g_Vocabulary = NULL;
+				}
 			}
 			break;
 		}
@@ -144,7 +174,7 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 			break;
 
 		case 12: {
-			if (!g_VocabularyPath) {
+			if (!g_VocabularyPath && !g_Vocabulary) {
 				MessageBox(handle, _T("암기할 단어장을 선택해야 합니다."), _T("오류"), MB_OK | MB_ICONERROR);
 				break;
 			}
@@ -159,12 +189,17 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 
 			QuestionOption* option = calloc(1, sizeof(QuestionOption));
 			CreateQuestionOption(option);
-			if (!LoadVocabulary(&option->Vocabulary, g_VocabularyPath)) {
+			if (!g_Vocabulary && !LoadVocabulary(&option->Vocabulary, g_VocabularyPath)) {
 				MessageBox(handle, _T("단어장을 읽는 중 오류가 발생했습니다. 올바른 단어장인지 확인해 보십시오."), _T("경고"), MB_OK | MB_ICONERROR);
 
 				DestroyQuestionOption(option);
 				free(option);
 				break;
+			} else if (g_Vocabulary) {
+				option->Vocabulary = *g_Vocabulary;
+
+				free(g_Vocabulary);
+				g_Vocabulary = NULL;
 			}
 
 			if (guessMeaning) {

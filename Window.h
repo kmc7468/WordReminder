@@ -71,6 +71,7 @@ switch (message)
 #define AM_DATA				WM_APP + 7
 
 #define DT_QUESTIONOPTION	(WPARAM)0
+#define DT_VOCABULARY		(WPARAM)1
 
 #define AM_USER				WM_USER + 2
 

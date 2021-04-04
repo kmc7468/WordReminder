@@ -110,6 +110,7 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 		return 0;
 
 	case AM_DESTROY:
+		memset(&g_Question, 0, sizeof(g_Question));
 		g_AnswerState = 0;
 
 		g_CheckedSelector = -1;
