@@ -6,6 +6,7 @@
 static HWND g_DescriptionStatic;
 static HWND g_QuestionStatic, g_HintStatic;
 static Question g_Question;
+static int g_AnswerState = 0;
 
 static HWND g_Selectors[5];
 static HWND g_PronunciationSelectors[5];
@@ -108,6 +109,13 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 		SetSceneTitle(handle, _T("단어 암기하기"));
 		return 0;
 
+	case AM_DESTROY:
+		g_AnswerState = 0;
+
+		g_CheckedSelector = -1;
+		g_CheckedPronunciationSelector = -1;
+		return 0;
+
 	case AM_DATA:
 		switch (wParam) {
 		case DT_QUESTIONOPTION:
@@ -145,20 +153,38 @@ LRESULT CALLBACK QuestionSceneProc(HWND handle, UINT message, WPARAM wParam, LPA
 					g_CheckedSelector = -1;
 					g_CheckedPronunciationSelector = -1;
 
+					g_AnswerState = 0;
 					UpdateQuestion(GetUIEngine(handle), true);
 				} else {
+					int localAnswerState = 0;
 					if (g_CheckedSelector != g_Question.Answer) {
 						SendMessage(g_Selectors[g_CheckedSelector], BM_SETSTATE, FALSE, 0);
 						EnableWindow(g_Selectors[g_CheckedSelector], FALSE);
 						g_CheckedSelector = -1;
+
+						g_AnswerState |= 1;
+						localAnswerState |= 1;
 					}
-					if (g_CheckedPronunciationSelector != g_Question.Answer) {
+					if (g_CheckedPronunciationSelector != g_Question.Answer &&
+						g_Question.Type->Option == 2) {
 						SendMessage(g_PronunciationSelectors[g_CheckedPronunciationSelector], BM_SETSTATE, FALSE, 0);
 						EnableWindow(g_PronunciationSelectors[g_CheckedPronunciationSelector], FALSE);
 						g_CheckedPronunciationSelector = -1;
+
+						g_AnswerState |= 2;
+						localAnswerState |= 2;
 					}
 
-					// TODO
+					static const LPCTSTR wrongDescription[] = {
+						_T("단어를 잘못 골랐습니다"), _T("뜻을 잘못 골랐습니다"), _T("발음을 잘못 골랐습니다"),
+						_T("단어와 발음을 잘못 골랐습니다"), _T("뜻과 발음을 잘못 골랐습니다"),
+					};
+					static const int wrongDescriptionTable[3][4] = {
+						{ -1, 1, 2, 4 },
+						{ -1, 0, 2, 3 },
+						{ -1, 2, -1, -1 },
+					};
+					SetWindowText(g_DescriptionStatic, wrongDescription[wrongDescriptionTable[g_Question.Type->Type][localAnswerState]]);
 				}
 			}
 		} else switch (LOWORD(wParam)) {
