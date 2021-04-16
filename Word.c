@@ -273,17 +273,18 @@ void WriteHomonymContainer(FILE* file, const Vocabulary* vocabulary) {
 	fseek(file, 0, SEEK_END);
 }
 
-static bool IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVocabulary, QuestionTypeType questionType, int option);
+static int IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVocabulary, QuestionTypeType questionType, int option);
 
-bool IsUsableVocabulary(Vocabulary* vocabulary, QuestionTypeType questionType, int option) {
+int IsUsableVocabulary(Vocabulary* vocabulary, QuestionTypeType questionType, int option) {
 	return IsUsableVocabularyInternal(vocabulary, vocabulary, questionType, option);
 }
 
-bool IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVocabulary, QuestionTypeType questionType, int option) {
+int IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVocabulary, QuestionTypeType questionType, int option) {
 	Vocabulary uniqueVocabulary = { 0 };
 	CreateVocabulary(&uniqueVocabulary);
 
 	int uniqueWords = vocabulary->Words.Count;
+	int result = 0;
 	for (int i = 0; i < vocabulary->Words.Count; ++i) {
 		Word uniqueWord = { 0 };
 		CreateWord(&uniqueWord);
@@ -313,12 +314,13 @@ bool IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVoca
 				}
 			}
 
+			++result;
 			AddMeaning(&uniqueWord, meaning);
 
 		next:
 			if (uniqueMeanings == 0 && --uniqueWords < 5) {
 				DestroyVocabulary(&uniqueVocabulary, false);
-				return false;
+				return 0;
 			}
 		}
 
@@ -328,10 +330,11 @@ bool IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVoca
 	}
 
 	if ((questionType == GuessMeaning || questionType == GuessWord) && option == 2) {
-		const bool result = IsUsableVocabularyInternal(&uniqueVocabulary, vocabulary, GuessPronunciation, 0);
+		result = IsUsableVocabularyInternal(&uniqueVocabulary, vocabulary, GuessPronunciation, 0);
 		DestroyVocabulary(&uniqueVocabulary, false);
 		return result;
-	} else return uniqueWords >= 5;
+	} else if (uniqueWords >= 5) return result;
+	else return 0;
 }
 
 void CreateQuestionType(QuestionType* questionType) {

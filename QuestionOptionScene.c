@@ -210,19 +210,22 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 				if ((bool)SendMessage(g_GuessMeaningWithPronunciationRadioButton, BM_GETCHECK, 0, 0)) {
 					type.Option = 1;
 				} else if ((bool)SendMessage(g_GuessMeaningAndPronunciationRadioButton, BM_GETCHECK, 0, 0)) {
-					if (!IsUsableVocabulary(&option->Vocabulary, GuessMeaning, 2)) {
-						MessageBox(handle, _T("다른 단어에는 없는 고유한 뜻과 발음을 가진 단어가 적어도 5개 이상 있어야 발음도 맞히기 옵션을 사용할 수 있습니다."), _T("오류"), MB_OK | MB_ICONERROR);
-
-						g_Vocabulary = malloc(sizeof(Vocabulary));
-						*g_Vocabulary = option->Vocabulary;
-						DestroyQuestionOption(option);
-						DestroyQuestionType(&type);
-						free(option);
-						break;
-					}
-
 					type.Option = 2;
 				}
+
+				const int unique = IsUsableVocabulary(&option->Vocabulary, type.Type, type.Option);
+				if (!unique) {
+					MessageBox(handle, _T("다른 단어에는 없는 고유한 뜻과 발음을 가진 단어가 적어도 5개 이상 있어야 발음도 맞히기 옵션을 사용할 수 있습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+
+					g_Vocabulary = malloc(sizeof(Vocabulary));
+					*g_Vocabulary = option->Vocabulary;
+					DestroyQuestionType(&type);
+					DestroyQuestionOption(option);
+					free(option);
+					break;
+				}
+
+				option->TotalQuestions += unique;
 
 				AddElement(&option->Types, &type);
 			}
@@ -234,42 +237,50 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 				if ((bool)SendMessage(g_GuessWordWithPronunciationRadioButton, BM_GETCHECK, 0, 0)) {
 					type.Option = 1;
 				} else if ((bool)SendMessage(g_GuessWordAndPronunciationRadioButton, BM_GETCHECK, 0, 0)) {
-					if (!IsUsableVocabulary(&option->Vocabulary, GuessMeaning, 2)) {
-						MessageBox(handle, _T("다른 단어에는 없는 고유한 뜻과 발음을 가진 단어가 적어도 5개 이상 있어야 발음도 맞히기 옵션을 사용할 수 있습니다."), _T("오류"), MB_OK | MB_ICONERROR);
-
-						g_Vocabulary = malloc(sizeof(Vocabulary));
-						*g_Vocabulary = option->Vocabulary;
-						DestroyQuestionOption(option);
-						DestroyQuestionType(&type);
-						free(option);
-						break;
-					}
-
 					type.Option = 2;
 				}
 
-				AddElement(&option->Types, &type);
-			}
-			if (guessPronunciation) {
-				if (!IsUsableVocabulary(&option->Vocabulary, GuessPronunciation, 0)) {
-					MessageBox(handle, _T("다른 단어에는 없는 고유한 발음을 가진 단어가 적어도 5개 이상 있어야 단어와 뜻 보고 단어 맞추기 유형을 사용할 수 있습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+				const int unique = IsUsableVocabulary(&option->Vocabulary, GuessWord, 2);
+				if (!unique) {
+					MessageBox(handle, _T("다른 단어에는 없는 고유한 뜻과 발음을 가진 단어가 적어도 5개 이상 있어야 발음도 맞히기 옵션을 사용할 수 있습니다."), _T("오류"), MB_OK | MB_ICONERROR);
 
 					g_Vocabulary = malloc(sizeof(Vocabulary));
 					*g_Vocabulary = option->Vocabulary;
+					DestroyQuestionType(&type);
 					DestroyQuestionOption(option);
 					free(option);
 					break;
 				}
 
+				option->TotalQuestions += unique;
+
+				AddElement(&option->Types, &type);
+			}
+			if (guessPronunciation) {
 				QuestionType type = { 0 };
 				CreateQuestionType(&type);
 
 				type.Type = GuessPronunciation;
 
+				const int unique = IsUsableVocabulary(&option->Vocabulary, GuessPronunciation, 0);
+				if (!unique) {
+					MessageBox(handle, _T("다른 단어에는 없는 고유한 발음을 가진 단어가 적어도 5개 이상 있어야 단어와 뜻 보고 단어 맞추기 유형을 사용할 수 있습니다."), _T("오류"), MB_OK | MB_ICONERROR);
+
+					g_Vocabulary = malloc(sizeof(Vocabulary));
+					*g_Vocabulary = option->Vocabulary;
+					DestroyQuestionType(&type);
+					DestroyQuestionOption(option);
+					free(option);
+					break;
+				}
+
+				option->TotalQuestions += unique;
+
 				AddElement(&option->Types, &type);
 			}
 
 			option->ExcludeDuplicatedAnswer = (bool)SendMessage(g_ExcludeDuplicatedAnswerCheckBox, BM_GETCHECK, 0, 0);
+			option->RemainingQuestions = option->TotalQuestions;
 
 			Setting.GuessMeaning = guessMeaning;
 			Setting.GuessMeaningWithPronunciation = ((bool)SendMessage(g_GuessMeaningWithPronunciationRadioButton, BM_GETCHECK, 0, 0) ? 1

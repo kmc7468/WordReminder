@@ -50,7 +50,7 @@ typedef enum {
 	GuessPronunciation,
 } QuestionTypeType;
 
-bool IsUsableVocabulary(Vocabulary* vocabulary, QuestionTypeType questionType, int option);
+int IsUsableVocabulary(Vocabulary* vocabulary, QuestionTypeType questionType, int option);
 
 typedef struct {
 	QuestionTypeType Type;
@@ -69,6 +69,7 @@ typedef struct {
 	int NumberOfSelectors;
 
 	bool ExcludeDuplicatedAnswer;
+	int RemainingQuestions, TotalQuestions;
 } QuestionOption;
 
 void CreateQuestionOption(QuestionOption* questionOption);

@@ -6,7 +6,6 @@
 static HWND g_DescriptionStatic;
 static HWND g_QuestionStatic, g_HintStatic;
 static Question g_Question;
-static int g_RemainingQuestions = -1, g_TotalQuestions = -1;
 static int g_AnswerState = 0;
 
 static HWND g_Selectors[5];
@@ -125,22 +124,10 @@ UIMARG_CON(enabledPronunciationSelector, Left, 5);
 			g_Question.Option->NumberOfSelectors = 5;
 
 			if (g_Question.Option->ExcludeDuplicatedAnswer) {
-				g_RemainingQuestions = 0;
-
 				for (int i = 0; i < g_Question.Option->Types.Count; ++i) {
 					QuestionType* const type = (QuestionType*)GetElement(&g_Question.Option->Types, i);
 					CopyVocabulary(&type->UnusedVocabulary, &g_Question.Option->Vocabulary);
-
-					if (i == 0) {
-						for (int j = 0; j < type->UnusedVocabulary.Words.Count; ++j) {
-							g_RemainingQuestions += GetWord(&type->UnusedVocabulary, j)->Meanings.Count;
-						}
-						g_RemainingQuestions *= g_Question.Option->Types.Count;
-						g_TotalQuestions = g_RemainingQuestions;
-					}
 				}
-			} else {
-				g_RemainingQuestions = -1;
 			}
 
 			UpdateQuestion(handle, GetUIEngine(handle), true);
@@ -184,7 +171,7 @@ UIMARG_CON(enabledPronunciationSelector, Left, 5);
 										RemoveWord(&g_Question.Type->UnusedVocabulary, i);
 									}
 
-									--g_RemainingQuestions;
+									--g_Question.Option->RemainingQuestions;
 									goto complete;
 								}
 							}
@@ -307,7 +294,7 @@ void UpdateQuestion(HWND handle, UIEngine* uiEngine, bool generateQuestion) {
 	const int oldTypeOption = g_Question.Type ? g_Question.Type->Option : 0;
 
 	if (generateQuestion) {
-		if (g_RemainingQuestions == 0) {
+		if (g_Question.Option->ExcludeDuplicatedAnswer && g_Question.Option->RemainingQuestions == 0) {
 			MessageBox(handle, _T("모든 문제를 풀었습니다. 단어 암기를 종료합니다."), _T("정보"), MB_OK | MB_ICONINFORMATION);
 			SendMessage(g_StopButton, BM_CLICK, 0, 0);
 			return;
@@ -386,8 +373,8 @@ void UpdateQuestion(HWND handle, UIEngine* uiEngine, bool generateQuestion) {
 
 	if (g_Question.Option->ExcludeDuplicatedAnswer) {
 		TCHAR number[20] = { 0 }, total[20] = { 0 };
-		_itot(g_TotalQuestions - g_RemainingQuestions + 1, number, 10);
-		_itot(g_TotalQuestions, total, 10);
+		_itot(g_Question.Option->TotalQuestions - g_Question.Option->RemainingQuestions + 1, number, 10);
+		_itot(g_Question.Option->TotalQuestions, total, 10);
 
 		LPTSTR realDescription = malloc(sizeof(TCHAR) * (_tcslen(description) + 2 + _tcslen(number) + 1 + _tcslen(total) + 1 + 1));
 		_tcscpy(realDescription, description);
