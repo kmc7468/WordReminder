@@ -25,8 +25,14 @@ bool InitializeApplication(HINSTANCE instance) {
 	RegisterWindow(_T("SceneWindow"), SceneWindowProc);
 	RegisterWindow(_T("Scene"), SceneProc);
 
+	LoadSetting();
+
 	g_GlobalFont.lfCharSet = HANGUL_CHARSET;
-	_tcscpy(g_GlobalFont.lfFaceName, _T("³ª´®°íµñ"));
+	if (Setting.FontName && _tcslen(Setting.FontName) < ARRAYSIZE(g_GlobalFont.lfFaceName) - 1) {
+		_tcscpy(g_GlobalFont.lfFaceName, Setting.FontName);
+	} else {
+		_tcscpy(g_GlobalFont.lfFaceName, _T("³ª´®°íµñ"));
+	}
 
 	g_FileDialog.lpstrDefExt = _T("kv");
 	g_FileDialog.lpstrFile = g_FileDialogPath;
@@ -39,8 +45,6 @@ bool InitializeApplication(HINSTANCE instance) {
 		g_FileDialog.lpstrInitialDir = desktop;
 	}
 
-	LoadSetting();
-
 	MainWindow = CreateSceneWindow(MainWindowProc, MainSceneProc);
 
 	WSADATA data;
@@ -48,6 +52,7 @@ bool InitializeApplication(HINSTANCE instance) {
 }
 void DestroyApplication() {
 	SaveSetting();
+	free(Setting.FontName);
 	free(Setting.ServerIp);
 
 	WSACleanup();
@@ -82,6 +87,10 @@ static void WriteString(HKEY key, LPCTSTR name, LPCTSTR data);
 void LoadSetting() {
 	HKEY key;
 	if (RegOpenKey(HKEY_CURRENT_USER, _T("SOFTWARE\\Staticom\\WordReminder"), &key) != ERROR_SUCCESS) return;
+
+	// Global
+	Setting.FontName = ReadString(key, _T("FontName"));
+	Setting.Scale = ReadDWord(key, _T("Scale"), 100);
 
 	// QuestionOptionScene
 	Setting.GuessMeaning = (bool)ReadDWord(key, _T("GuessMeaning"), false);

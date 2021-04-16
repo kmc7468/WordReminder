@@ -19,6 +19,10 @@ LPCTSTR ShowOpenFileDialog(HWND window);
 LPCTSTR ShowSaveFileDialog(HWND window);
 
 typedef struct {
+	// Global
+	LPTSTR FontName;
+	int Scale;
+
 	// QuestionOptionScene
 	bool GuessMeaning;
 	int GuessMeaningWithPronunciation;

@@ -15,8 +15,8 @@ bool IsHiDPIAvailable() {
 }
 
 UINT GetDpiForWindowSafely(HWND window) {
-	if (IsHiDPIAvailable()) return GetDpiForWindow(window);
-	else return USER_DEFAULT_SCREEN_DPI;
+	const UINT windowDpi = IsHiDPIAvailable() ? GetDpiForWindow(window) : USER_DEFAULT_SCREEN_DPI;
+	return MulDiv(windowDpi, Setting.Scale, 100);
 }
 BOOL AdjustWindowRectExForDpiSafely(LPRECT rect, DWORD style, BOOL hasMenu, DWORD exStyle, UINT dpi) {
 	if (IsHiDPIAvailable()) return AdjustWindowRectExForDpi(rect, style, hasMenu, exStyle, dpi);
