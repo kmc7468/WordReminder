@@ -365,12 +365,15 @@ void UpdateQuestion(HWND handle, UIEngine* uiEngine, bool generateQuestion) {
 		SetWindowText(g_QuestionStatic, GetWord(&g_Question.Option->Vocabulary, g_Question.Meanings[g_Question.Answer]->Word)->Word);
 		if (g_Question.Type->Option == 1) {
 			SetWindowText(g_HintStatic, g_Question.Meanings[g_Question.Answer]->Pronunciation);
+		} else {
+			SetWindowText(g_HintStatic, NULL);
 		}
 		break;
 
 	case GuessWord:
 		description = _T("다음 뜻을 가진 단어는?");
 		SetWindowText(g_QuestionStatic, g_Question.Meanings[g_Question.Answer]->Meaning);
+		SetWindowText(g_HintStatic, NULL);
 		break;
 
 	case GuessPronunciation:
