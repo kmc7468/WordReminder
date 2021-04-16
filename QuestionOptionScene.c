@@ -240,7 +240,7 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 					type.Option = 2;
 				}
 
-				const int unique = IsUsableVocabulary(&option->Vocabulary, GuessWord, 2);
+				const int unique = IsUsableVocabulary(&option->Vocabulary, type.Type, type.Option);
 				if (!unique) {
 					MessageBox(handle, _T("다른 단어에는 없는 고유한 뜻과 발음을 가진 단어가 적어도 5개 이상 있어야 발음도 맞히기 옵션을 사용할 수 있습니다."), _T("오류"), MB_OK | MB_ICONERROR);
 
@@ -262,7 +262,7 @@ LRESULT CALLBACK QuestionOptionSceneProc(HWND handle, UINT message, WPARAM wPara
 
 				type.Type = GuessPronunciation;
 
-				const int unique = IsUsableVocabulary(&option->Vocabulary, GuessPronunciation, 0);
+				const int unique = IsUsableVocabulary(&option->Vocabulary, type.Type, type.Option);
 				if (!unique) {
 					MessageBox(handle, _T("다른 단어에는 없는 고유한 발음을 가진 단어가 적어도 5개 이상 있어야 단어와 뜻 보고 단어 맞추기 유형을 사용할 수 있습니다."), _T("오류"), MB_OK | MB_ICONERROR);
 

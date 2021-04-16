@@ -284,12 +284,14 @@ int IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVocab
 	CreateVocabulary(&uniqueVocabulary);
 
 	int uniqueWords = vocabulary->Words.Count;
-	int result = 0;
+	int result = 0, total = 0;
 	for (int i = 0; i < vocabulary->Words.Count; ++i) {
 		Word uniqueWord = { 0 };
 		CreateWord(&uniqueWord);
 
 		Word* const word = GetWord(vocabulary, i);
+		total += word->Meanings.Count;
+
 		int uniqueMeanings = word->Meanings.Count;
 		for (int j = 0; j < word->Meanings.Count; ++j) {
 			Meaning* const meaning = GetMeaning(word, j);
@@ -333,7 +335,8 @@ int IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVocab
 		result = IsUsableVocabularyInternal(&uniqueVocabulary, vocabulary, GuessPronunciation, 0);
 		DestroyVocabulary(&uniqueVocabulary, false);
 		return result;
-	} else if (uniqueWords >= 5) return result;
+	} else if ((questionType == GuessMeaning || questionType == GuessWord) && option != 2) return total;
+	else if (uniqueWords >= 5) return result;
 	else return 0;
 }
 
