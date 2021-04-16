@@ -123,9 +123,17 @@ LRESULT CALLBACK StatisticSceneProc(HWND handle, UINT message, WPARAM wParam, LP
 		DestroyVocabularyStatus(&g_VocabularyStatus);
 		return 0;
 
-	case AM_DATA:
+	case AM_DATA: {
 		CreateVocabularyStatus(&g_VocabularyStatus, (QuestionOption*)lParam);
+
+		TCHAR text[100] = _T("틀린 단어 목록("), count[100];
+		_itot(g_VocabularyStatus.WrongVocabulary->Words.Count, count, 10);
+		_tcscat(text, count);
+		_tcscat(text, _T("개)"));
+
+		SetWindowText(g_WordListStatic, text);
 		return 0;
+	}
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
