@@ -363,7 +363,8 @@ void UpdateQuestion(HWND handle, UIEngine* uiEngine, bool generateQuestion) {
 	case GuessMeaning:
 		description = _T("다음 단어의 뜻은?");
 		SetWindowText(g_QuestionStatic, GetWord(&g_Question.Option->Vocabulary, g_Question.Meanings[g_Question.Answer]->Word)->Word);
-		if (g_Question.Type->Option == 1) {
+		if (g_Question.Type->Option == 1 && g_Question.Meanings[g_Question.Answer]->Pronunciation[0] != 0 &&
+			_tcscmp(g_Question.Meanings[g_Question.Answer]->Pronunciation, GetWord(&g_Question.Option->Vocabulary, g_Question.Meanings[g_Question.Answer]->Word)->Word) != 0) {
 			SetWindowText(g_HintStatic, g_Question.Meanings[g_Question.Answer]->Pronunciation);
 		} else {
 			SetWindowText(g_HintStatic, NULL);
@@ -409,7 +410,8 @@ void UpdateQuestion(HWND handle, UIEngine* uiEngine, bool generateQuestion) {
 			SetWindowText(g_Selectors[i], g_Question.Meanings[i]->Pronunciation);
 		} else {
 			const Word* const word = GetWord(&g_Question.Option->Vocabulary, g_Question.Meanings[i]->Word);
-			if (g_Question.Type->Option != 1) {
+			if (g_Question.Type->Option != 1 || g_Question.Meanings[i]->Pronunciation[0] == 0 ||
+				_tcscmp(g_Question.Meanings[i]->Pronunciation, GetWord(&g_Question.Option->Vocabulary, g_Question.Meanings[i]->Word)->Word) == 0) {
 				SetWindowText(g_Selectors[i], word->Word);
 			} else {
 				LPTSTR text = malloc(sizeof(TCHAR) * (_tcslen(word->Word) + _tcslen(g_Question.Meanings[i]->Pronunciation) + 4));

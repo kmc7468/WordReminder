@@ -273,7 +273,13 @@ void WriteHomonymContainer(FILE* file, const Vocabulary* vocabulary) {
 	fseek(file, 0, SEEK_END);
 }
 
+static bool IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVocabulary, QuestionTypeType questionType, int option);
+
 bool IsUsableVocabulary(Vocabulary* vocabulary, QuestionTypeType questionType, int option) {
+	return IsUsableVocabularyInternal(vocabulary, vocabulary, questionType, option);
+}
+
+bool IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVocabulary, QuestionTypeType questionType, int option) {
 	Vocabulary uniqueVocabulary = { 0 };
 	CreateVocabulary(&uniqueVocabulary);
 
@@ -286,6 +292,11 @@ bool IsUsableVocabulary(Vocabulary* vocabulary, QuestionTypeType questionType, i
 		int uniqueMeanings = word->Meanings.Count;
 		for (int j = 0; j < word->Meanings.Count; ++j) {
 			Meaning* const meaning = GetMeaning(word, j);
+			if (questionType == GuessPronunciation &&
+				(meaning->Pronunciation[0] == 0 || _tcscmp(meaning->Pronunciation, GetWord(originalVocabulary, meaning->Word)->Word) == 0)) {
+				--uniqueMeanings;
+				goto next;
+			}
 
 			for (int k = 0; k <= i; ++k) {
 				if ((questionType == GuessMeaning || questionType == GuessWord) && k == i) break;
@@ -317,12 +328,11 @@ bool IsUsableVocabulary(Vocabulary* vocabulary, QuestionTypeType questionType, i
 	}
 
 	if ((questionType == GuessMeaning || questionType == GuessWord) && option == 2) {
-		const bool result = IsUsableVocabulary(&uniqueVocabulary, GuessPronunciation, 0);
+		const bool result = IsUsableVocabularyInternal(&uniqueVocabulary, vocabulary, GuessPronunciation, 0);
 		DestroyVocabulary(&uniqueVocabulary, false);
 		return result;
 	} else return uniqueWords >= 5;
 }
-
 
 void CreateQuestionType(QuestionType* questionType) {
 	CreateVocabulary(&questionType->UnusedVocabulary);
@@ -362,7 +372,8 @@ void GenerateQuestion(Question* question, Meaning* answer) {
 		do {
 			Word* const word = GetWord(&question->Type->UnusedVocabulary, rand() % question->Type->UnusedVocabulary.Words.Count);
 			answer = GetMeaning(word, rand() % word->Meanings.Count);
-		} while (oldAnswer && !IsUniqueMeaning(prevQuestionType, &oldAnswer, 1, answer));
+		} while ((((question->Type->Type == GuessMeaning || question->Type->Type == GuessWord) && question->Type->Option == 2) || question->Type->Type == GuessPronunciation) && (answer->Pronunciation[0] == 0 || _tcscmp(answer->Pronunciation, GetWord(&question->Option->Vocabulary, answer->Word)->Word) == 0) ||
+			oldAnswer && !IsUniqueMeaning(prevQuestionType, &oldAnswer, 1, answer));
 
 		for (int i = 0; i < question->Option->Vocabulary.Words.Count; ++i) {
 			Word* const word = GetWord(&question->Option->Vocabulary, i);
@@ -386,7 +397,8 @@ void GenerateQuestion(Question* question, Meaning* answer) {
 		do {
 			Word* const word = GetWord(&question->Option->Vocabulary, rand() % question->Option->Vocabulary.Words.Count);
 			question->Meanings[i] = GetMeaning(word, rand() % word->Meanings.Count);
-		} while (!IsUniqueMeaning(question->Type, question->Meanings, i, question->Meanings[i]));
+		} while ((((question->Type->Type == GuessMeaning || question->Type->Type == GuessWord) && question->Type->Option == 2) || question->Type->Type == GuessPronunciation) && (question->Meanings[i]->Pronunciation[0] == 0 || _tcscmp(question->Meanings[i]->Pronunciation, GetWord(&question->Option->Vocabulary, question->Meanings[i]->Word)->Word) == 0) ||
+			!IsUniqueMeaning(question->Type, question->Meanings, i, question->Meanings[i]));
 	}
 
 	if (answer) {
