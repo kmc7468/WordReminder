@@ -340,6 +340,62 @@ int IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVocab
 	else return 0;
 }
 
+static bool ExportVocabularyAsCsv(const Vocabulary* vocabulary, LPCTSTR path);
+
+bool ExportVocabulary(const Vocabulary* vocabulary, ExportType type, LPCTSTR path) {
+	switch (type) {
+	case Csv: return ExportVocabularyAsCsv(vocabulary, path);
+	}
+}
+
+bool ExportVocabularyAsCsv(const Vocabulary* vocabulary, LPCTSTR path) {
+	FILE* const file = _tfopen(path, _T("wb"));
+	if (!file) return false;
+
+	for (int i = 0; i < vocabulary->Words.Count; ++i) {
+		Word* const word = GetWord((Vocabulary*)vocabulary, i);
+
+		const LPSTR wordUTF8 = EncodeToUTF8(word->Word);
+		fputc('\"', file);
+		fwrite(wordUTF8, 1, strlen(wordUTF8), file);
+		fputs("\",\"", file);
+		free(wordUTF8);
+
+		for (int j = 0; j < word->Meanings.Count; ++j) {
+			Meaning* const meaning = GetMeaning(word, j);
+			if (j != 0) {
+				fputs(",\n", file);
+			}
+
+			const LPSTR meaningUTF8 = EncodeToUTF8(meaning->Meaning);
+			fwrite(meaningUTF8, 1, strlen(meaningUTF8), file);
+			free(meaningUTF8);
+		}
+		fputs("\",\"", file);
+
+		bool prevHasPronunciation = false;
+		for (int j = 0; j < word->Meanings.Count; ++j) {
+			Meaning* const meaning = GetMeaning(word, j);
+			if (prevHasPronunciation) {
+				fputs(",\n", file);
+			} else if (j != 0) {
+				fputs("\n", file);
+			}
+
+			const LPSTR pronunciationUTF8 = EncodeToUTF8(meaning->Pronunciation);
+			fwrite(pronunciationUTF8, 1, strlen(pronunciationUTF8), file);
+			free(pronunciationUTF8);
+
+			prevHasPronunciation = (_tcslen(meaning->Pronunciation) != 0 &&
+				_tcscmp(GetWord((Vocabulary*)vocabulary, meaning->Word), meaning->Pronunciation) != 0);
+		}
+		fputs("\"\n", file);
+	}
+
+	fclose(file);
+	return true;
+}
+
 void CreateQuestionType(QuestionType* questionType) {
 	CreateVocabulary(&questionType->UnusedVocabulary);
 }

@@ -1,8 +1,13 @@
 #include "Application.h"
 
+#include "String.h"
 #include "Window.h"
+#include "Word.h"
 
+#include <fcntl.h>
+#include <io.h>
 #include <ShlObj.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -174,4 +179,79 @@ void StartThread(Thread* thread, LPTHREAD_START_ROUTINE function, LPVOID param) 
 void DestroyThread(Thread* thread) {
 	CloseHandle(thread->Handle);
 	thread->Handle = NULL;
+}
+
+static void RunVocabularyEditor(FILE* stream, int argc, LPWSTR* argv);
+
+bool ProcessCommandLineArguments(LPWSTR cmdArgs) {
+	if (wcslen(cmdArgs) == 0) return false;
+
+	int argc;
+	LPWSTR* const argv = CommandLineToArgvW(cmdArgs, &argc);
+	if (!argv) return false;
+
+	FILE* stream = NULL;
+	if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+		const HANDLE streamHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		const int fd = _open_osfhandle((intptr_t)streamHandle, _O_TEXT);
+		if (fd > 0) {
+			stream = _fdopen(fd, "w");
+		}
+	} else {
+		LocalFree(argv);
+		return false;
+	}
+
+	if (wcscmp(argv[0], L"help") == 0) {
+		fprintf(stream,
+			"사용법: ./WordReminder.exe <도구> [인수...]\n\n"
+			"도구:\n"
+			"  vocabulary        단어장 편집\n");
+	} else if (wcscmp(argv[0], L"vocabulary") == 0) {
+		RunVocabularyEditor(stream, argc, argv);
+	}
+
+	LocalFree(argv);
+	return true;
+}
+
+void RunVocabularyEditor(FILE* stream, int argc, LPWSTR* argv) {
+	if (wcscmp(argv[1], L"help") == 0) {
+		fprintf(stream,
+			"사용법: ./WordReminder.exe vocabulary export <csv> <단어장 경로> <내보낼 경로>\n");
+	} else if (wcscmp(argv[1], L"export") == 0) {
+		if (argc == 5) {
+			ExportType type;
+			if (wcscmp(argv[2], L"csv") == 0) {
+				type = Csv;
+			} else {
+				fprintf(stream, "오류: '%ws'는 알 수 없는 유형입니다.", argv[2]);
+				return;
+			}
+
+			const LPTSTR vocabularyPath = MakeGenericString(argv[3]);
+			const LPTSTR exportPath = MakeGenericString(argv[4]);
+
+			Vocabulary vocabulary = { 0 };
+			CreateVocabulary(&vocabulary);
+			if (LoadVocabulary(&vocabulary, vocabularyPath)) {
+				if (ExportVocabulary(&vocabulary, type, exportPath)) {
+					fprintf(stream, "성공!\n");
+				} else {
+					fprintf(stream, "오류: 단어장을 내보내지 못했습니다.\n");
+				}
+			} else {
+				fprintf(stream, "오류: 단어장을 열지 못했습니다.\n");
+			}
+
+			DestroyVocabulary(&vocabulary, true);
+
+			FreeGenericString(vocabularyPath);
+			FreeGenericString(exportPath);
+		} else if (argc < 6) {
+			fprintf(stream, "오류: 인수가 부족합니다.\n");
+		} else if (argc > 6) {
+			fprintf(stream, "오류: 인수가 너무 많습니다.\n");
+		}
+	}
 }

@@ -4,8 +4,11 @@
 #include "WinAPI.h"
 
 LPTSTR MakeGenericString(LPWSTR rawString);
+void FreeGenericString(LPCTSTR genericString);
 LPCWSTR GetRawString(LPCTSTR genericString);
 void FreeRawString(LPCWSTR rawString);
+
+LPSTR EncodeToUTF8(LPTSTR genericString);
 
 typedef struct {
 	int Major;

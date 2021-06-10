@@ -17,6 +17,13 @@ LPTSTR MakeGenericString(LPWSTR rawString) {
 	return result;
 #endif
 }
+void FreeGenericString(LPCTSTR genericString) {
+#ifdef _UNICODE
+	(void)genericString;
+#else
+	free((LPTSTR)genericString);
+#endif
+}
 LPCWSTR GetRawString(LPCTSTR genericString) {
 #ifdef _UNICODE
 	return genericString;
@@ -33,6 +40,17 @@ void FreeRawString(LPCWSTR rawString) {
 #else
 	free((LPWSTR)rawString);
 #endif
+}
+
+LPSTR EncodeToUTF8(LPTSTR genericString) {
+	const LPWSTR rawString = GetRawString(genericString);
+	const int length = WideCharToMultiByte(CP_UTF8, 0, rawString, -1, NULL, 0, NULL, NULL);
+
+	LPSTR result = malloc(length);
+	WideCharToMultiByte(CP_UTF8, 0, rawString, -1, result, length, NULL, NULL);
+
+	FreeRawString(rawString);
+	return result;
 }
 
 static bool IsIntegerIdentifier(LPTSTR identifier);

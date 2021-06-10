@@ -45,6 +45,12 @@ int FindWord(const Vocabulary* vocabulary, LPCTSTR word);
 void DestroyVocabulary(Vocabulary* vocabulary, bool destroyWords);
 
 typedef enum {
+	Csv,
+} ExportType;
+
+bool ExportVocabulary(const Vocabulary* vocabulary, ExportType type, LPCTSTR path);
+
+typedef enum {
 	GuessMeaning,
 	GuessWord,
 	GuessPronunciation,

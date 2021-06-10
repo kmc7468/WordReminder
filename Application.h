@@ -5,7 +5,7 @@
 
 #include <stdbool.h>
 
-#define WR_APPLICATION_VERSION _T("1.4.0-beta.2")
+#define WR_APPLICATION_VERSION _T("1.4.0-beta.3")
 #define WR_APPLICATION_GITHUB_RELEASE _T("https://github.com/kmc7468/WordReminder/releases/latest")
 
 extern HINSTANCE Instance;
@@ -53,3 +53,5 @@ typedef struct {
 
 void StartThread(Thread* thread, LPTHREAD_START_ROUTINE function, LPVOID param);
 void DestroyThread(Thread* thread);
+
+bool ProcessCommandLineArguments(LPWSTR cmdArgs);
