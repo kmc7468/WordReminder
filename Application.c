@@ -224,7 +224,9 @@ bool ProcessCommandLineArguments(LPWSTR cmdArgs) {
 			"사용법: ./WordReminder.exe <도구> [인수...]\n\n"
 			"도구:\n"
 			"  option            내부 설정을 변경합니다.\n"
-			"  vocabulary        단어장을 편집합니다.\n");
+			"  vocabulary        단어장을 편집합니다.\n\n"
+			"주의:\n"
+			"  이곳에서는 실험적인 도구들을 제공합니다. 불안정하게 작동할 수 있습니다.\n");
 	}
 
 	LocalFree(argv);
@@ -281,7 +283,55 @@ void RunOptionEditor(FILE* stream, int argc, LPWSTR* argv) {
 	}
 }
 void RunVocabularyEditor(FILE* stream, int argc, LPWSTR* argv) {
-	if (argc > 1 && wcscmp(argv[1], L"export") == 0) {
+	if (argc > 1 && wcscmp(argv[1], L"editword") == 0) {
+		if (argc == 2 || wcscmp(argv[2], L"help") == 0) {
+			fprintf(stream,
+				"사용법: ./WordReminder.exe vocabulary editword <단어장 경로> <단어> <새 단어>\n");
+		} else if (argc == 5) {
+			const LPTSTR vocabularyPath = MakeGenericString(argv[2]);
+
+			Vocabulary vocabulary = { 0 };
+			CreateVocabulary(&vocabulary);
+			if (LoadVocabulary(&vocabulary, vocabularyPath)) {
+				const LPTSTR word = MakeGenericString(argv[3]);
+				const LPTSTR newWord = MakeGenericString(argv[4]);
+
+				const int wordIndex = FindWord(&vocabulary, word);
+				const int newWordIndex = FindWord(&vocabulary, newWord);
+				if (wordIndex == -1) {
+					fprintf(stream, "오류: 단어 '%ws'를 찾지 못했습니다.\n", word);
+				} else if (newWordIndex != -1) {
+					fprintf(stream, "오류: 단어 '%ws'가 이미 존재합니다.\n", newWord);
+				} else {
+					const LPTSTR copiedNewWord = malloc(sizeof(TCHAR) * (_tcslen(newWord) + 1));
+					_tcscpy(copiedNewWord, newWord);
+
+					LPTSTR* target = &GetWord(&vocabulary, wordIndex)->Word;
+					free(*target);
+					*target = copiedNewWord;
+
+					if (SaveVocabulary(&vocabulary, vocabularyPath)) {
+						fprintf(stream, "성공!\n");
+					} else {
+						fprintf(stream, "오류: 단어장을 내보내지 못했습니다.\n");
+					}
+				}
+
+				FreeGenericString(word);
+				FreeGenericString(newWord);
+			} else {
+				fprintf(stream, "오류: 단어장을 열지 못했습니다.\n");
+			}
+
+			DestroyVocabulary(&vocabulary, true);
+
+			FreeGenericString(vocabularyPath);
+		} else if (argc < 6) {
+			fprintf(stream, "오류: 인수가 부족합니다.\n");
+		} else {
+			fprintf(stream, "오류: 인수가 너무 많습니다.\n");
+		}
+	} else if (argc > 1 && wcscmp(argv[1], L"export") == 0) {
 		if (argc == 2 || wcscmp(argv[2], L"help") == 0) {
 			fprintf(stream,
 				"사용법: ./WordReminder.exe vocabulary export <형식> <단어장 경로> <내보낼 경로>\n\n"
@@ -386,7 +436,11 @@ void RunVocabularyEditor(FILE* stream, int argc, LPWSTR* argv) {
 					}
 				}
 
-				if (SaveVocabulary(&vocabulary1, exportPath)) {
+				if (!IsUsableVocabulary(&vocabulary1, GuessMeaning, 0)) {
+					fprintf(stream,
+						"오류: 단어장을 합칠 수 없습니다.\n"
+						"정보: 다른 단어에는 없는 고유한 뜻을 가진 단어의 개수가 5개 미만입니다.\n");
+				} else if (SaveVocabulary(&vocabulary1, exportPath)) {
 					fprintf(stream, "성공!\n");
 				} else {
 					fprintf(stream, "오류: 단어장을 내보내지 못했습니다.\n");
@@ -409,6 +463,7 @@ void RunVocabularyEditor(FILE* stream, int argc, LPWSTR* argv) {
 		fprintf(stream,
 			"사용법: ./WordReminder.exe vocabulary <기능> [인수...]\n\n"
 			"기능:\n"
+			"  editword          단어를 수정합니다.\n"
 			"  export            단어장을 다른 형식으로 내보냅니다.\n"
 			"  merge             두 단어장을 하나의 단어장으로 합칩니다.\n");
 	}
