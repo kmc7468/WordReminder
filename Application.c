@@ -6,6 +6,7 @@
 
 #include <fcntl.h>
 #include <io.h>
+#include <locale.h>
 #include <ShlObj.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -197,6 +198,8 @@ bool ProcessCommandLineArguments(LPWSTR cmdArgs) {
 		if (fd > 0) {
 			stream = _fdopen(fd, "w");
 			fputc('\n', stream);
+
+			setlocale(LC_ALL, "");
 		}
 	}
 
@@ -261,10 +264,93 @@ void RunVocabularyEditor(FILE* stream, int argc, LPWSTR* argv) {
 		} else {
 			fprintf(stream, "오류: 인수가 너무 많습니다.\n");
 		}
+	} else if (argc > 1 && wcscmp(argv[1], L"merge") == 0) {
+		if (argc == 2 || wcscmp(argv[2], L"help") == 0) {
+			fprintf(stream,
+				"사용법: ./WordReminder.exe vocabulary merge <합칠 단어장 1 경로> <합칠 단어장 2 경로> <내보낼 경로>\n");
+		} else if (argc == 5) {
+			const LPTSTR vocabulary1Path = MakeGenericString(argv[2]);
+			const LPTSTR vocabulary2Path = MakeGenericString(argv[3]);
+			const LPTSTR exportPath = MakeGenericString(argv[4]);
+
+			Vocabulary vocabulary1 = { 0 }, vocabulary2 = { 0 };
+			CreateVocabulary(&vocabulary1);
+			CreateVocabulary(&vocabulary2);
+
+			if (!LoadVocabulary(&vocabulary1, vocabulary1Path)) {
+				fprintf(stream, "오류: 단어장 1을 열지 못했습니다.\n");
+			} else if (!LoadVocabulary(&vocabulary2, vocabulary2Path)) {
+				fprintf(stream, "오류: 단어장 2를 열지 못했습니다.\n");
+			} else {
+				for (int i = 0; i < vocabulary2.Words.Count; ++i) {
+					Word* const word = GetWord(&vocabulary2, i);
+					const int wordIndex = FindWord(&vocabulary1, word->Word);
+					if (wordIndex == -1) {
+						Word copied = { 0 };
+						CopyWord(&copied, word);
+						AddWord(&vocabulary1, &copied);
+					} else {
+						Word* const destination = GetWord(&vocabulary1, wordIndex);
+						for (int j = 0; j < word->Meanings.Count; ++j) {
+							Meaning* const meaning = GetMeaning(word, j);
+							const int meaningIndex = FindMeaning(destination, meaning->Meaning);
+							if (meaningIndex == -1) {
+								Meaning copied = { 0 };
+								CopyMeaning(&copied, meaning);
+								AddMeaning(destination, &copied);
+							} else {
+								Meaning* const crashed = GetMeaning(destination, meaningIndex);
+								if (_tcscmp(meaning->Pronunciation, crashed->Pronunciation) == 0) continue;
+
+								const bool hasPronunciation = (_tcslen(meaning->Pronunciation) != 0 &&
+									_tcscmp(GetWord(&vocabulary2, meaning->Word), meaning->Pronunciation) != 0);
+								const bool crashedHasPronunciation = (_tcslen(crashed->Pronunciation) != 0 &&
+									_tcscmp(GetWord(&vocabulary1, crashed->Word), crashed->Pronunciation) != 0);
+								if (hasPronunciation && !crashedHasPronunciation) {
+									crashed->Pronunciation = meaning->Pronunciation;
+									meaning->Pronunciation = NULL;
+								} else if (hasPronunciation && crashedHasPronunciation) {
+									const LPWSTR wordRawStr = GetRawString(word->Word);
+									const LPWSTR meaningRawStr = GetRawString(meaning->Meaning);
+									fprintf(stream,
+										"오류: 단어 '%ws'의 뜻 '%ws'를 합칠 수 없습니다.\n"
+										"정보: 단어장 1의 %d번째, 단어장 2의 %d번째 단어입니다.\n"
+										"정보: 발음이 다릅니다.\n",
+										wordRawStr, meaningRawStr, wordIndex + 1, i + 1);
+
+									FreeRawString(wordRawStr);
+									FreeRawString(meaningRawStr);
+									goto end;
+								}
+							}
+						}
+					}
+				}
+
+				if (SaveVocabulary(&vocabulary1, exportPath)) {
+					fprintf(stream, "성공!\n");
+				} else {
+					fprintf(stream, "오류: 단어장을 내보내지 못했습니다.\n");
+				}
+			}
+
+		end:
+			DestroyVocabulary(&vocabulary1, true);
+			DestroyVocabulary(&vocabulary2, true);
+
+			FreeGenericString(vocabulary1Path);
+			FreeGenericString(vocabulary2Path);
+			FreeGenericString(exportPath);
+		} else if (argc < 6) {
+			fprintf(stream, "오류: 인수가 부족합니다.\n");
+		} else {
+			fprintf(stream, "오류: 인수가 너무 많습니다.\n");
+		}
 	} else {
 		fprintf(stream,
 			"사용법: ./WordReminder.exe vocabulary <기능> [인수...]\n\n"
 			"기능:\n"
-			"  export            단어장을 다른 형식으로 내보냅니다.\n");
+			"  export            단어장을 다른 형식으로 내보냅니다.\n"
+			"  merge             두 단어장을 하나의 단어장으로 합칩니다.\n");
 	}
 }
