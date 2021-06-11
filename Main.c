@@ -9,12 +9,11 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include <stdlib.h>
 
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPWSTR cmdArgs, int cmdShow) {
-	if (ProcessCommandLineArguments(cmdArgs)) return EXIT_SUCCESS;
-	else if (!InitializeApplication(instance)) {
+	if (!InitializeApplication(instance)) {
 		(void)(prevInstance, cmdArgs);
 		MessageBox(NULL, _T("프로그램을 초기화하는 중 오류가 발생했습니다."), _T("오류"), MB_OK | MB_ICONERROR);
 		return EXIT_FAILURE;
-	}
+	} else if (ProcessCommandLineArguments(cmdArgs)) return EXIT_SUCCESS;
 	ShowWindow(MainWindow, cmdShow);
 
 	MSG message;

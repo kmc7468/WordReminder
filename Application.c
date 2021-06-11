@@ -122,6 +122,10 @@ void SaveSetting() {
 	if (RegOpenKey(HKEY_CURRENT_USER, _T("SOFTWARE\\Staticom\\WordReminder"), &key) != ERROR_SUCCESS &&
 		RegCreateKey(HKEY_CURRENT_USER, _T("SOFTWARE\\Staticom\\WordReminder"), &key) != ERROR_SUCCESS) return;
 
+	// Global
+	WriteString(key, _T("FontName"), Setting.FontName);
+	WriteDWord(key, _T("Scale"), Setting.Scale);
+
 	// QuestionOptionScene
 	WriteDWord(key, _T("GuessMeaning"), Setting.GuessMeaning);
 	WriteDWord(key, _T("GuessMeaningWithPronunciation"), Setting.GuessMeaningWithPronunciation);
@@ -167,6 +171,8 @@ LPTSTR ReadString(HKEY key, LPCTSTR name) {
 void WriteString(HKEY key, LPCTSTR name, LPCTSTR data) {
 	if (data) {
 		RegSetValueEx(key, name, 0, REG_SZ, (LPBYTE)data, (DWORD)(sizeof(TCHAR) * _tcslen(data)));
+	} else {
+		RegDeleteValue(key, name);
 	}
 }
 
@@ -182,6 +188,7 @@ void DestroyThread(Thread* thread) {
 	thread->Handle = NULL;
 }
 
+static void RunOptionEditor(FILE* stream, int argc, LPWSTR* argv);
 static void RunVocabularyEditor(FILE* stream, int argc, LPWSTR* argv);
 
 bool ProcessCommandLineArguments(LPWSTR cmdArgs) {
@@ -208,19 +215,71 @@ bool ProcessCommandLineArguments(LPWSTR cmdArgs) {
 		return false;
 	}
 
-	if (wcscmp(argv[0], L"vocabulary") == 0) {
+	if (wcscmp(argv[0], L"option") == 0) {
+		RunOptionEditor(stream, argc, argv);
+	} else if (wcscmp(argv[0], L"vocabulary") == 0) {
 		RunVocabularyEditor(stream, argc, argv);
 	} else {
 		fprintf(stream,
 			"사용법: ./WordReminder.exe <도구> [인수...]\n\n"
 			"도구:\n"
-			"  vocabulary        단어장 편집\n");
+			"  option            내부 설정을 변경합니다.\n"
+			"  vocabulary        단어장을 편집합니다.\n");
 	}
 
 	LocalFree(argv);
 	return true;
 }
 
+void RunOptionEditor(FILE* stream, int argc, LPWSTR* argv) {
+	if (argc > 1 && wcscmp(argv[1], L"fontname") == 0) {
+		if (argc == 2) {
+			if (Setting.FontName) {
+				const LPWSTR fontNameRaw = GetRawString(Setting.FontName);
+				fprintf(stream, "현재 값: '%ws'\n", fontNameRaw);
+				FreeRawString(fontNameRaw);
+			} else {
+				fprintf(stream, "현재 값: NULL\n");
+			}
+		} else if (argc == 3) {
+			free(Setting.FontName);
+
+			if (wcscmp(argv[2], L"NULL") == 0) {
+				Setting.FontName = NULL;
+			} else {
+				Setting.FontName = MakeGenericString(argv[2]);
+			}
+
+			SaveSetting();
+			fprintf(stream, "성공!\n");
+		} else {
+			fprintf(stream, "오류: 인수가 너무 많습니다.\n");
+		}
+	} else if (argc > 1 && wcscmp(argv[1], L"scale") == 0) {
+		if (argc == 2) {
+			fprintf(stream, "현재 값: %d\n", Setting.Scale);
+		} else if (argc == 3) {
+			int newScale;
+			if (swscanf(argv[2], L"%d", &newScale) != 1) {
+				fprintf(stream, "오류: 새 값이 정수가 아닙니다.\n");
+			} else if (newScale <= 0) {
+				fprintf(stream, "오류: 새 값은 0 또는 음수일 수 없습니다.\n");
+			} else {
+				Setting.Scale = newScale;
+				SaveSetting();
+				fprintf(stream, "성공!\n");
+			}
+		} else {
+			fprintf(stream, "오류: 인수가 너무 많습니다.\n");
+		}
+	} else {
+		fprintf(stream,
+			"사용법: ./WordReminder.exe option <설정> [새 값]\n\n"
+			"설정:\n"
+			"  fontname          폰트 이름입니다(기본값: NULL).\n"
+			"  scale             추가 화면 배율(%%)입니다(기본값: 100).\n");
+	}
+}
 void RunVocabularyEditor(FILE* stream, int argc, LPWSTR* argv) {
 	if (argc > 1 && wcscmp(argv[1], L"export") == 0) {
 		if (argc == 2 || wcscmp(argv[2], L"help") == 0) {
