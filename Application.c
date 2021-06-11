@@ -196,19 +196,22 @@ bool ProcessCommandLineArguments(LPWSTR cmdArgs) {
 		const int fd = _open_osfhandle((intptr_t)streamHandle, _O_TEXT);
 		if (fd > 0) {
 			stream = _fdopen(fd, "w");
+			fputc('\n', stream);
 		}
-	} else {
+	}
+
+	if (!stream) {
 		LocalFree(argv);
 		return false;
 	}
 
-	if (wcscmp(argv[0], L"help") == 0) {
+	if (wcscmp(argv[0], L"vocabulary") == 0) {
+		RunVocabularyEditor(stream, argc, argv);
+	} else {
 		fprintf(stream,
 			"사용법: ./WordReminder.exe <도구> [인수...]\n\n"
 			"도구:\n"
 			"  vocabulary        단어장 편집\n");
-	} else if (wcscmp(argv[0], L"vocabulary") == 0) {
-		RunVocabularyEditor(stream, argc, argv);
 	}
 
 	LocalFree(argv);
@@ -216,16 +219,21 @@ bool ProcessCommandLineArguments(LPWSTR cmdArgs) {
 }
 
 void RunVocabularyEditor(FILE* stream, int argc, LPWSTR* argv) {
-	if (wcscmp(argv[1], L"help") == 0) {
-		fprintf(stream,
-			"사용법: ./WordReminder.exe vocabulary export <csv> <단어장 경로> <내보낼 경로>\n");
-	} else if (wcscmp(argv[1], L"export") == 0) {
-		if (argc == 5) {
+	if (argc > 1 && wcscmp(argv[1], L"export") == 0) {
+		if (argc == 2 || wcscmp(argv[2], L"help") == 0) {
+			fprintf(stream,
+				"사용법: ./WordReminder.exe vocabulary export <형식> <단어장 경로> <내보낼 경로>\n\n"
+				"형식:\n"
+				"  csv               UTF-8(BOM 포함)로 인코딩된 csv 형식입니다.\n"
+				"  csvs              UTF-8(BOM 미포함)로 인코딩된 csv 형식입니다.\n");
+		} else if (argc == 5) {
 			ExportType type;
 			if (wcscmp(argv[2], L"csv") == 0) {
 				type = Csv;
+			} else if (wcscmp(argv[2], L"csvs") == 0) {
+				type = CsvS;
 			} else {
-				fprintf(stream, "오류: '%ws'는 알 수 없는 유형입니다.", argv[2]);
+				fprintf(stream, "오류: '%ws'는 알 수 없는 형식입니다.", argv[2]);
 				return;
 			}
 
@@ -250,8 +258,13 @@ void RunVocabularyEditor(FILE* stream, int argc, LPWSTR* argv) {
 			FreeGenericString(exportPath);
 		} else if (argc < 6) {
 			fprintf(stream, "오류: 인수가 부족합니다.\n");
-		} else if (argc > 6) {
+		} else {
 			fprintf(stream, "오류: 인수가 너무 많습니다.\n");
 		}
+	} else {
+		fprintf(stream,
+			"사용법: ./WordReminder.exe vocabulary <기능> [인수...]\n\n"
+			"기능:\n"
+			"  export            단어장을 다른 형식으로 내보냅니다.\n");
 	}
 }

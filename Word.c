@@ -340,17 +340,24 @@ int IsUsableVocabularyInternal(Vocabulary* vocabulary, Vocabulary* originalVocab
 	else return 0;
 }
 
-static bool ExportVocabularyAsCsv(const Vocabulary* vocabulary, LPCTSTR path);
+static bool ExportVocabularyAsCsv(const Vocabulary* vocabulary, LPCTSTR path, bool insertBOM);
 
 bool ExportVocabulary(const Vocabulary* vocabulary, ExportType type, LPCTSTR path) {
 	switch (type) {
-	case Csv: return ExportVocabularyAsCsv(vocabulary, path);
+	case Csv: return ExportVocabularyAsCsv(vocabulary, path, true);
+	case CsvS: return ExportVocabularyAsCsv(vocabulary, path, false);
+	default: return false;
 	}
 }
 
-bool ExportVocabularyAsCsv(const Vocabulary* vocabulary, LPCTSTR path) {
+bool ExportVocabularyAsCsv(const Vocabulary* vocabulary, LPCTSTR path, bool insertBOM) {
 	FILE* const file = _tfopen(path, _T("wb"));
 	if (!file) return false;
+
+	if (insertBOM) {
+		static const char bom[] = { 0xEF, 0xBB, 0xBF };
+		fwrite(bom, 1, sizeof(bom), file);
+	}
 
 	for (int i = 0; i < vocabulary->Words.Count; ++i) {
 		Word* const word = GetWord((Vocabulary*)vocabulary, i);

@@ -46,6 +46,7 @@ void DestroyVocabulary(Vocabulary* vocabulary, bool destroyWords);
 
 typedef enum {
 	Csv,
+	CsvS,
 } ExportType;
 
 bool ExportVocabulary(const Vocabulary* vocabulary, ExportType type, LPCTSTR path);
