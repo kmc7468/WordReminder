@@ -53,5 +53,3 @@ typedef struct {
 
 void StartThread(Thread* thread, LPTHREAD_START_ROUTINE function, LPVOID param);
 void DestroyThread(Thread* thread);
-
-bool ProcessCommandLineArguments(LPWSTR cmdArgs);
