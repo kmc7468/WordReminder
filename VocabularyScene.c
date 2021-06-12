@@ -47,15 +47,15 @@ LRESULT CALLBACK VocabularySceneProc(HWND handle, UINT message, WPARAM wParam, L
 		g_WordList = CreateList(WS_VISIBLE, handle, 0);
 
 		g_WordStatic = CreateStatic(_T("단어"), WS_VISIBLE | SS_LEFT, handle, -1);
-		g_WordEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP, handle, 1);
+		g_WordEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP | ES_AUTOHSCROLL, handle, 1);
 
 		g_MeaningListStatic = CreateStatic(_T("뜻 목록(0개)"), WS_VISIBLE | SS_LEFT, handle, -1);
 		g_MeaningList = CreateList(WS_VISIBLE, handle, 2);
 
 		g_MeaningStatic = CreateStatic(_T("뜻"), WS_VISIBLE | SS_LEFT, handle, -1);
-		g_MeaningEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP, handle, 3);
+		g_MeaningEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP | ES_AUTOHSCROLL, handle, 3);
 		g_PronunciationStatic = CreateStatic(_T("발음"), WS_VISIBLE | SS_LEFT, handle, -1);
-		g_PronunciationEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP, handle, 4);
+		g_PronunciationEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP | ES_AUTOHSCROLL, handle, 4);
 		g_MeaningEditDefWndProc = (WNDPROC)SetWindowLongPtr(g_MeaningEdit, GWLP_WNDPROC, (LONG_PTR)ReturnAwarenessEditSubclassProc);
 		g_PronunciationEditDefWndProc = (WNDPROC)SetWindowLongPtr(g_PronunciationEdit, GWLP_WNDPROC, (LONG_PTR)ReturnAwarenessEditSubclassProc);
 

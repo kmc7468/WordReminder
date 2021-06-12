@@ -38,16 +38,16 @@ LRESULT CALLBACK StatisticSceneProc(HWND handle, UINT message, WPARAM wParam, LP
 		g_WordList = CreateList(WS_VISIBLE, handle, 0);
 
 		g_WordStatic = CreateStatic(_T("단어"), WS_VISIBLE | SS_LEFT, handle, -1);
-		g_WordEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP, handle, 1);
+		g_WordEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP | ES_AUTOHSCROLL, handle, 1);
 		SendMessage(g_WordEdit, EM_SETREADONLY, TRUE, 0);
 
 		g_MeaningListStatic = CreateStatic(_T("뜻 목록(0개)"), WS_VISIBLE | SS_LEFT, handle, -1);
 		g_MeaningList = CreateList(WS_VISIBLE, handle, 2);
 
 		g_MeaningStatic = CreateStatic(_T("뜻"), WS_VISIBLE | SS_LEFT, handle, -1);
-		g_MeaningEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP, handle, 3);
+		g_MeaningEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP | ES_AUTOHSCROLL, handle, 3);
 		g_PronunciationStatic = CreateStatic(_T("발음"), WS_VISIBLE | SS_LEFT, handle, -1);
-		g_PronunciationEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP, handle, 4);
+		g_PronunciationEdit = CreateEdit(WS_VISIBLE | WS_GROUP | WS_TABSTOP | ES_AUTOHSCROLL, handle, 4);
 		SendMessage(g_MeaningEdit, EM_SETREADONLY, TRUE, 0);
 		SendMessage(g_PronunciationEdit, EM_SETREADONLY, TRUE, 0);
 
