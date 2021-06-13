@@ -10,7 +10,7 @@
 Meaning::Meaning(Word* word, std::wstring meaning, std::wstring pronunciation) noexcept
 	: m_Word(word), m_Meaning(std::move(meaning)), m_Pronunciation(std::move(pronunciation)) {
 	assert(word != nullptr);
-	assert(!meaning.empty());
+	assert(!m_Meaning.empty());
 }
 
 const Word* Meaning::GetWord() const noexcept {
@@ -81,17 +81,28 @@ Meaning* Word::FindMeaning(const std::wstring& meaning) noexcept {
 Meaning Word::MergeMeaning(const std::wstring& separator) {
 	if (m_Meanings.size() == 1) return *m_Meanings.front();
 
-	std::wostringstream meaningStream, pronunciationStream;
-	bool isFirstMeaning = true, isFirstPronunciation = true;
+	std::vector<std::wstring> pronunciations;
+
+	std::wostringstream meaningStream;
+	bool isFirstMeaning = true;
 	for (const auto& meaningPtr : m_Meanings) {
 		meaningStream << (isFirstMeaning ? L"" : separator) << meaningPtr->GetMeaning();
 		isFirstMeaning = false;
 
-		const std::wstring pronunciation = meaningPtr->GetPronunciation();
+		std::wstring pronunciation = meaningPtr->GetPronunciation();
 		if (!pronunciation.empty()) {
-			pronunciationStream << (isFirstPronunciation ? L"" : separator) << pronunciation;
-			isFirstPronunciation = false;
+			pronunciations.push_back(std::move(pronunciation));
 		}
+	}
+
+	std::sort(pronunciations.begin(), pronunciations.end());
+	pronunciations.erase(std::unique(pronunciations.begin(), pronunciations.end()), pronunciations.end());
+
+	std::wostringstream pronunciationStream;
+	bool isFirstPronunciation = true;
+	for (const auto& pronunciation : pronunciations) {
+		pronunciationStream << (isFirstPronunciation ? L"" : separator) << pronunciation;
+		isFirstPronunciation = false;
 	}
 
 	return { this, meaningStream.str(), pronunciationStream.str() };
