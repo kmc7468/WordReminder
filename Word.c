@@ -394,7 +394,7 @@ bool ExportVocabularyAsCsv(const Vocabulary* vocabulary, LPCTSTR path, bool inse
 			free(pronunciationUTF8);
 
 			prevHasPronunciation = (_tcslen(meaning->Pronunciation) != 0 &&
-				_tcscmp(GetWord((Vocabulary*)vocabulary, meaning->Word), meaning->Pronunciation) != 0);
+				_tcscmp(GetWord((Vocabulary*)vocabulary, meaning->Word)->Word, meaning->Pronunciation) != 0);
 		}
 		fputs("\"\n", file);
 	}
