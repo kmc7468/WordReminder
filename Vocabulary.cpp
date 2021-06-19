@@ -122,6 +122,12 @@ Vocabulary& Vocabulary::operator=(const Vocabulary& vocabulary) {
 	CopyFrom(vocabulary);
 	return *this;
 }
+const Word* Vocabulary::operator[](std::size_t index) const noexcept {
+	return m_Words[index].get();
+}
+Word* Vocabulary::operator[](std::size_t index) noexcept {
+	return m_Words[index].get();
+}
 
 std::size_t Vocabulary::GetCountOfWords() const noexcept {
 	return m_Words.size();
@@ -223,10 +229,10 @@ void Vocabulary::LoadKv(std::ifstream& file) {
 	if (file.eof()) return;
 
 	for (int i = 0; i < countOfContainers; ++i) {
-		const int containerId = Read<int>(file);
+		const ContainerId containerId = Read<ContainerId>(file);
 		const int containerLength = Read<int>(file);
 		switch (containerId) {
-		case m_HomonymContainerId:
+		case HomonymContainer:
 			ReadHomonymContainer(file);
 			break;
 
@@ -282,7 +288,7 @@ void Vocabulary::SaveAsCsv(std::ofstream& file, bool insertBOM) const {
 	}
 }
 
-std::streampos Vocabulary::WriteContainerHeader(std::ofstream& file, int id) const {
+std::streampos Vocabulary::WriteContainerHeader(std::ofstream& file, ContainerId id) const {
 	Write(file, id);
 
 	const std::streampos lengthPos = file.tellp();
@@ -309,7 +315,7 @@ void Vocabulary::ReadHomonymContainer(std::ifstream& file) {
 	}
 }
 void Vocabulary::WriteHomonymContainer(std::ofstream& file) const {
-	const std::streampos lengthPos = WriteContainerHeader(file, m_HomonymContainerId);
+	const std::streampos lengthPos = WriteContainerHeader(file, HomonymContainer);
 
 	for (const auto& wordPtr : m_Words) {
 		const int countOfMeanings = static_cast<int>(wordPtr->GetCountOfMeanings());

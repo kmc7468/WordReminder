@@ -77,7 +77,9 @@ public:
 	};
 
 private:
-	static constexpr int m_HomonymContainerId = 0x00000000;
+	enum ContainerId {
+		HomonymContainer,
+	};
 
 private:
 	std::vector<std::unique_ptr<Word>> m_Words;
@@ -91,6 +93,8 @@ public:
 public:
 	Vocabulary& operator=(const Vocabulary& vocabulary);
 	Vocabulary& operator=(Vocabulary&& vocabulary) noexcept = default;
+	const Word* operator[](std::size_t index) const noexcept;
+	Word* operator[](std::size_t index) noexcept;
 
 public:
 	std::size_t GetCountOfWords() const noexcept;
@@ -110,7 +114,7 @@ private:
 	void SaveAsKv(std::ofstream& file) const;
 	void SaveAsCsv(std::ofstream& file, bool insertBOM) const;
 
-	std::streampos WriteContainerHeader(std::ofstream& file, int id) const;
+	std::streampos WriteContainerHeader(std::ofstream& file, ContainerId id) const;
 	void WriteContainerLength(std::ofstream& file, std::streampos lengthPos) const;
 	void ReadHomonymContainer(std::ifstream& file);
 	void WriteHomonymContainer(std::ofstream& file) const;
