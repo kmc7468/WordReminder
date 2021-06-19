@@ -77,3 +77,33 @@ public:
 	bool GetExcludeDuplicatedAnswer() const noexcept;
 	void SetExcludeDuplicatedAnswer(bool newExcludeDuplicatedAnswer) noexcept;
 };
+
+class Question final {
+private:
+	QuestionType* m_Type = nullptr;
+	std::vector<Meaning*> m_FirstSelectors;
+	int m_AnswerOfFirstSelectors;
+	std::vector<Meaning*> m_SecondSelectors;
+	int m_AnswerOfSecondSelectors;
+
+public:
+	Question(QuestionType* type, std::vector<Meaning*>&& firstSelectors, int answerOfFirstSelectors,
+		std::vector<Meaning*>&& secondSelectors, int answerOfSecondSelectors) noexcept;
+	Question(const Question&) = delete;
+	Question(Question&& question) noexcept = default;
+	~Question() = default;
+
+public:
+	Question& operator=(const Question&) = delete;
+	Question& operator=(Question&& question) noexcept = default;
+
+public:
+	const QuestionType* GetType() const noexcept;
+	QuestionType* GetType() noexcept;
+	const Meaning* GetFirstSelector(int index) const noexcept;
+	Meaning* GetFirstSelector(int index) noexcept;
+	int GetAnswerOfFirstSelectors() const noexcept;
+	const Meaning* GetSecondSelector(int index) const noexcept;
+	Meaning* GetSecondSelector(int index) noexcept;
+	int GetAnswerOfSecondSelectors() const noexcept;
+};
