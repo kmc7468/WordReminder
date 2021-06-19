@@ -114,10 +114,19 @@ void Word::CopyFrom(const Word& word) {
 	}
 }
 
+Vocabulary::Vocabulary(const Vocabulary& vocabulary) {
+	CopyFrom(vocabulary);
+}
+
+Vocabulary& Vocabulary::operator=(const Vocabulary& vocabulary) {
+	CopyFrom(vocabulary);
+	return *this;
+}
+
 std::size_t Vocabulary::GetCountOfWords() const noexcept {
 	return m_Words.size();
 }
-void Vocabulary::AddWord(std::shared_ptr<Word> word) {
+void Vocabulary::AddWord(std::unique_ptr<Word>&& word) {
 	m_Words.push_back(std::move(word));
 }
 void Vocabulary::RemoveWord(std::size_t index) {
@@ -130,12 +139,12 @@ std::size_t Vocabulary::GetIndexOfWord(const std::wstring& word) const noexcept 
 	if (iter != m_Words.end()) return std::distance(m_Words.begin(), iter);
 	else return -1;
 }
-std::shared_ptr<const Word> Vocabulary::FindWord(const std::wstring& word) const noexcept {
-	if (const auto index = GetIndexOfWord(word); index != -1) return m_Words[index];
+const Word* Vocabulary::FindWord(const std::wstring& word) const noexcept {
+	if (const auto index = GetIndexOfWord(word); index != -1) return m_Words[index].get();
 	else return nullptr;
 }
-std::shared_ptr<Word> Vocabulary::FindWord(const std::wstring& word) noexcept {
-	if (const auto index = GetIndexOfWord(word); index != -1) return m_Words[index];
+Word* Vocabulary::FindWord(const std::wstring& word) noexcept {
+	if (const auto index = GetIndexOfWord(word); index != -1) return m_Words[index].get();
 	else return nullptr;
 }
 
@@ -160,6 +169,12 @@ bool Vocabulary::Save(const std::wstring& path, Type type) const {
 	}
 
 	return true;
+}
+
+void Vocabulary::CopyFrom(const Vocabulary& vocabulary) {
+	for (const auto& wordPtr : vocabulary.m_Words) {
+		m_Words.push_back(std::make_unique<Word>(*wordPtr));
+	}
 }
 
 namespace {
@@ -201,7 +216,7 @@ void Vocabulary::LoadKv(std::ifstream& file) {
 		std::wstring word = Read<std::wstring>(file);
 		std::wstring pronunciation = Read<std::wstring>(file);
 		std::wstring meaning = Read<std::wstring>(file);
-		m_Words.push_back(std::make_shared<Word>(std::move(word), std::move(meaning), std::move(pronunciation)));
+		m_Words.push_back(std::make_unique<Word>(std::move(word), std::move(meaning), std::move(pronunciation)));
 	}
 
 	const int countOfContainers = Read<int>(file);

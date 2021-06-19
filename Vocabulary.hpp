@@ -80,30 +80,32 @@ private:
 	static constexpr int m_HomonymContainerId = 0x00000000;
 
 private:
-	std::vector<std::shared_ptr<Word>> m_Words;
+	std::vector<std::unique_ptr<Word>> m_Words;
 
 public:
 	Vocabulary() noexcept = default;
-	Vocabulary(const Vocabulary& vocabulary) = default;
+	Vocabulary(const Vocabulary& vocabulary);
 	Vocabulary(Vocabulary&& vocabulary) noexcept = default;
 	~Vocabulary() = default;
 
 public:
-	Vocabulary& operator=(const Vocabulary& vocabulary) = default;
+	Vocabulary& operator=(const Vocabulary& vocabulary);
 	Vocabulary& operator=(Vocabulary&& vocabulary) noexcept = default;
 
 public:
 	std::size_t GetCountOfWords() const noexcept;
-	void AddWord(std::shared_ptr<Word> word);
+	void AddWord(std::unique_ptr<Word>&& word);
 	void RemoveWord(std::size_t index);
 	std::size_t GetIndexOfWord(const std::wstring& word) const noexcept;
-	std::shared_ptr<const Word> FindWord(const std::wstring& word) const noexcept;
-	std::shared_ptr<Word> FindWord(const std::wstring& word) noexcept;
+	const Word* FindWord(const std::wstring& word) const noexcept;
+	Word* FindWord(const std::wstring& word) noexcept;
 
 	bool Load(const std::wstring& path);
 	bool Save(const std::wstring& path, Type type = Kv) const;
 
 private:
+	void CopyFrom(const Vocabulary& vocabulary);
+
 	void LoadKv(std::ifstream& file);
 	void SaveAsKv(std::ofstream& file) const;
 	void SaveAsCsv(std::ofstream& file, bool insertBOM) const;
