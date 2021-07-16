@@ -105,6 +105,7 @@ public:
 	std::size_t GetIndexOfWord(const std::wstring& word) const noexcept;
 	const Word* FindWord(const std::wstring& word) const noexcept;
 	Word* FindWord(const std::wstring& word) noexcept;
+	Meaning* ExtractRandomMeaning() noexcept;
 
 	bool Load(const std::wstring& path);
 	bool Save(const std::wstring& path) const;

@@ -1,5 +1,6 @@
 #include "Vocabulary.hpp"
 
+#include "Utility.hpp"
 #include "WinAPI.hpp"
 
 #include <algorithm>
@@ -172,6 +173,10 @@ const Word* Vocabulary::FindWord(const std::wstring& word) const noexcept {
 Word* Vocabulary::FindWord(const std::wstring& word) noexcept {
 	if (const auto index = GetIndexOfWord(word); index != -1) return m_Words[index].get();
 	else return nullptr;
+}
+Meaning* Vocabulary::ExtractRandomMeaning() noexcept {
+	Word& word = *m_Words[GetRandomInteger(0, static_cast<int>(m_Words.size()))];
+	return word[GetRandomInteger(0, static_cast<int>(word.GetCountOfMeanings()))];
 }
 
 bool Vocabulary::Load(const std::wstring& path) {
