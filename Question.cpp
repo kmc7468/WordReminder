@@ -40,6 +40,9 @@ void QuestionType::ExcludeUsedAnswer(const Vocabulary* vocabulary) {
 std::wstring QuestionType::GetSelector(const Question* question, int selectorIndex) const {
 	return GetFirstSelector(question, selectorIndex);
 }
+std::wstring QuestionType::GetSecondSelector(const Question*, int) const {
+	return {};
+}
 
 std::optional<Question> QuestionType::GenerateQuestion(QuestionOption* questionOption, Meaning* previousAnswer, Meaning* answer) {
 	assert(!m_ExcludeUsedAnswer || answer == nullptr);

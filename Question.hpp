@@ -50,7 +50,7 @@ public:
 	virtual std::wstring GetHint(const Question* question) const = 0;
 	std::wstring GetSelector(const Question* question, int selectorIndex) const;
 	virtual std::wstring GetFirstSelector(const Question* question, int selectorIndex) const = 0;
-	virtual std::wstring GetSecondSelector(const Question* question, int selectorIndex) const = 0;
+	virtual std::wstring GetSecondSelector(const Question* question, int selectorIndex) const;
 
 	std::optional<Question> GenerateQuestion(QuestionOption* questionOption, Meaning* previousAnswer, Meaning* answer = nullptr);
 
