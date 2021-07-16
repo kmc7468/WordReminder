@@ -21,7 +21,7 @@ void QuestionType::ExcludeUsedAnswer(const Vocabulary* vocabulary) {
 	const std::size_t countOfWords = vocabulary->GetCountOfWords();
 	for (std::size_t i = 0; i < countOfWords; ++i) {
 		const Word* word = (*vocabulary)[i];
-		auto copiedWord = std::make_unique<Word>(*word);
+		auto copiedWord = std::make_unique<Word>(std::wstring(word->GetWord()));
 
 		const std::size_t countOfMeanings = word->GetCountOfMeanings();
 		for (std::size_t j = 0; j < countOfMeanings; ++j) {
@@ -120,7 +120,7 @@ Meaning* QuestionType::ExtractUniqueMeaning(Vocabulary* vocabulary, const std::v
 bool QuestionType::IsUniqueMeaning(const std::vector<Meaning*>& fixedMeanings, Meaning* meaning) const {
 	bool isUnique = true;
 	for (const auto fixedMeaning : fixedMeanings) {
-		if (IsDuplicatedMeaning(fixedMeaning, meaning)) {
+		if (!IsUsableMeaning(meaning) || fixedMeaning && IsDuplicatedMeaning(fixedMeaning, meaning)) {
 			isUnique = false;
 			break;
 		}
@@ -152,17 +152,31 @@ std::size_t QuestionOption::GetCountOfQuestionTypes() const noexcept {
 	return m_QuestionTypes.size();
 }
 void QuestionOption::AddQuestionType(std::unique_ptr<QuestionType>&& questionType) {
+	assert(!m_ExcludeDuplicatedAnswer);
+
 	m_QuestionTypes.push_back(std::move(questionType));
 }
 int QuestionOption::GetNumberOfSelectors() const noexcept {
 	return m_NumberOfSelectors;
 }
 
-bool QuestionOption::GetExcludeDuplicatedAnswer() const noexcept {
-	return m_ExcludeDuplicatedAnswer;
+void QuestionOption::ExcludeDuplicatedAnswer() {
+	assert(!m_ExcludeDuplicatedAnswer);
+
+	m_ExcludeDuplicatedAnswer = true;
+
+	for (const auto& questionTypePtr : m_QuestionTypes) {
+		questionTypePtr->ExcludeUsedAnswer(m_Vocabulary.get());
+	}
 }
-void QuestionOption::SetExcludeDuplicatedAnswer(bool newExcludeDuplicatedAnswer) noexcept {
-	m_ExcludeDuplicatedAnswer = newExcludeDuplicatedAnswer;
+std::optional<Question> QuestionOption::GenerateQuestion(Meaning* previousAnswer, Meaning* answer) {
+	std::shuffle(m_QuestionTypes.begin(), m_QuestionTypes.end(), std::mt19937(std::random_device{}()));
+
+	for (const auto& questionTypePtr : m_QuestionTypes) {
+		if (auto question = questionTypePtr->GenerateQuestion(this, previousAnswer, answer);
+			question) return std::move(question);
+	}
+	return std::nullopt;
 }
 
 Question::Question(QuestionType* type, std::vector<Meaning*>&& firstSelectors, int answerOfFirstSelectors) noexcept

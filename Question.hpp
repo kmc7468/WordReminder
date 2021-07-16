@@ -91,8 +91,8 @@ public:
 	void AddQuestionType(std::unique_ptr<QuestionType>&& questionType);
 	int GetNumberOfSelectors() const noexcept;
 
-	bool GetExcludeDuplicatedAnswer() const noexcept;
-	void SetExcludeDuplicatedAnswer(bool newExcludeDuplicatedAnswer) noexcept;
+	void ExcludeDuplicatedAnswer();
+	std::optional<Question> GenerateQuestion(Meaning* previousAnswer, Meaning* answer = nullptr);
 };
 
 class Question final {
