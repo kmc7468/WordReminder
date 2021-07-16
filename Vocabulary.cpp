@@ -5,12 +5,21 @@
 #include <algorithm>
 #include <cassert>
 #include <sstream>
+#include <unordered_set>
 #include <utility>
 
 Meaning::Meaning(Word* word, std::wstring meaning, std::wstring pronunciation) noexcept
 	: m_Word(word), m_Meaning(std::move(meaning)), m_Pronunciation(std::move(pronunciation)) {
 	assert(word != nullptr);
 	assert(!m_Meaning.empty());
+}
+Meaning::Meaning(const Meaning& meaning, Word* newWord)
+	: m_Word(newWord), m_Meaning(meaning.m_Meaning), m_Pronunciation(meaning.m_Pronunciation) {
+	assert(newWord != nullptr);
+}
+Meaning::Meaning(Meaning&& meaning, Word* newWord) noexcept
+	: m_Word(newWord), m_Meaning(std::move(meaning.m_Meaning)), m_Pronunciation(std::move(meaning.m_Pronunciation)) {
+	assert(newWord != nullptr);
 }
 
 const Word* Meaning::GetWord() const noexcept {
@@ -19,10 +28,14 @@ const Word* Meaning::GetWord() const noexcept {
 Word* Meaning::GetWord() noexcept {
 	return m_Word;
 }
-std::wstring Meaning::GetMeaning() const {
+void Meaning::SetWord(Word* newWord) noexcept {
+	assert(newWord != nullptr);
+	m_Word = newWord;
+}
+std::wstring_view Meaning::GetMeaning() const noexcept {
 	return m_Meaning;
 }
-std::wstring Meaning::GetPronunciation() const {
+std::wstring_view Meaning::GetPronunciation() const noexcept {
 	return m_Pronunciation;
 }
 bool Meaning::HasPronunciation() const noexcept {
@@ -38,9 +51,16 @@ Word::Word(std::wstring word, std::wstring meaning, std::wstring pronunciation)
 Word::Word(const Word& word) {
 	CopyFrom(word);
 }
+Word::Word(Word&& word) noexcept {
+	MoveFrom(std::move(word));
+}
 
 Word& Word::operator=(const Word& word) {
 	CopyFrom(word);
+	return *this;
+}
+Word& Word::operator=(Word&& word) noexcept {
+	MoveFrom(std::move(word));
 	return *this;
 }
 const Meaning* Word::operator[](std::size_t index) const noexcept {
@@ -50,7 +70,7 @@ Meaning* Word::operator[](std::size_t index) noexcept {
 	return m_Meanings[index].get();
 }
 
-std::wstring Word::GetWord() const {
+std::wstring_view Word::GetWord() const noexcept {
 	return m_Word;
 }
 std::size_t Word::GetCountOfMeanings() const noexcept {
@@ -81,36 +101,36 @@ Meaning* Word::FindMeaning(const std::wstring& meaning) noexcept {
 Meaning Word::MergeMeaning(const std::wstring& separator) {
 	if (m_Meanings.size() == 1) return *m_Meanings.front();
 
-	std::vector<std::wstring> pronunciations;
-
-	std::wostringstream meaningStream;
+	std::wostringstream meaningStream, pronunciationStream;
 	bool isFirstMeaning = true;
+	std::unordered_set<std::wstring_view> usedPronunciations;
 	for (const auto& meaningPtr : m_Meanings) {
 		meaningStream << (isFirstMeaning ? L"" : separator) << meaningPtr->GetMeaning();
 		isFirstMeaning = false;
 
-		std::wstring pronunciation = meaningPtr->GetPronunciation();
-		if (!pronunciation.empty()) {
-			pronunciations.push_back(std::move(pronunciation));
+		if (const auto pronunciation = meaningPtr->GetPronunciation();
+			!pronunciation.empty() && !usedPronunciations.contains(pronunciation)) {
+			pronunciationStream << (usedPronunciations.empty() ? L"" : separator) << pronunciation;
+			usedPronunciations.insert(pronunciation);
 		}
-	}
-
-	std::sort(pronunciations.begin(), pronunciations.end());
-	pronunciations.erase(std::unique(pronunciations.begin(), pronunciations.end()), pronunciations.end());
-
-	std::wostringstream pronunciationStream;
-	bool isFirstPronunciation = true;
-	for (const auto& pronunciation : pronunciations) {
-		pronunciationStream << (isFirstPronunciation ? L"" : separator) << pronunciation;
-		isFirstPronunciation = false;
 	}
 
 	return { this, meaningStream.str(), pronunciationStream.str() };
 }
 
 void Word::CopyFrom(const Word& word) {
+	m_Word = word.m_Word;
+
 	for (const auto& meaningPtr : word.m_Meanings) {
-		m_Meanings.push_back(std::make_unique<Meaning>(*meaningPtr));
+		m_Meanings.push_back(std::make_unique<Meaning>(*meaningPtr, this));
+	}
+}
+void Word::MoveFrom(Word&& word) noexcept {
+	m_Word = std::move(word.m_Word);
+
+	m_Meanings = std::move(word.m_Meanings);
+	for (const auto& meaningPtr : m_Meanings) {
+		meaningPtr->SetWord(this);
 	}
 }
 
@@ -160,20 +180,25 @@ bool Vocabulary::Load(const std::wstring& path) {
 
 	m_Words.clear();
 
-	LoadKv(file);
+	LoadFromStream(file);
 	return true;
 }
-bool Vocabulary::Save(const std::wstring& path, Type type) const {
+bool Vocabulary::Save(const std::wstring& path) const {
 	std::ofstream file(path, std::ofstream::binary);
 	if (!file) return false;
 
-	switch (type) {
-	case Kv: SaveAsKv(file); break;
-	case Csv: SaveAsCsv(file, true); break;
-	case CsvS: SaveAsCsv(file, false); break;
+	SaveToStream(file);
+	return true;
+}
+bool Vocabulary::Export(const std::wstring& path, ExportType exportType) const {
+	std::ofstream file(path, std::ofstream::binary);
+	if (!file) return false;
+
+	switch (exportType) {
+	case Csv: ExportAsCsv(file, true); break;
+	case CsvS: ExportAsCsv(file, false); break;
 	default: return false;
 	}
-
 	return true;
 }
 
@@ -206,17 +231,21 @@ namespace {
 		Write(file, static_cast<int>(data.size()));
 		file.write(reinterpret_cast<const char*>(data.data()), sizeof(wchar_t) * data.size());
 	}
+	void Write(std::ofstream& file, const std::wstring_view& data) {
+		Write(file, static_cast<int>(data.size()));
+		file.write(reinterpret_cast<const char*>(data.data()), sizeof(wchar_t) * data.size());
+	}
 
-	std::string EncodeToUTF8(const std::wstring& string) {
-		const int length = WideCharToMultiByte(CP_UTF8, 0, string.data(), -1, nullptr, 0, nullptr, nullptr);
-
+	std::string EncodeToUTF8(const std::wstring_view& string) {
+		const int length = WideCharToMultiByte(CP_UTF8, 0, string.data(), static_cast<int>(string.size()) + 1, nullptr, 0, nullptr, nullptr);
 		std::string result(length - 1, 0);
-		WideCharToMultiByte(CP_UTF8, 0, string.data(), -1, result.data(), length, nullptr, nullptr);
+
+		WideCharToMultiByte(CP_UTF8, 0, string.data(), static_cast<int>(string.size()) + 1, result.data(), length, nullptr, nullptr);
 		return result;
 	}
 }
 
-void Vocabulary::LoadKv(std::ifstream& file) {
+void Vocabulary::LoadFromStream(std::ifstream& file) {
 	const int countOfWords = Read<int>(file);
 	for (int i = 0; i < countOfWords; ++i) {
 		std::wstring word = Read<std::wstring>(file);
@@ -242,7 +271,7 @@ void Vocabulary::LoadKv(std::ifstream& file) {
 		}
 	}
 }
-void Vocabulary::SaveAsKv(std::ofstream& file) const {
+void Vocabulary::SaveToStream(std::ofstream& file) const {
 	bool needHomonymContainer = false;
 
 	Write(file, static_cast<int>(m_Words.size()));
@@ -258,33 +287,6 @@ void Vocabulary::SaveAsKv(std::ofstream& file) const {
 	if (needHomonymContainer) {
 		Write(file, 1);
 		WriteHomonymContainer(file);
-	}
-}
-void Vocabulary::SaveAsCsv(std::ofstream& file, bool insertBOM) const {
-	if (insertBOM) {
-		Write<unsigned char>(file, 0xEF);
-		Write<unsigned char>(file, 0xBB);
-		Write<unsigned char>(file, 0xBF);
-	}
-
-	for (const auto& wordPtr : m_Words) {
-		const Meaning mergedMeaning = wordPtr->MergeMeaning(L",\n");
-		const std::string wordUTF8 = EncodeToUTF8(wordPtr->GetWord());
-		const std::string meaningUTF8 = EncodeToUTF8(mergedMeaning.GetMeaning());
-		const std::string pronunciationUTF8 = EncodeToUTF8(mergedMeaning.GetPronunciation());
-
-		const auto writeWithQuotes = [&](const std::string& string) {
-			file << '"';
-			file.write(string.data(), string.size());
-			file << '"';
-		};
-
-		writeWithQuotes(wordUTF8);
-		file << ',';
-		writeWithQuotes(meaningUTF8);
-		file << ',';
-		writeWithQuotes(pronunciationUTF8);
-		file << '\n';
 	}
 }
 
@@ -329,4 +331,32 @@ void Vocabulary::WriteHomonymContainer(std::ofstream& file) const {
 	}
 
 	WriteContainerLength(file, lengthPos);
+}
+
+void Vocabulary::ExportAsCsv(std::ofstream& file, bool insertBOM) const {
+	if (insertBOM) {
+		Write<unsigned char>(file, 0xEF);
+		Write<unsigned char>(file, 0xBB);
+		Write<unsigned char>(file, 0xBF);
+	}
+
+	for (const auto& wordPtr : m_Words) {
+		const Meaning mergedMeaning = wordPtr->MergeMeaning(L",\n");
+		const std::string wordUTF8 = EncodeToUTF8(wordPtr->GetWord());
+		const std::string meaningUTF8 = EncodeToUTF8(mergedMeaning.GetMeaning());
+		const std::string pronunciationUTF8 = EncodeToUTF8(mergedMeaning.GetPronunciation());
+
+		const auto writeWithQuotes = [&](const std::string& string) {
+			file << '"';
+			file.write(string.data(), string.size());
+			file << '"';
+		};
+
+		writeWithQuotes(wordUTF8);
+		file << ',';
+		writeWithQuotes(meaningUTF8);
+		file << ',';
+		writeWithQuotes(pronunciationUTF8);
+		file << '\n';
+	}
 }

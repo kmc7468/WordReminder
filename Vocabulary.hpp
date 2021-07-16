@@ -5,6 +5,7 @@
 #include <ios>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 class Word;
@@ -16,10 +17,11 @@ private:
 	std::wstring m_Pronunciation;
 
 public:
-	Meaning() noexcept = default;
 	Meaning(Word* word, std::wstring meaning, std::wstring pronunciation) noexcept;
 	Meaning(const Meaning& meaning) = default;
+	Meaning(const Meaning& meaning, Word* newWord);
 	Meaning(Meaning&& meaning) noexcept = default;
+	Meaning(Meaning&& meaning, Word* newWord) noexcept;
 	~Meaning() = default;
 
 public:
@@ -29,8 +31,9 @@ public:
 public:
 	const Word* GetWord() const noexcept;
 	Word* GetWord() noexcept;
-	std::wstring GetMeaning() const;
-	std::wstring GetPronunciation() const;
+	void SetWord(Word* newWord) noexcept;
+	std::wstring_view GetMeaning() const noexcept;
+	std::wstring_view GetPronunciation() const noexcept;
 	bool HasPronunciation() const noexcept;
 };
 
@@ -40,21 +43,20 @@ private:
 	std::vector<std::unique_ptr<Meaning>> m_Meanings;
 
 public:
-	Word() noexcept = default;
 	Word(std::wstring word) noexcept;
 	Word(std::wstring word, std::wstring meaning, std::wstring pronunciation);
 	Word(const Word& word);
-	Word(Word&& word) noexcept = default;
+	Word(Word&& word) noexcept;
 	~Word() = default;
 
 public:
 	Word& operator=(const Word& word);
-	Word& operator=(Word&& word) noexcept = default;
+	Word& operator=(Word&& word) noexcept;
 	const Meaning* operator[](std::size_t index) const noexcept;
 	Meaning* operator[](std::size_t index) noexcept;
 
 public:
-	std::wstring GetWord() const;
+	std::wstring_view GetWord() const noexcept;
 	std::size_t GetCountOfMeanings() const noexcept;
 	void AddMeaning(std::unique_ptr<Meaning>&& meaning);
 	void RemoveMeaning(std::size_t index);
@@ -66,12 +68,12 @@ public:
 
 private:
 	void CopyFrom(const Word& word);
+	void MoveFrom(Word&& word) noexcept;
 };
 
 class Vocabulary final {
 public:
-	enum Type {
-		Kv,
+	enum ExportType {
 		Csv,
 		CsvS,
 	};
@@ -105,17 +107,19 @@ public:
 	Word* FindWord(const std::wstring& word) noexcept;
 
 	bool Load(const std::wstring& path);
-	bool Save(const std::wstring& path, Type type = Kv) const;
+	bool Save(const std::wstring& path) const;
+	bool Export(const std::wstring& path, ExportType exportType) const;
 
 private:
 	void CopyFrom(const Vocabulary& vocabulary);
 
-	void LoadKv(std::ifstream& file);
-	void SaveAsKv(std::ofstream& file) const;
-	void SaveAsCsv(std::ofstream& file, bool insertBOM) const;
+	void LoadFromStream(std::ifstream& file);
+	void SaveToStream(std::ofstream& file) const;
 
 	std::streampos WriteContainerHeader(std::ofstream& file, ContainerId id) const;
 	void WriteContainerLength(std::ofstream& file, std::streampos lengthPos) const;
 	void ReadHomonymContainer(std::ifstream& file);
 	void WriteHomonymContainer(std::ofstream& file) const;
+
+	void ExportAsCsv(std::ofstream& file, bool insertBOM) const;
 };
