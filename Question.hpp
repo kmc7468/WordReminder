@@ -4,28 +4,34 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 class Question;
+class QuestionOption;
 
 class QuestionType {
 public:
-	enum Id {
+	enum Type {
 		WordToMeaning,
 		MeaningToWord,
 		WordToPronunciation,
 	};
-	enum InputType {
-		OneSelector,
-		TwoSelector,
+	enum AnswerType {
+		OneMultipleChoice,
+		TwoMultipleChoice,
 	};
 
 private:
-	Id m_Id;
+	Type m_Type;
+
+	bool m_ExcludeUsedAnswer = false;
+	Vocabulary m_UsableVocabulary;
 
 protected:
-	QuestionType(Id id) noexcept;
+	QuestionType(Type type) noexcept;
 
 public:
 	QuestionType(const QuestionType&) = delete;
@@ -35,8 +41,9 @@ public:
 	QuestionType& operator=(const QuestionType&) = delete;
 
 public:
-	Id GetId() const noexcept;
-	virtual InputType GetInputType() const noexcept = 0;
+	Type GetType() const noexcept;
+	virtual AnswerType GetAnswerType() const noexcept = 0;
+	void ExcludeUsedAnswer(const Vocabulary* vocabulary);
 
 	virtual std::wstring GetQuestionDescription() const = 0;
 	virtual std::wstring GetQuestion(const Question* question) const = 0;
@@ -44,6 +51,16 @@ public:
 	std::wstring GetSelector(const Question* question, int selectorIndex) const;
 	virtual std::wstring GetFirstSelector(const Question* question, int selectorIndex) const = 0;
 	virtual std::wstring GetSecondSelector(const Question* question, int selectorIndex) const = 0;
+
+	std::optional<Question> GenerateQuestion(QuestionOption* questionOption, Meaning* previousAnswer, Meaning* answer = nullptr);
+
+protected:
+	virtual bool IsUsableMeaning(const Meaning* meaning) const = 0;
+	virtual bool IsDuplicatedMeaning(const Meaning* fixedMeaning, const Meaning* targetMeaning) const = 0;
+
+private:
+	Meaning* ExtractUniqueMeaning(Vocabulary* vocabulary, const std::vector<Meaning*>& fixedMeanings) const;
+	bool IsUniqueMeaning(const std::vector<Meaning*>& fixedMeanings, Meaning* meaning) const;
 };
 
 class QuestionOption final {
@@ -81,12 +98,10 @@ public:
 class Question final {
 private:
 	QuestionType* m_Type = nullptr;
-	std::vector<Meaning*> m_FirstSelectors;
-	int m_AnswerOfFirstSelectors;
-	std::vector<Meaning*> m_SecondSelectors;
-	int m_AnswerOfSecondSelectors;
+	std::optional<std::pair<std::vector<Meaning*>, int>> m_FirstSelectors, m_SecondSelectors;
 
 public:
+	Question(QuestionType* type, std::vector<Meaning*>&& firstSelectors, int answerOfFirstSelectors) noexcept;
 	Question(QuestionType* type, std::vector<Meaning*>&& firstSelectors, int answerOfFirstSelectors,
 		std::vector<Meaning*>&& secondSelectors, int answerOfSecondSelectors) noexcept;
 	Question(const Question&) = delete;
