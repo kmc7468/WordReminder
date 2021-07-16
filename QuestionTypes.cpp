@@ -1,6 +1,7 @@
 #include "QuestionTypes.hpp"
 
 #include <cassert>
+#include <sstream>
 
 WordToMeaning::WordToMeaning(bool enableHint, bool enableSecondSelectors) noexcept
 	: QuestionType(Type::WordToMeaning), m_EnableHint(enableHint), m_EnableSecondSelectors(enableSecondSelectors) {
@@ -21,7 +22,16 @@ std::wstring WordToMeaning::GetHint(const Question* question) const {
 	return std::wstring(m_EnableHint ? question->GetFirstSelector(question->GetAnswerOfFirstSelectors())->GetPronunciation() : L"");
 }
 std::wstring WordToMeaning::GetFirstSelector(const Question* question, int selectorIndex) const {
-	return std::wstring(question->GetFirstSelector(selectorIndex)->GetMeaning());
+	const Meaning* selector = question->GetFirstSelector(selectorIndex);
+
+	std::wostringstream oss;
+	oss << selector->GetMeaning();
+
+	if (m_EnableHint && selector->HasPronunciation()) {
+		oss << L"\n(" << selector->GetPronunciation() << ')';
+	}
+
+	return oss.str();
 }
 std::wstring WordToMeaning::GetSecondSelector(const Question* question, int selectorIndex) const {
 	return std::wstring(question->GetFirstSelector(selectorIndex)->GetPronunciation());
@@ -55,7 +65,16 @@ std::wstring MeaningToWord::GetHint(const Question* question) const {
 	return std::wstring(m_EnableHint ? question->GetFirstSelector(question->GetAnswerOfFirstSelectors())->GetPronunciation() : L"");
 }
 std::wstring MeaningToWord::GetFirstSelector(const Question* question, int selectorIndex) const {
-	return std::wstring(question->GetFirstSelector(selectorIndex)->GetWord()->GetWord());
+	const Meaning* selector = question->GetFirstSelector(selectorIndex);
+
+	std::wostringstream oss;
+	oss << selector->GetWord()->GetWord();
+
+	if (m_EnableHint && selector->HasPronunciation()) {
+		oss << L"\n(" << selector->GetPronunciation() << ')';
+	}
+
+	return oss.str();
 }
 std::wstring MeaningToWord::GetSecondSelector(const Question* question, int selectorIndex) const {
 	return std::wstring(question->GetFirstSelector(selectorIndex)->GetPronunciation());
