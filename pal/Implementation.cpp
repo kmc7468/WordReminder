@@ -5,7 +5,7 @@
 #	include "../platform/Win32.hpp"
 
 std::unique_ptr<Config> Config::Create() {
-	return std::make_unique<RegistryKey>();
+	return std::make_unique<Win32RegistryKey>();
 }
 
 std::u8string EncodeToUTF8(const std::wstring_view& string) {

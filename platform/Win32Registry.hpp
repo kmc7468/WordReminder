@@ -8,31 +8,31 @@
 #include <optional>
 #include <string>
 
-class RegistryKey final : public Config {
+class Win32RegistryKey final : public Config {
 public:
-	static const RegistryKey CurrentUser;
+	static const Win32RegistryKey CurrentUser;
 
 private:
 	HKEY m_Key = nullptr;
 	bool m_CloseKey = true;
 
 public:
-	RegistryKey() noexcept = default;
-	RegistryKey(const RegistryKey&) = delete;
-	RegistryKey(RegistryKey&& registry) noexcept;
-	virtual ~RegistryKey() override;
+	Win32RegistryKey() noexcept = default;
+	Win32RegistryKey(const Win32RegistryKey&) = delete;
+	Win32RegistryKey(Win32RegistryKey&& registry) noexcept;
+	virtual ~Win32RegistryKey() override;
 
 private:
-	RegistryKey(HKEY key) noexcept;
+	Win32RegistryKey(HKEY key) noexcept;
 
 public:
-	RegistryKey& operator=(const RegistryKey&) = delete;
-	RegistryKey& operator=(RegistryKey&& registryKey) noexcept;
+	Win32RegistryKey& operator=(const Win32RegistryKey&) = delete;
+	Win32RegistryKey& operator=(Win32RegistryKey&& registryKey) noexcept;
 
 public:
 	virtual bool IsOpen() const noexcept override;
 	virtual bool Open(const std::filesystem::path& path) override;
-	bool Open(const RegistryKey& key, const std::wstring& subKey) noexcept;
+	bool Open(const Win32RegistryKey& key, const std::wstring& subKey) noexcept;
 	virtual void Close() override;
 
 	virtual std::optional<int> ReadInt(const std::wstring& valueName) const override;
