@@ -30,32 +30,28 @@ RegistryKey& RegistryKey::operator=(RegistryKey&& registryKey) noexcept {
 bool RegistryKey::IsOpen() const noexcept {
 	return m_Key != nullptr;
 }
+bool RegistryKey::Open(const std::filesystem::path& path) {
+	return Open(CurrentUser, L"SOFTWARE\\" + path.wstring());
+}
 bool RegistryKey::Open(const RegistryKey& key, const std::wstring& subKey) noexcept {
 	assert(m_Key == nullptr);
 	assert(&key != this);
 
 	return RegOpenKeyW(key.m_Key, subKey.data(), &m_Key) == ERROR_SUCCESS;
 }
-void RegistryKey::Close() noexcept {
+void RegistryKey::Close() {
 	if (m_Key) {
 		RegCloseKey(m_Key);
 	}
 }
 
-std::optional<bool> RegistryKey::ReadBool(const std::wstring& valueName) const noexcept {
-	if (const auto result = ReadInt(valueName); result) return !!*result;
-	else return std::nullopt;
-}
-bool RegistryKey::WriteBool(const std::wstring& valueName, bool value) noexcept {
-	return WriteInt(valueName, value);
-}
-std::optional<int> RegistryKey::ReadInt(const std::wstring& valueName) const noexcept {
+std::optional<int> RegistryKey::ReadInt(const std::wstring& valueName) const {
 	DWORD buffer;
 	DWORD bufferSize = sizeof(buffer);
 	if (QueryValue(valueName, REG_DWORD, &buffer, &bufferSize)) return static_cast<int>(buffer);
 	else return std::nullopt;
 }
-bool RegistryKey::WriteInt(const std::wstring& valueName, int value) noexcept {
+bool RegistryKey::WriteInt(const std::wstring& valueName, int value) {
 	return SetValue(valueName, REG_DWORD, &value, sizeof(value));
 }
 std::optional<std::wstring> RegistryKey::ReadString(const std::wstring& valueName) const {
@@ -66,10 +62,10 @@ std::optional<std::wstring> RegistryKey::ReadString(const std::wstring& valueNam
 	if (QueryValue(valueName, REG_SZ, buffer.data(), &bufferSize)) return buffer;
 	else return std::nullopt;
 }
-bool RegistryKey::WriteString(const std::wstring& valueName, const std::wstring& value) noexcept {
+bool RegistryKey::WriteString(const std::wstring& valueName, const std::wstring& value) {
 	return SetValue(valueName, REG_SZ, value.data(), value.size());
 }
-void RegistryKey::Delete(const std::wstring& valueName) noexcept {
+void RegistryKey::Delete(const std::wstring& valueName) {
 	RegDeleteKeyW(m_Key, valueName.data());
 }
 
