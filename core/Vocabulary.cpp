@@ -1,7 +1,8 @@
 #include "Vocabulary.hpp"
 
 #include "Utility.hpp"
-#include "WinAPI.hpp"
+
+#include "../pal/Utility.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -240,14 +241,6 @@ namespace {
 		Write(file, static_cast<int>(data.size()));
 		file.write(reinterpret_cast<const char*>(data.data()), sizeof(wchar_t) * data.size());
 	}
-
-	std::string EncodeToUTF8(const std::wstring_view& string) {
-		const int length = WideCharToMultiByte(CP_UTF8, 0, string.data(), static_cast<int>(string.size()) + 1, nullptr, 0, nullptr, nullptr);
-		std::string result(length - 1, 0);
-
-		WideCharToMultiByte(CP_UTF8, 0, string.data(), static_cast<int>(string.size()) + 1, result.data(), length, nullptr, nullptr);
-		return result;
-	}
 }
 
 void Vocabulary::LoadFromStream(std::ifstream& file) {
@@ -347,13 +340,13 @@ void Vocabulary::ExportAsCsv(std::ofstream& file, bool insertBOM) const {
 
 	for (const auto& wordPtr : m_Words) {
 		const Meaning mergedMeaning = wordPtr->MergeMeaning(L",\n");
-		const std::string wordUTF8 = EncodeToUTF8(wordPtr->GetWord());
-		const std::string meaningUTF8 = EncodeToUTF8(mergedMeaning.GetMeaning());
-		const std::string pronunciationUTF8 = EncodeToUTF8(mergedMeaning.GetPronunciation());
+		const std::u8string wordUTF8 = EncodeToUTF8(wordPtr->GetWord());
+		const std::u8string meaningUTF8 = EncodeToUTF8(mergedMeaning.GetMeaning());
+		const std::u8string pronunciationUTF8 = EncodeToUTF8(mergedMeaning.GetPronunciation());
 
-		const auto writeWithQuotes = [&](const std::string& string) {
+		const auto writeWithQuotes = [&](const std::u8string& string) {
 			file << '"';
-			file.write(string.data(), string.size());
+			file.write(reinterpret_cast<const char*>(string.data()), string.size());
 			file << '"';
 		};
 
