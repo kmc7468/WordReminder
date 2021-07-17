@@ -1,5 +1,3 @@
 #pragma once
 
-#ifdef _WIN32
-#	include "Win32Registry.hpp"
-#endif
+#include "Win32Registry.hpp"
