@@ -63,7 +63,7 @@ std::optional<std::wstring> RegistryKey::ReadString(const std::wstring& valueNam
 	else return std::nullopt;
 }
 bool RegistryKey::WriteString(const std::wstring& valueName, const std::wstring& value) {
-	return SetValue(valueName, REG_SZ, value.data(), value.size());
+	return SetValue(valueName, REG_SZ, value.data(), value.size() * sizeof(wchar_t));
 }
 void RegistryKey::Delete(const std::wstring& valueName) {
 	RegDeleteKeyW(m_Key, valueName.data());
