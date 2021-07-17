@@ -13,7 +13,11 @@ struct Size final {
 	int Width, Height;
 };
 
+class Application;
+
 class Component {
+	friend class Application;
+
 private:
 	Component* m_Parent = nullptr;
 	std::vector<std::unique_ptr<Component>> m_Children;

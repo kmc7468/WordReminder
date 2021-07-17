@@ -2,8 +2,8 @@
 
 #include <cassert>
 
-Win32Component::Win32Component(std::wstring className) noexcept
-	: m_ClassName(std::move(className)) {
+Win32Component::Win32Component(std::wstring className, DWORD style) noexcept
+	: m_ClassName(std::move(className)), m_Style(style) {
 	assert(!m_ClassName.empty());
 }
 
@@ -39,7 +39,8 @@ void Win32Component::SetVisibilityDirect(bool newVisibility) {
 
 void Win32Component::CreateComponent(Point location, Size size, const std::wstring& text, bool visibility, std::size_t index) {
 	Win32Component* const parent = dynamic_cast<Win32Component*>(GetParent());
-	m_Window = CreateWindowExW(0, m_ClassName.data(), text.data(), m_Style, location.X, location.Y, size.Width, size.Height,
+	m_Window = CreateWindowExW(0, m_ClassName.data(), text.data(), m_Style | (visibility ? WS_VISIBLE : 0),
+		location.X, location.Y, size.Width, size.Height,
 		parent ? parent->m_Window : nullptr, reinterpret_cast<HMENU>(index), /*TODO: hInstance*/nullptr, nullptr);
 	SetWindowLongPtrW(m_Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 }
@@ -55,7 +56,7 @@ std::pair<Point, Size> Win32Component::GetRectangle() const noexcept {
 }
 
 Win32Window::Win32Window()
-	: Win32Component(L"Window") {}
+	: Win32Component(L"Window", WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN) {}
 
 LRESULT Win32Window::WndProc(UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {

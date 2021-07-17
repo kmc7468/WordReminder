@@ -3,6 +3,7 @@
 #include "../pal/Config.hpp"
 
 #include <cassert>
+#include <utility>
 
 void Setting::Load() {
 	assert(!m_Loaded);
@@ -46,4 +47,31 @@ void Setting::Save() const {
 	Write(WordToPronunciationOption, Int);
 
 	Write(ExcludeDuplicatedAnswer, Bool);
+}
+
+bool Application::Initialize(std::unique_ptr<ApplicationState>&& applicationState) {
+	Setting.Load();
+
+	m_ApplicationState = std::move(applicationState);
+	return m_ApplicationState->Initialize();
+}
+int Application::Run(std::unique_ptr<Window>&& mainWindow) {
+	m_MainWindow = std::move(mainWindow);
+	m_MainWindow->CreateComponent(0);
+
+	return m_ApplicationState->Run();
+}
+void Application::Finalize() {
+	Setting.Save();
+
+	m_ApplicationState->Finalize();
+}
+
+Window* Application::GetMainWindow() noexcept {
+	return m_MainWindow.get();
+}
+
+Application& Application::Get() {
+	static Application instance;
+	return instance;
 }

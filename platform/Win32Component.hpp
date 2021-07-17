@@ -15,7 +15,7 @@ private:
 	DWORD m_Style = 0;
 
 protected:
-	Win32Component(std::wstring className) noexcept;
+	Win32Component(std::wstring className, DWORD style) noexcept;
 
 protected:
 	virtual Point GetLocationDirect() const override;
@@ -36,7 +36,11 @@ private:
 	std::pair<Point, Size> GetRectangle() const noexcept;
 };
 
+class Win32ApplicationState;
+
 class Win32Window : public Window, public Win32Component {
+	friend class Win32ApplicationState;
+
 public:
 	Win32Window();
 	Win32Window(const Win32Window&) = delete;

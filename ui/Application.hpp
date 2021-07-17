@@ -1,5 +1,9 @@
 #pragma once
 
+#include "../pal/ApplicationState.hpp"
+#include "../pal/Component.hpp"
+
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -35,4 +39,35 @@ public:
 public:
 	void Load();
 	void Save() const;
+};
+
+class Application final {
+public:
+	::Setting Setting;
+
+private:
+	std::unique_ptr<ApplicationState> m_ApplicationState;
+	std::unique_ptr<Window> m_MainWindow;
+
+public:
+	Application() noexcept = default;
+	Application(const Application&) = delete;
+	~Application() = default;
+
+public:
+	Application& operator=(const Application&) = delete;
+
+public:
+	bool Initialize(std::unique_ptr<ApplicationState>&& applicationState);
+	int Run(std::unique_ptr<Window>&& mainWindow);
+	void Finalize();
+
+	template<typename T>
+	T* GetApplicationState() noexcept {
+		return static_cast<T*>(m_ApplicationState.get());
+	}
+	Window* GetMainWindow() noexcept;
+
+public:
+	static Application& Get();
 };
