@@ -1,6 +1,7 @@
 #include "Component.hpp"
 
 #include <cassert>
+#include <utility>
 
 Component::Component(std::unique_ptr<EventHandler>&& eventHandler) noexcept
 	: m_EventHandler(std::move(eventHandler)) {
@@ -93,6 +94,14 @@ void Component::Hide() {
 	}
 }
 
+void Component::RaiseEvent(std::unique_ptr<Event> event) {
+	switch (event->GetType()) {
+	case Event::Create: m_EventHandler->OnCreate(event.get()); break;
+	case Event::Close: m_EventHandler->OnClose(event.get()); break;
+	default: assert(false); break;
+	}
+}
+
 void Component::CreateComponent() {
 	assert(!m_IsCreated);
 
@@ -107,17 +116,18 @@ void Component::CreateComponent() {
 	}
 }
 
-void Component::OnCreate() {
-	m_EventHandler->OnCreate(this);
-}
-void Component::OnClose() {
-	m_EventHandler->OnClose(this);
-}
-
 Window::Window(Point location, Size size) noexcept {
 	SetLocation(location);
 	SetSize(size);
 }
 
-void EventHandler::OnCreate(Component*) {}
-void EventHandler::OnClose(Component*) {}
+Button::Button() noexcept {}
+
+void Button::RaiseEvent(std::unique_ptr<Event> event) {
+	switch (event->GetType()) {
+	case Event::Click: GetEventHandler<ButtonEventHandler>()->OnClick(event.get()); break;
+	default: Component::RaiseEvent(std::move(event));
+	}
+}
+
+Label::Label() noexcept {}

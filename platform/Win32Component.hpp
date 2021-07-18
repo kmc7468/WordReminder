@@ -65,3 +65,23 @@ private:
 	LRESULT WndProc(UINT message, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK WndProc(HWND handle, UINT message, WPARAM wParam, LPARAM lParam);
 };
+
+class Win32Button final : public Button, public Win32Component {
+public:
+	Win32Button(std::unique_ptr<ButtonEventHandler>&& eventHandler);
+	Win32Button(const Win32Window&) = delete;
+	virtual ~Win32Button() override = default;
+
+public:
+	Win32Button& operator=(const Win32Button&) = delete;
+};
+
+class Win32Static final : public Label, public Win32Component {
+public:
+	Win32Static(std::unique_ptr<EventHandler>&& eventHandler);
+	Win32Static(const Win32Static&) = delete;
+	virtual ~Win32Static() override = default;
+
+public:
+	Win32Static& operator=(const Win32Static&) = delete;
+};

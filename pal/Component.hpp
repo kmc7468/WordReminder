@@ -1,9 +1,10 @@
 #pragma once
 
+#include "../ui/Event.hpp"
+
 #include <cstddef>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 struct Point final {
@@ -13,8 +14,6 @@ struct Point final {
 struct Size final {
 	int Width, Height;
 };
-
-class EventHandler;
 
 class Component {
 private:
@@ -70,12 +69,15 @@ protected:
 
 	virtual void CreateComponent(Point location, Size size, const std::wstring& text, bool visibility) = 0;
 
+public:
+	virtual void RaiseEvent(std::unique_ptr<Event> event);
+	template<typename T>
+	T* GetEventHandler() noexcept {
+		return static_cast<T*>(m_EventHandler.get());
+	}
+
 private:
 	void CreateComponent();
-
-protected:
-	void OnCreate();
-	void OnClose();
 };
 
 class Window : public virtual Component {
@@ -91,16 +93,31 @@ public:
 	static std::unique_ptr<Window> Create(std::unique_ptr<EventHandler>&& eventHandler, int width, int height);
 };
 
-class EventHandler {
+class Button : public virtual Component {
 public:
-	EventHandler() noexcept = default;
-	EventHandler(const EventHandler&) = delete;
-	virtual ~EventHandler() = default;
+	Button() noexcept;
+	Button(const Button&) = delete;
+	virtual ~Button() override = default;
 
 public:
-	EventHandler& operator=(const EventHandler&) = delete;
+	Button& operator=(const Button&) = delete;
+
+protected:
+	virtual void RaiseEvent(std::unique_ptr<Event> event) override;
 
 public:
-	virtual void OnCreate(Component* component);
-	virtual void OnClose(Component* component);
+	static std::unique_ptr<Button> Create(std::unique_ptr<ButtonEventHandler>&& eventHandler);
+};
+
+class Label : public virtual Component {
+public:
+	Label() noexcept;
+	Label(const Label&) = delete;
+	virtual ~Label() override = default;
+
+public:
+	Label& operator=(const Label&) = delete;
+
+public:
+	static std::unique_ptr<Label> Create(std::unique_ptr<EventHandler>&& eventHandler);
 };

@@ -9,6 +9,12 @@
 std::unique_ptr<Window> Window::Create(std::unique_ptr<EventHandler>&& eventHandler, int width, int height) {
 	return std::make_unique<Win32Window>(std::move(eventHandler), width, height);
 }
+std::unique_ptr<Button> Button::Create(std::unique_ptr<ButtonEventHandler>&& eventHandler) {
+	return std::make_unique<Win32Button>(std::move(eventHandler));
+}
+std::unique_ptr<Label> Label::Create(std::unique_ptr<EventHandler>&& eventHandler) {
+	return std::make_unique<Win32Static>(std::move(eventHandler));
+}
 
 // Config.hpp
 std::unique_ptr<Config> Config::Create() {

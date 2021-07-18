@@ -71,11 +71,28 @@ Win32Window::Win32Window(std::unique_ptr<EventHandler>&& eventHandler, int width
 LRESULT Win32Window::WndProc(UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 	case WM_CREATE:
-		OnCreate();
+		RaiseEvent(std::make_unique<Event>(Event::Create, this));
 		return 0;
 
 	case WM_CLOSE:
-		OnClose();
+		RaiseEvent(std::make_unique<Event>(Event::Close, this));
+		return 0;
+
+	case WM_COMMAND: {
+		Component* const child = GetChild(LOWORD(wParam));
+		if (const auto button = dynamic_cast<Win32Button*>(child); button) {
+			switch (HIWORD(wParam)) {
+			case BN_CLICKED:
+				child->RaiseEvent(std::make_unique<Event>(Event::Click, child));
+				return 0;
+			}
+		}
+
+		return 0;
+	}
+
+	case WM_CTLCOLORSTATIC:
+		SetBkMode(reinterpret_cast<HDC>(wParam), TRANSPARENT);
 		return 0;
 	}
 	return DefWindowProcW(GetHandle(), message, wParam, lParam);
@@ -91,3 +108,9 @@ LRESULT CALLBACK Win32Window::WndProc(HWND handle, UINT message, WPARAM wParam, 
 
 	return window ? window->WndProc(message, wParam, lParam) : DefWindowProcW(handle, message, wParam, lParam);
 }
+
+Win32Button::Win32Button(std::unique_ptr<ButtonEventHandler>&& eventHandler)
+	: Component(std::move(eventHandler)), Win32Component(L"Button", WS_CHILD | BS_PUSHBUTTON, 0) {}
+
+Win32Static::Win32Static(std::unique_ptr<EventHandler>&& eventHandler)
+	: Component(std::move(eventHandler)), Win32Component(L"Static", WS_CHILD, 0) {}
