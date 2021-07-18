@@ -3,6 +3,11 @@
 #include <cassert>
 #include <utility>
 
+Component::Component(std::unique_ptr<EventHandler>&& eventHandler) noexcept
+	: m_EventHandler(std::move(eventHandler)) {
+	assert(m_EventHandler != nullptr);
+}
+
 const Component* Component::GetParent() const noexcept {
 	return m_Parent;
 }
@@ -13,8 +18,9 @@ Component* Component::AddChild(std::unique_ptr<Component>&& child) {
 	assert(child->m_Parent == nullptr);
 
 	child->m_Parent = this;
+	child->SetParentDirect(this, m_Children.size());
 	if (m_IsCreated) {
-		child->CreateComponent(m_Children.size());
+		child->CreateComponent();
 	}
 
 	m_Children.push_back(std::move(child));
@@ -71,16 +77,38 @@ void Component::SetVisibility(bool newVisibility) {
 	}
 }
 
-void Component::CreateComponent(std::size_t index) {
+void Component::Show() {
+	if (m_IsCreated) {
+		SetVisibilityDirect(true);
+	} else {
+		m_Visibility = true;
+		CreateComponent();
+	}
+}
+void Component::Hide() {
+	if (m_IsCreated) {
+		SetVisibilityDirect(false);
+	} else {
+		m_Visibility = false;
+		CreateComponent();
+	}
+}
+
+void Component::CreateComponent() {
 	assert(!m_IsCreated);
 
-	CreateComponent(m_Location, m_Size, m_Text, m_Visibility, index);
+	CreateComponent(m_Location, m_Size, m_Text, m_Visibility);
 	m_IsCreated = true;
 
 	for (std::size_t i = 0; i < m_Children.size(); ++i) {
 		if (const auto& child = m_Children[i];
 			!child->m_IsCreated) {
-			child->CreateComponent(index);
+			child->CreateComponent();
 		}
 	}
+}
+
+Window::Window(Point location, Size size) noexcept {
+	SetLocation(location);
+	SetSize(size);
 }

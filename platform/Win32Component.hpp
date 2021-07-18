@@ -13,11 +13,19 @@ private:
 
 	std::wstring m_ClassName;
 	DWORD m_Style = 0;
+	HMENU m_Menu = nullptr;
 
-protected:
+public:
 	Win32Component(std::wstring className, DWORD style) noexcept;
+	Win32Component(const Win32Component&) = delete;
+	virtual ~Win32Component() override = 0;
+
+public:
+	Win32Component& operator=(const Win32Component&) = delete;
 
 protected:
+	virtual void SetParentDirect(Component* parent, std::size_t index) override;
+
 	virtual Point GetLocationDirect() const override;
 	virtual void SetLocationDirect(Point newLocation) override;
 	virtual Size GetSizeDirect() const override;
@@ -27,7 +35,7 @@ protected:
 	virtual bool GetVisibilityDirect() const override;
 	virtual void SetVisibilityDirect(bool newVisibility) override;
 
-	virtual void CreateComponent(Point location, Size size, const std::wstring& text, bool visibility, std::size_t index) override;
+	virtual void CreateComponent(Point location, Size size, const std::wstring& text, bool visibility) override;
 
 public:
 	HWND GetHandle() noexcept;
@@ -38,11 +46,11 @@ private:
 
 class Win32ApplicationState;
 
-class Win32Window : public Window, public Win32Component {
+class Win32Window final : public Window, public Win32Component {
 	friend class Win32ApplicationState;
 
 public:
-	Win32Window();
+	Win32Window(std::unique_ptr<EventHandler>&& eventHandler, int width, int height);
 	Win32Window(const Win32Window&) = delete;
 	virtual ~Win32Window() override = default;
 

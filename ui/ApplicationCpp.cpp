@@ -57,7 +57,7 @@ bool Application::Initialize(std::unique_ptr<ApplicationState>&& applicationStat
 }
 int Application::Run(std::unique_ptr<Window>&& mainWindow) {
 	m_MainWindow = std::move(mainWindow);
-	m_MainWindow->CreateComponent(0);
+	m_MainWindow->Show();
 
 	return m_ApplicationState->Run();
 }

@@ -13,12 +13,11 @@ struct Size final {
 	int Width, Height;
 };
 
-class Application;
+class EventHandler;
 
 class Component {
-	friend class Application;
-
 private:
+	std::unique_ptr<EventHandler> m_EventHandler;
 	Component* m_Parent = nullptr;
 	std::vector<std::unique_ptr<Component>> m_Children;
 
@@ -29,7 +28,7 @@ private:
 	bool m_Visibility = true;
 
 public:
-	Component() noexcept = default;
+	Component(std::unique_ptr<EventHandler>&& eventHandler) noexcept;
 	Component(const Component&) = delete;
 	virtual ~Component() = default;
 
@@ -53,7 +52,12 @@ public:
 	bool GetVisibility() const;
 	void SetVisibility(bool newVisibility);
 
+	void Show();
+	void Hide();
+
 protected:
+	virtual void SetParentDirect(Component* parent, std::size_t index) = 0;
+
 	virtual Point GetLocationDirect() const = 0;
 	virtual void SetLocationDirect(Point newLocation) = 0;
 	virtual Size GetSizeDirect() const = 0;
@@ -63,12 +67,25 @@ protected:
 	virtual bool GetVisibilityDirect() const = 0;
 	virtual void SetVisibilityDirect(bool newVisibility) = 0;
 
-	virtual void CreateComponent(Point location, Size size, const std::wstring& text, bool visibility, std::size_t index) = 0;
+	virtual void CreateComponent(Point location, Size size, const std::wstring& text, bool visibility) = 0;
 
 private:
-	void CreateComponent(std::size_t index);
+	void CreateComponent();
 };
 
 class Window : public virtual Component {
+public:
+	Window(Point location, Size size) noexcept;
+	Window(const Window&) = delete;
+	virtual ~Window() override = default;
+
+public:
+	Window& operator=(const Window&) = delete;
+
+public:
+	static std::unique_ptr<Window> Create(std::unique_ptr<EventHandler>&& eventHandler, int width, int height);
+};
+
+class EventHandler {
 	// TODO
 };
