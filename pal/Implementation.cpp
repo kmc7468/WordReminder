@@ -2,8 +2,6 @@
 #include "Config.hpp"
 #include "Utility.hpp"
 
-#include <utility>
-
 #ifdef _WIN32
 #	include "../platform/Win32.hpp"
 

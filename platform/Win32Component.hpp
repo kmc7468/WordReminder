@@ -7,16 +7,20 @@
 #include <string>
 #include <utility>
 
+class Win32Window;
+
 class Win32Component : public virtual Component {
+	friend class Win32Window;
+
 private:
 	HWND m_Window = nullptr;
 
 	std::wstring m_ClassName;
-	DWORD m_Style = 0;
+	DWORD m_Style = 0, m_ExStyle = 0;
 	HMENU m_Menu = nullptr;
 
 public:
-	Win32Component(std::wstring className, DWORD style) noexcept;
+	Win32Component(std::wstring className, DWORD style, DWORD exStyle) noexcept;
 	Win32Component(const Win32Component&) = delete;
 	virtual ~Win32Component() override = 0;
 

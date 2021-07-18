@@ -1,7 +1,6 @@
 #include "Component.hpp"
 
 #include <cassert>
-#include <utility>
 
 Component::Component(std::unique_ptr<EventHandler>&& eventHandler) noexcept
 	: m_EventHandler(std::move(eventHandler)) {
@@ -108,7 +107,17 @@ void Component::CreateComponent() {
 	}
 }
 
+void Component::OnCreate() {
+	m_EventHandler->OnCreate(this);
+}
+void Component::OnClose() {
+	m_EventHandler->OnClose(this);
+}
+
 Window::Window(Point location, Size size) noexcept {
 	SetLocation(location);
 	SetSize(size);
 }
+
+void EventHandler::OnCreate(Component*) {}
+void EventHandler::OnClose(Component*) {}

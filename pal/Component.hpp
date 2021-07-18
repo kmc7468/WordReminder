@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 struct Point final {
@@ -71,6 +72,10 @@ protected:
 
 private:
 	void CreateComponent();
+
+protected:
+	void OnCreate();
+	void OnClose();
 };
 
 class Window : public virtual Component {
@@ -87,5 +92,15 @@ public:
 };
 
 class EventHandler {
-	// TODO
+public:
+	EventHandler() noexcept = default;
+	EventHandler(const EventHandler&) = delete;
+	virtual ~EventHandler() = default;
+
+public:
+	EventHandler& operator=(const EventHandler&) = delete;
+
+public:
+	virtual void OnCreate(Component* component);
+	virtual void OnClose(Component* component);
 };
