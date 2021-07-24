@@ -1,37 +1,36 @@
 #include "LayoutEngine.hpp"
 
 #include <cassert>
+#include <utility>
 
-Length::Length(double value, Unit unit, ScaleMode scaleMode) noexcept
-	: m_Value(value), m_Unit(unit), m_ScaleMode(scaleMode) {}
+Length::Length(std::function<double(const LengthEvaluationContext&)> evaluator) noexcept
+	: m_Evaluator(std::move(evaluator)) {
+	assert(m_Evaluator != nullptr);
+}
 
-double Length::Evaluate(double displayScale, double windowScale, double parentLength) const noexcept {
-	assert(displayScale > 0);
-	assert(windowScale > 0);
+void Length::Evaluate(const LengthEvaluationContext& evaluationContext) {
+	m_Evaluated = m_Evaluator(evaluationContext);
 
-	switch (m_Unit) {
-	case Unit::Pixel:
-		return m_Value * (m_ScaleMode == DisplayBased ? displayScale : windowScale);
+	assert(m_Evaluated != 0);
+}
+double Length::GetEvaluated() const noexcept {
+	assert(m_Evaluated != 0);
 
-	case Unit::Percent:
-		assert(parentLength != -1);
-		return parentLength * m_Value / 100;
-
-	case Unit::WrapContent:
-		return -1;
-	}
+	return m_Evaluated;
 }
 
 Length Length::Pixel(double value, ScaleMode scaleMode) {
-	assert(value > 0);
-
-	return { value, Unit::Pixel, scaleMode };
+	return Length([value, scaleMode](const LengthEvaluationContext& evaluationContext) {
+		return value * (scaleMode == DisplayBased ? evaluationContext.DisplayScale : evaluationContext.WindowScale);
+	});
 }
 Length Length::Percent(double value) {
-	assert(0 < value && value <= 100);
-
-	return { value, Unit::Percent, DisplayBased };
+	return Length([value](const LengthEvaluationContext& evaluationContext) {
+		return evaluationContext.ParentLength * value / 100;
+	});
 }
 Length Length::WrapContent() {
-	return { 0.0, Unit::WrapContent, DisplayBased };
+	return Length([](const LengthEvaluationContext&) {
+		return -1;
+	});
 }

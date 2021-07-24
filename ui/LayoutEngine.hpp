@@ -1,5 +1,14 @@
 #pragma once
 
+#include <functional>
+
+struct LengthEvaluationContext final {
+	double DisplayScale;
+	double WindowScale;
+	double ParentLength;
+	double UsableLength;
+};
+
 class Length final {
 public:
 	enum ScaleMode {
@@ -8,29 +17,22 @@ public:
 	};
 
 private:
-	enum class Unit {
-		Pixel,
-		Percent,
-		WrapContent,
-	};
-
-private:
-	double m_Value;
-	Unit m_Unit;
-	ScaleMode m_ScaleMode;
+	std::function<double(const LengthEvaluationContext&)> m_Evaluator;
+	double m_Evaluated = 0;
 
 public:
+	explicit Length(std::function<double(const LengthEvaluationContext&)> evaluator) noexcept;
 	Length(const Length& length) = default;
+	Length(Length&& length) noexcept = default;
 	~Length() = default;
-
-private:
-	Length(double value, Unit unit, ScaleMode scaleMode) noexcept;
 
 public:
 	Length& operator=(const Length& length) = default;
+	Length& operator=(Length&& length) noexcept = default;
 
 public:
-	double Evaluate(double displayScale, double windowScale, double parentLength) const noexcept;
+	void Evaluate(const LengthEvaluationContext& evaluationContext);
+	double GetEvaluated() const noexcept;
 
 public:
 	static Length Pixel(double value, ScaleMode scaleMode = DisplayBased);
