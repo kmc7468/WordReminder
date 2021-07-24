@@ -54,7 +54,7 @@ void Win32Component::CreateComponent(Point location, Size size, const std::wstri
 		Application::Get().GetApplicationState<Win32ApplicationState>()->GetInstance(), this);
 }
 
-HWND Win32Component::GetHandle() noexcept {
+HWND Win32Component::GetHandle() const noexcept {
 	return m_Window;
 }
 
@@ -67,6 +67,17 @@ std::pair<Point, Size> Win32Component::GetRectangle() const noexcept {
 Win32Window::Win32Window(std::unique_ptr<EventHandler>&& eventHandler, int width, int height)
 	: Component(std::move(eventHandler)), Window({ CW_USEDEFAULT, CW_USEDEFAULT }, { width, height }),
 	Win32Component(L"Window", WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0) {}
+
+Size Win32Window::GetMinimumSizeDirect() const {
+	return GetMinimumSizeProperty();
+}
+void Win32Window::SetMinimumSizeDirect(Size newMinimumSize) {
+	return SetMinimumSizeProperty(newMinimumSize);
+}
+
+double Win32Window::GetDisplayScaleDirect() const {
+	return GetDpiForWindowSafely(GetHandle()) / static_cast<double>(USER_DEFAULT_SCREEN_DPI);
+}
 
 LRESULT Win32Window::WndProc(UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
@@ -88,6 +99,14 @@ LRESULT Win32Window::WndProc(UINT message, WPARAM wParam, LPARAM lParam) {
 			}
 		}
 
+		return 0;
+	}
+
+	case WM_GETMINMAXINFO: {
+		const Size minimumSize = GetMinimumSizeProperty();
+		const LPMINMAXINFO sizeInfo = reinterpret_cast<LPMINMAXINFO>(lParam);
+		sizeInfo->ptMinTrackSize.x = minimumSize.Width;
+		sizeInfo->ptMinTrackSize.y = minimumSize.Height;
 		return 0;
 	}
 

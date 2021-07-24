@@ -94,6 +94,10 @@ void Component::Hide() {
 	}
 }
 
+bool Component::IsCreated() const noexcept {
+	return m_IsCreated;
+}
+
 void Component::RaiseEvent(std::unique_ptr<Event> event) {
 	switch (event->GetType()) {
 	case Event::Create: m_EventHandler->OnCreate(event.get()); break;
@@ -119,6 +123,30 @@ void Component::CreateComponent() {
 Window::Window(Point location, Size size) noexcept {
 	SetLocation(location);
 	SetSize(size);
+}
+
+Size Window::GetMinimumSize() const {
+	return IsCreated() ? GetMinimumSizeDirect() : GetMinimumSizeProperty();
+}
+void Window::SetMinimumSize(Size newMinimumSize) {
+	if (IsCreated()) {
+		SetMinimumSizeDirect(newMinimumSize);
+	} else {
+		SetMinimumSizeProperty(newMinimumSize);
+	}
+}
+
+double Window::GetDisplayScale() const {
+	assert(IsCreated());
+
+	return GetDisplayScaleDirect();
+}
+
+Size Window::GetMinimumSizeProperty() const noexcept {
+	return m_MinimumSize;
+}
+void Window::SetMinimumSizeProperty(Size newMinimumSize) noexcept {
+	m_MinimumSize = newMinimumSize;
 }
 
 Button::Button() noexcept {}

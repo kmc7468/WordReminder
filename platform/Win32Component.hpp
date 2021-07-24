@@ -42,7 +42,7 @@ protected:
 	virtual void CreateComponent(Point location, Size size, const std::wstring& text, bool visibility) override;
 
 public:
-	HWND GetHandle() noexcept;
+	HWND GetHandle() const noexcept;
 
 private:
 	std::pair<Point, Size> GetRectangle() const noexcept;
@@ -60,6 +60,12 @@ public:
 
 public:
 	Win32Window& operator=(const Win32Window&) = delete;
+
+protected:
+	virtual Size GetMinimumSizeDirect() const override;
+	virtual void SetMinimumSizeDirect(Size newMinimumSize) override;
+
+	virtual double GetDisplayScaleDirect() const override;
 
 private:
 	LRESULT WndProc(UINT message, WPARAM wParam, LPARAM lParam);

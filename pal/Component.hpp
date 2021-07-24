@@ -68,6 +68,7 @@ protected:
 	virtual void SetVisibilityDirect(bool newVisibility) = 0;
 
 	virtual void CreateComponent(Point location, Size size, const std::wstring& text, bool visibility) = 0;
+	bool IsCreated() const noexcept;
 
 public:
 	virtual void RaiseEvent(std::unique_ptr<Event> event);
@@ -81,6 +82,9 @@ private:
 };
 
 class Window : public virtual Component {
+private:
+	Size m_MinimumSize{ 0, 0 };
+
 public:
 	Window(Point location, Size size) noexcept;
 	Window(const Window&) = delete;
@@ -88,6 +92,20 @@ public:
 
 public:
 	Window& operator=(const Window&) = delete;
+
+public:
+	Size GetMinimumSize() const;
+	void SetMinimumSize(Size newMinimumSize);
+
+	double GetDisplayScale() const;
+
+protected:
+	virtual Size GetMinimumSizeDirect() const = 0;
+	Size GetMinimumSizeProperty() const noexcept;
+	virtual void SetMinimumSizeDirect(Size newMinimumSize) = 0;
+	void SetMinimumSizeProperty(Size newMinimumSize) noexcept;
+
+	virtual double GetDisplayScaleDirect() const = 0;
 
 public:
 	static std::unique_ptr<Window> Create(std::unique_ptr<EventHandler>&& eventHandler, int width, int height);
