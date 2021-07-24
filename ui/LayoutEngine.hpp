@@ -104,3 +104,24 @@ public:
 	Division& SetHorizontalAlignment(Alignment horizontalAlignment) noexcept;
 	Division& SetVerticalAlignment(Alignment verticalAlignment) noexcept;
 };
+
+class LayoutEngine final {
+private:
+	Division m_RootDivision;
+
+public:
+	LayoutEngine(Component* component);
+	LayoutEngine(const LayoutEngine&) = delete;
+	LayoutEngine(LayoutEngine&& layoutEngine) noexcept = default;
+	~LayoutEngine() = default;
+
+public:
+	LayoutEngine& operator=(const LayoutEngine&) = delete;
+	LayoutEngine& operator=(LayoutEngine&& layoutEngine) noexcept = default;
+
+public:
+	void Evaluate();
+
+private:
+	void Evaluate(Division& division, Division& parent, LengthEvaluationContext& evaluationContext);
+};

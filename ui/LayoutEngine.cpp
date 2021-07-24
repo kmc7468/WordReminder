@@ -124,3 +124,47 @@ Division& Division::SetVerticalAlignment(Alignment verticalAlignment) noexcept {
 	m_VerticalAlignment = verticalAlignment;
 	return *this;
 }
+
+namespace {
+	LengthEvaluationContext& UpdateParentLength(LengthEvaluationContext& evaluationContext, double newParentLength) noexcept {
+		evaluationContext.ParentLength = newParentLength;
+		return evaluationContext;
+	}
+	LengthEvaluationContext& UpdateUsableLength(LengthEvaluationContext& evaluationContext, double newUsableLength) noexcept {
+		evaluationContext.UsableLength = newUsableLength;
+		return evaluationContext;
+	}
+
+#define UPL(newParentLength) UpdateParentLength(evaluationContext, newParentLength)
+#define UUL(newUsableLength) UpdateUsableLength(evaluationContext, newUsableLength)
+#define UPUL(newParentLength, newUsableLength) UPL(UUL(newUsableLength), newParentLength)
+}
+
+LayoutEngine::LayoutEngine(Component* component)
+	: m_RootDivision(component, Length::Percent(100), Length::Percent(100)) {}
+
+void LayoutEngine::Evaluate() {
+	Component* windowComponent = m_RootDivision.m_Component;
+	while (windowComponent->GetParent()) {
+		windowComponent = windowComponent->GetParent();
+	}
+
+	Window* const window = dynamic_cast<Window*>(windowComponent);
+	const Size windowSize = window->GetSize();
+
+	LengthEvaluationContext evaluationContext;
+	evaluationContext.DisplayScale = window->GetDisplayScale();
+	evaluationContext.WindowScale =
+		(windowSize.Width * 3 >= windowSize.Height * 4 ? windowSize.Height : windowSize.Width * 3. / 4) / 480;
+
+	m_RootDivision.m_Width.Evaluate(UPL(windowSize.Width));
+	m_RootDivision.m_Height.Evaluate(UPL(windowSize.Height));
+
+	for (auto& child : m_RootDivision.m_Children) {
+		Evaluate(child, m_RootDivision, evaluationContext);
+	}
+}
+
+void LayoutEngine::Evaluate(Division& division, Division& parent, LengthEvaluationContext& evaluationContext) {
+	// TODO
+}
