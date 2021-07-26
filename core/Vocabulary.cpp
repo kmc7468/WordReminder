@@ -89,7 +89,7 @@ std::size_t Word::GetIndexOfMeaning(const std::wstring& meaning) const noexcept 
 		return meaningPtr->GetMeaning() == meaning;
 	});
 	if (iter != m_Meanings.end()) return std::distance(m_Meanings.begin(), iter);
-	else return -1;
+	else return static_cast<std::size_t>(-1);
 }
 const Meaning* Word::FindMeaning(const std::wstring& meaning) const noexcept {
 	if (const auto index = GetIndexOfMeaning(meaning); index != -1) return m_Meanings[index].get();
@@ -165,7 +165,7 @@ std::size_t Vocabulary::GetIndexOfWord(const std::wstring& word) const noexcept 
 		return wordPtr->GetWord() == word;
 	});
 	if (iter != m_Words.end()) return std::distance(m_Words.begin(), iter);
-	else return -1;
+	else return static_cast<std::size_t>(-1);
 }
 const Word* Vocabulary::FindWord(const std::wstring& word) const noexcept {
 	if (const auto index = GetIndexOfWord(word); index != -1) return m_Words[index].get();

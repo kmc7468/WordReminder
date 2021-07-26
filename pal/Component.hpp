@@ -150,3 +150,7 @@ public:
 public:
 	static std::unique_ptr<Label> Create(std::unique_ptr<EventHandler>&& eventHandler);
 };
+
+#ifdef _MSC_VER
+#	pragma warning(disable: 4250)
+#endif
