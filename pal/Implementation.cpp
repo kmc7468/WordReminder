@@ -1,5 +1,6 @@
 #include "Component.hpp"
 #include "Config.hpp"
+#include "Font.hpp"
 #include "Utility.hpp"
 
 #ifdef _WIN32
@@ -19,6 +20,11 @@ std::unique_ptr<Label> Label::Create(std::unique_ptr<EventHandler>&& eventHandle
 // Config.hpp
 std::unique_ptr<Config> Config::Create() {
 	return std::make_unique<Win32RegistryKey>();
+}
+
+// Font.hpp
+std::unique_ptr<Font> Font::Create(std::wstring name, int height, bool isBold) {
+	return std::make_unique<Win32Font>(std::move(name), height, isBold);
 }
 
 // Utility.hpp
