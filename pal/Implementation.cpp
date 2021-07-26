@@ -23,8 +23,8 @@ std::unique_ptr<Config> Config::Create() {
 }
 
 // Font.hpp
-std::unique_ptr<Font> Font::Create(std::wstring name, int height, bool isBold) {
-	return std::make_unique<Win32Font>(std::move(name), height, isBold);
+std::shared_ptr<Font> Font::Create(std::wstring name, int height, bool isBold) {
+	return std::make_shared<Win32Font>(std::move(name), height, isBold);
 }
 
 // Utility.hpp

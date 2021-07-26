@@ -26,5 +26,5 @@ public:
 	virtual bool IsCreated() const noexcept = 0;
 
 public:
-	std::unique_ptr<Font> Create(std::wstring name, int height, bool isBold = false);
+	static std::shared_ptr<Font> Create(std::wstring name, int height, bool isBold = false);
 };

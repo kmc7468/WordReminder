@@ -77,6 +77,20 @@ void Component::SetVisibility(bool newVisibility) {
 	}
 }
 
+const Font* Component::GetFont() const noexcept {
+	return m_Font.get();
+}
+Font* Component::GetFont() noexcept {
+	return m_Font.get();
+}
+void Component::SetFont(std::shared_ptr<Font> newFont) {
+	m_Font = std::move(newFont);
+
+	if (m_IsCreated) {
+		SetFontDirect(m_Font.get());
+	}
+}
+
 void Component::Show() {
 	if (m_IsCreated) {
 		SetVisibilityDirect(true);
@@ -111,6 +125,10 @@ void Component::CreateComponent() {
 
 	CreateComponent(m_Location, m_Size, m_Text, m_Visibility);
 	m_IsCreated = true;
+
+	if (m_Font) {
+		SetFontDirect(m_Font.get());
+	}
 
 	for (std::size_t i = 0; i < m_Children.size(); ++i) {
 		if (const auto& child = m_Children[i];

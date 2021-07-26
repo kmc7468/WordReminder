@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Font.hpp"
+
 #include "../ui/Event.hpp"
 
 #include <cstddef>
@@ -27,6 +29,8 @@ private:
 	std::wstring m_Text;
 	bool m_Visibility = true;
 
+	std::shared_ptr<Font> m_Font;
+
 public:
 	Component(std::unique_ptr<EventHandler>&& eventHandler) noexcept;
 	Component(const Component&) = delete;
@@ -52,8 +56,13 @@ public:
 	bool GetVisibility() const;
 	void SetVisibility(bool newVisibility);
 
+	const Font* GetFont() const noexcept;
+	Font* GetFont() noexcept;
+	void SetFont(std::shared_ptr<Font> newFont);
+
 	void Show();
 	void Hide();
+
 
 protected:
 	virtual void SetParentDirect(Component* parent, std::size_t index) = 0;
@@ -66,6 +75,8 @@ protected:
 	virtual void SetTextDirect(const std::wstring& newText) = 0;
 	virtual bool GetVisibilityDirect() const = 0;
 	virtual void SetVisibilityDirect(bool newVisibility) = 0;
+
+	virtual void SetFontDirect(Font* newFont) = 0;
 
 	virtual void CreateComponent(Point location, Size size, const std::wstring& text, bool visibility) = 0;
 	bool IsCreated() const noexcept;

@@ -39,6 +39,8 @@ protected:
 	virtual bool GetVisibilityDirect() const override;
 	virtual void SetVisibilityDirect(bool newVisibility) override;
 
+	virtual void SetFontDirect(Font* newFont) override;
+
 	virtual void CreateComponent(Point location, Size size, const std::wstring& text, bool visibility) override;
 
 public:

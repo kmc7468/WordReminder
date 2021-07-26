@@ -1,6 +1,7 @@
 #include "Win32Component.hpp"
 
 #include "Win32ApplicationState.hpp"
+#include "Win32Font.hpp"
 
 #include "../ui/Application.hpp"
 
@@ -44,6 +45,10 @@ bool Win32Component::GetVisibilityDirect() const {
 }
 void Win32Component::SetVisibilityDirect(bool newVisibility) {
 	ShowWindow(m_Window, newVisibility ? SW_SHOW : SW_HIDE);
+}
+
+void Win32Component::SetFontDirect(Font* newFont) {
+	SendMessage(m_Window, WM_SETFONT, reinterpret_cast<WPARAM>(static_cast<Win32Font*>(newFont)->GetHandle()), MAKELPARAM(true, 0));
 }
 
 void Win32Component::CreateComponent(Point location, Size size, const std::wstring& text, bool visibility) {
